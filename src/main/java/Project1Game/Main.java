@@ -18,6 +18,7 @@ public class Main extends GameApplication {
     private Entity player;
     private Inventory inventory;
     private ToolbarView toolbarView;
+    private StatusBarsView statusBarsView;
 
     @Override
     protected void initSettings(GameSettings gameSettings) {
@@ -71,6 +72,12 @@ public class Main extends GameApplication {
         toolbarView.setLayoutY(1080 - 64 - 16);
 
         FXGL.getGameScene().addUINode(toolbarView);
+
+        // Thanh máu và thanh thức ăn ở góc trên bên trái
+        statusBarsView = new StatusBarsView();
+        statusBarsView.setLayoutX(16);
+        statusBarsView.setLayoutY(16);
+        FXGL.getGameScene().addUINode(statusBarsView);
     }
 
     @Override
