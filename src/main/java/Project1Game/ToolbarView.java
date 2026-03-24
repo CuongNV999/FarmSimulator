@@ -13,8 +13,8 @@ import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 
 public class ToolbarView extends HBox {
-    private static final int SLOT_SIZE = 64;
-    private static final int SLOT_GAP = 4;
+    private static final int SLOT_SIZE = 80;
+    private static final int SLOT_GAP = 6;
     private final Inventory inventory;
     private final StackPane[] slotPanes;
 
@@ -49,13 +49,13 @@ public class ToolbarView extends HBox {
 
         // Icon vật phẩm
         Texture icon = FXGL.texture(itemType.getIconName());
-        icon.setFitWidth(40);
-        icon.setFitHeight(40);
+        icon.setFitWidth(50);
+        icon.setFitHeight(50);
         icon.setPreserveRatio(true);
 
         // Số lượng
         Text countText = new Text();
-        countText.setFont(Font.font("Arial", 14));
+        countText.setFont(Font.font("Arial", 18));
         countText.setFill(Color.WHITE);
         countText.textProperty().bind(
                 Bindings.createStringBinding(
@@ -72,14 +72,14 @@ public class ToolbarView extends HBox {
 
         // Tên vật phẩm (hiển thị nhỏ phía trên)
         Text nameText = new Text(itemType.getDisplayName());
-        nameText.setFont(Font.font("Arial", 9));
+        nameText.setFont(Font.font("Arial", 11));
         nameText.setFill(Color.LIGHTGRAY);
         StackPane.setAlignment(nameText, Pos.TOP_CENTER);
         nameText.setTranslateY(2);
 
         // Phím tắt
         Text keyText = new Text(String.valueOf(index + 1));
-        keyText.setFont(Font.font("Arial", 10));
+        keyText.setFont(Font.font("Arial", 12));
         keyText.setFill(Color.YELLOW);
         StackPane.setAlignment(keyText, Pos.TOP_LEFT);
         keyText.setTranslateX(4);

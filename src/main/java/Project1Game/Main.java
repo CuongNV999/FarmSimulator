@@ -67,9 +67,14 @@ public class Main extends GameApplication {
         toolbarView = new ToolbarView(inventory);
 
         // Đặt thanh công cụ ở giữa phía dưới màn hình
-        double toolbarWidth = inventory.getSlots().length * (64 + 4) - 4;
-        toolbarView.setLayoutX((1920 - toolbarWidth) / 2);
-        toolbarView.setLayoutY(1080 - 64 - 16);
+        // Sử dụng các hằng số từ ToolbarView để tính toán kích thước thực tế
+        // (SLOT_SIZE = 80, SLOT_GAP = 6)
+        double slotSize = 80;
+        double slotGap = 6;
+        double toolbarWidth = inventory.getSlots().length * (slotSize + slotGap) - slotGap;
+        
+        toolbarView.setLayoutX((FXGL.getAppWidth() - toolbarWidth) / 2);
+        toolbarView.setLayoutY(FXGL.getAppHeight() - slotSize - 20);
 
         FXGL.getGameScene().addUINode(toolbarView);
 
@@ -174,11 +179,16 @@ public class Main extends GameApplication {
             return null;
         });
 
-        // Phím số 1-4 để chọn slot trên toolbar
+        // Phím số 1-9 để chọn slot trên toolbar
         onKeyDown(KeyCode.DIGIT1, () -> { selectSlot(0); return null; });
         onKeyDown(KeyCode.DIGIT2, () -> { selectSlot(1); return null; });
         onKeyDown(KeyCode.DIGIT3, () -> { selectSlot(2); return null; });
         onKeyDown(KeyCode.DIGIT4, () -> { selectSlot(3); return null; });
+        onKeyDown(KeyCode.DIGIT5, () -> { selectSlot(4); return null; });
+        onKeyDown(KeyCode.DIGIT6, () -> { selectSlot(5); return null; });
+        onKeyDown(KeyCode.DIGIT7, () -> { selectSlot(6); return null; });
+        onKeyDown(KeyCode.DIGIT8, () -> { selectSlot(7); return null; });
+        onKeyDown(KeyCode.DIGIT9, () -> { selectSlot(8); return null; });
 
         // Phím Q/Tab để chuyển slot
         onKeyDown(KeyCode.Q, () -> {
