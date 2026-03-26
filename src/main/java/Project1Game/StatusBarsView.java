@@ -1,25 +1,35 @@
 package Project1Game;
 
+import com.almasb.fxgl.dsl.FXGL;
+import com.almasb.fxgl.texture.Texture;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.scene.Parent;
+import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class StatusBarsView extends Parent {
 
-    private static final double BAR_WIDTH = 200;
-    private static final double BAR_HEIGHT = 20;
-    private static final double SPACING = 8;
+    private static final double BAR_WIDTH = 300;
+    private static final double BAR_HEIGHT = 28;
+    private static final double SPACING = 12;
+    private static final int NUM_HEARTS = 9;
 
     private final DoubleProperty health = new SimpleDoubleProperty(100);
     private final DoubleProperty maxHealth = new SimpleDoubleProperty(100);
     private final DoubleProperty hunger = new SimpleDoubleProperty(100);
     private final DoubleProperty maxHunger = new SimpleDoubleProperty(100);
 
-    private final Rectangle healthFill;
+    private final HBox heartsContainer;
+    private final List<Texture> heartTextures = new ArrayList<>();
+    private final Texture fullHeart;
+    private final Texture emptyHeart;
     private final Rectangle hungerFill;
     private final Text healthText;
     private final Text hungerText;
@@ -27,62 +37,60 @@ public class StatusBarsView extends Parent {
     public StatusBarsView() {
         double y = 0;
 
-        // --- Thanh máu ---
-        Text healthLabel = new Text("❤ HP");
-        healthLabel.setFont(Font.font("Arial", 14));
-        healthLabel.setFill(Color.WHITE);
-        healthLabel.setTranslateY(y + 14);
+        // --- Thanh máu (Dạng 9 trái tim) ---
+        heartsContainer = new HBox(4);
+        heartsContainer.setTranslateX(0);
+        heartsContainer.setTranslateY(y - 4);
 
-        Rectangle healthBg = new Rectangle(BAR_WIDTH, BAR_HEIGHT);
-        healthBg.setFill(Color.rgb(60, 60, 60, 0.8));
-        healthBg.setArcWidth(6);
-        healthBg.setArcHeight(6);
-        healthBg.setTranslateX(50);
-        healthBg.setTranslateY(y);
+        // Load heart sprite (giả định cấu trúc 2 frame: [0]=đầy, [1]=rỗng)
+        // Mỗi frame giả định là 16x16, FXGL sẽ tự điều chỉnh nếu subTexture hợp lệ
+        fullHeart = FXGL.texture("heart_sprite.png").subTexture(new javafx.geometry.Rectangle2D(0, 0, 16, 16));
+        emptyHeart = FXGL.texture("heart_sprite.png").subTexture(new javafx.geometry.Rectangle2D(16, 0, 16, 16));
 
-        healthFill = new Rectangle(BAR_WIDTH, BAR_HEIGHT);
-        healthFill.setFill(Color.rgb(220, 40, 40));
-        healthFill.setArcWidth(6);
-        healthFill.setArcHeight(6);
-        healthFill.setTranslateX(50);
-        healthFill.setTranslateY(y);
+        for (int i = 0; i < NUM_HEARTS; i++) {
+            Texture heart = new Texture(fullHeart.getImage());
+            heart.setFitWidth(32);
+            heart.setFitHeight(32);
+            heartTextures.add(heart);
+            heartsContainer.getChildren().add(heart);
+        }
 
         healthText = new Text("100 / 100");
-        healthText.setFont(Font.font("Arial", 12));
+        healthText.setFont(Font.font("Arial", 16));
         healthText.setFill(Color.WHITE);
-        healthText.setTranslateX(50 + BAR_WIDTH / 2 - 25);
-        healthText.setTranslateY(y + 14);
+        healthText.setTranslateX(NUM_HEARTS * (32 + 4) + 10);
+        healthText.setTranslateY(y + 20);
 
         // --- Thanh thức ăn ---
         y += BAR_HEIGHT + SPACING;
 
         Text hungerLabel = new Text("\uD83C\uDF5E Food");
-        hungerLabel.setFont(Font.font("Arial", 14));
+        hungerLabel.setFont(Font.font("Arial", 18));
         hungerLabel.setFill(Color.WHITE);
-        hungerLabel.setTranslateY(y + 14);
+        hungerLabel.setTranslateY(y + 20);
 
         Rectangle hungerBg = new Rectangle(BAR_WIDTH, BAR_HEIGHT);
         hungerBg.setFill(Color.rgb(60, 60, 60, 0.8));
-        hungerBg.setArcWidth(6);
-        hungerBg.setArcHeight(6);
-        hungerBg.setTranslateX(50);
+        hungerBg.setArcWidth(8);
+        hungerBg.setArcHeight(8);
+        hungerBg.setTranslateX(70);
         hungerBg.setTranslateY(y);
 
         hungerFill = new Rectangle(BAR_WIDTH, BAR_HEIGHT);
         hungerFill.setFill(Color.rgb(200, 150, 30));
-        hungerFill.setArcWidth(6);
-        hungerFill.setArcHeight(6);
-        hungerFill.setTranslateX(50);
+        hungerFill.setArcWidth(8);
+        hungerFill.setArcHeight(8);
+        hungerFill.setTranslateX(70);
         hungerFill.setTranslateY(y);
 
         hungerText = new Text("100 / 100");
-        hungerText.setFont(Font.font("Arial", 12));
+        hungerText.setFont(Font.font("Arial", 16));
         hungerText.setFill(Color.WHITE);
-        hungerText.setTranslateX(50 + BAR_WIDTH / 2 - 25);
-        hungerText.setTranslateY(y + 14);
+        hungerText.setTranslateX(70 + BAR_WIDTH / 2 - 35);
+        hungerText.setTranslateY(y + 20);
 
         getChildren().addAll(
-                healthBg, healthFill, healthLabel, healthText,
+                heartsContainer, healthText,
                 hungerBg, hungerFill, hungerLabel, hungerText
         );
 
@@ -95,7 +103,15 @@ public class StatusBarsView extends Parent {
 
     private void updateBars() {
         double hpRatio = Math.max(0, Math.min(1, health.get() / maxHealth.get()));
-        healthFill.setWidth(BAR_WIDTH * hpRatio);
+        int activeHearts = (int) Math.ceil(hpRatio * NUM_HEARTS);
+
+        for (int i = 0; i < NUM_HEARTS; i++) {
+            if (i < activeHearts) {
+                heartTextures.get(i).setImage(fullHeart.getImage());
+            } else {
+                heartTextures.get(i).setImage(emptyHeart.getImage());
+            }
+        }
         healthText.setText((int) health.get() + " / " + (int) maxHealth.get());
 
         double foodRatio = Math.max(0, Math.min(1, hunger.get() / maxHunger.get()));

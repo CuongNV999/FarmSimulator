@@ -80,5 +80,19 @@ public class Factory implements EntityFactory {
                 .with(new RiceComponent()) // Component quản lý sự trưởng thành
                 .build();
     }
+
+    @Spawns("Selector")
+    public Entity spawnSelector(SpawnData data) {
+        javafx.scene.shape.Rectangle rect = new javafx.scene.shape.Rectangle(32, 32);
+        rect.setFill(Color.color(1, 1, 1, 0.2)); // Nền trắng mờ
+        rect.setStroke(Color.WHITE); // Viền trắng
+        rect.setStrokeWidth(2);
+
+        return FXGL.entityBuilder(data)
+                .type(EntityType.SELECTOR)
+                .view(rect)
+                .zIndex(10)
+                .build();
+    }
 }
 

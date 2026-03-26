@@ -1,5 +1,5 @@
 package Project1Game;
 
 public enum EntityType {
-    WALL, WATER, SOIL, RICE, PLAYER
+    WALL, WATER, SOIL, RICE, PLAYER, SELECTOR
     }
