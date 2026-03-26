@@ -16,6 +16,7 @@ import static com.almasb.fxgl.dsl.FXGLForKtKt.onKeyDown;
 
 public class Main extends GameApplication {
     private Entity player;
+    private Entity selector;
     private Inventory inventory;
     private ToolbarView toolbarView;
     private StatusBarsView statusBarsView;
@@ -55,11 +56,46 @@ public class Main extends GameApplication {
         FXGL.setLevelFromMap("level2.tmx");
 
         player = getGameWorld().getSingleton(EntityType.PLAYER);
+        selector = FXGL.spawn("Selector");
 
         // Đảm bảo tất cả các thực thể SOIL hiện có được cập nhật texture
         getGameWorld().getEntitiesByType(EntityType.SOIL).forEach(soil -> {
             soil.getComponent(SoilComponent.class).updateTexture();
         });
+    }
+
+    @Override
+    protected void onUpdate(double tpf) {
+        if (selector != null && player != null) {
+            double mouseX = FXGL.getInput().getMouseXWorld();
+            double mouseY = FXGL.getInput().getMouseYWorld();
+
+            // Làm tròn vị trí chuột về lưới 32x32
+            double x = Math.floor(mouseX / 32) * 32;
+            double y = Math.floor(mouseY / 32) * 32;
+
+            selector.setPosition(x, y);
+
+            // Kiểm tra bán kính tương tác là 2 ô (64 pixels tính từ tâm)
+            // Lấy tâm của player và tâm của selector
+            double playerCenterX = player.getCenter().getX();
+            double playerCenterY = player.getCenter().getY();
+            double selectorCenterX = x + 16;
+            double selectorCenterY = y + 16;
+
+            double distance = Math.sqrt(Math.pow(playerCenterX - selectorCenterX, 2) + Math.pow(playerCenterY - selectorCenterY, 2));
+
+            // Bán kính tương tác là 2 ô (32*2 = 64 pixels tính từ tâm của ô Player).
+            // Nếu Player ở giữa 1 ô (16,16), và tâm ô thứ 2 là (80,16), khoảng cách là 64.
+            // Để cho phép chọn chéo, ta có thể dùng 96 làm ngưỡng an toàn (cho phép 2 ô ngang/dọc và chéo).
+            if (distance <= 96) {
+                selector.getViewComponent().setOpacity(1.0);
+                selector.setVisible(true);
+            } else {
+                selector.getViewComponent().setOpacity(0.3);
+                selector.setVisible(true); // Vẫn cho thấy selector nhưng mờ để người dùng biết mình đang trỏ đi đâu
+            }
+        }
     }
 
     @Override
@@ -160,8 +196,10 @@ public class Main extends GameApplication {
 
         // Phím E - Thu hoạch lúa chín
         onKeyDown(KeyCode.E, () -> {
+            if (selector.getViewComponent().getOpacity() < 1.0) return null;
+
             getGameWorld().getEntitiesByType(EntityType.RICE).stream()
-                    .filter(rice -> player.isColliding(rice))
+                    .filter(rice -> Math.abs(rice.getX() - selector.getX()) < 5 && Math.abs(rice.getY() - selector.getY()) < 5)
                     .filter(rice -> rice.getComponent(RiceComponent.class).isRipe())
                     .findFirst()
                     .ifPresent(rice -> {
@@ -213,9 +251,13 @@ public class Main extends GameApplication {
     }
 
     private void useHoe() {
-        // Làm tròn vị trí player về lưới 32x32 để Soil khít nhau
-        double x = Math.floor(player.getX() / 32) * 32;
-        double y = Math.floor(player.getY() / 32) * 32;
+        if (selector.getViewComponent().getOpacity() < 1.0) {
+            System.out.println("Ngoài phạm vi tương tác!");
+            return;
+        }
+
+        double x = selector.getX();
+        double y = selector.getY();
 
         // Kiểm tra xem tại vị trí này đã có Soil chưa
         boolean alreadyHasSoil = getGameWorld().getEntitiesByType(EntityType.SOIL).stream()
@@ -242,8 +284,13 @@ public class Main extends GameApplication {
             return;
         }
 
+        if (selector.getViewComponent().getOpacity() < 1.0) {
+            System.out.println("Ngoài phạm vi tương tác!");
+            return;
+        }
+
         getGameWorld().getEntitiesByType(EntityType.SOIL).stream()
-                .filter(soil -> player.isColliding(soil))
+                .filter(soil -> Math.abs(soil.getX() - selector.getX()) < 5 && Math.abs(soil.getY() - selector.getY()) < 5)
                 .filter(soil -> soil.getComponent(SoilComponent.class).canPlant())
                 .findFirst()
                 .ifPresent(soil -> {

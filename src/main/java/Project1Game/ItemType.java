@@ -5,11 +5,11 @@ public enum ItemType {
     RICE_SEED("Hạt lúa", "rice_1.png"),
     RICE("Lúa", "rice_3.png"),
     WATERING_CAN("Bình tưới", "soil_2.png"),
-    EMPTY_5("Ô trống", "soil_1.png"),
-    EMPTY_6("Ô trống", "soil_1.png"),
-    EMPTY_7("Ô trống", "soil_1.png"),
-    EMPTY_8("Ô trống", "soil_1.png"),
-    EMPTY_9("Ô trống", "soil_1.png");
+    EMPTY_5("Ô trống", ""),
+    EMPTY_6("Ô trống", ""),
+    EMPTY_7("Ô trống", ""),
+    EMPTY_8("Ô trống", ""),
+    EMPTY_9("Ô trống", "");
 
     private final String displayName;
     private final String iconName;

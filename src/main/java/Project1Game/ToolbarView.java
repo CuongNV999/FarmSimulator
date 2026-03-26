@@ -47,11 +47,16 @@ public class ToolbarView extends HBox {
         bg.setArcWidth(8);
         bg.setArcHeight(8);
 
+        pane.getChildren().add(bg);
+
         // Icon vật phẩm
-        Texture icon = FXGL.texture(itemType.getIconName());
-        icon.setFitWidth(50);
-        icon.setFitHeight(50);
-        icon.setPreserveRatio(true);
+        if (itemType.getIconName() != null && !itemType.getIconName().isEmpty()) {
+            Texture icon = FXGL.texture(itemType.getIconName());
+            icon.setFitWidth(50);
+            icon.setFitHeight(50);
+            icon.setPreserveRatio(true);
+            pane.getChildren().add(icon);
+        }
 
         // Số lượng
         Text countText = new Text();
@@ -61,7 +66,7 @@ public class ToolbarView extends HBox {
                 Bindings.createStringBinding(
                         () -> {
                             int count = inventory.countProperty(itemType).get();
-                            return count > 0 ? String.valueOf(count) : "";
+                            return count > 0 && !itemType.getIconName().isEmpty() ? String.valueOf(count) : "";
                         },
                         inventory.countProperty(itemType)
                 )
@@ -71,7 +76,8 @@ public class ToolbarView extends HBox {
         countText.setTranslateY(-2);
 
         // Tên vật phẩm (hiển thị nhỏ phía trên)
-        Text nameText = new Text(itemType.getDisplayName());
+        String displayName = itemType.getIconName().isEmpty() ? "" : itemType.getDisplayName();
+        Text nameText = new Text(displayName);
         nameText.setFont(Font.font("Arial", 11));
         nameText.setFill(Color.LIGHTGRAY);
         StackPane.setAlignment(nameText, Pos.TOP_CENTER);
@@ -85,7 +91,7 @@ public class ToolbarView extends HBox {
         keyText.setTranslateX(4);
         keyText.setTranslateY(2);
 
-        pane.getChildren().addAll(bg, icon, countText, nameText, keyText);
+        pane.getChildren().addAll(countText, nameText, keyText);
         return pane;
     }
 
