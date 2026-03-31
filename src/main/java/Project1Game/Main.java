@@ -9,6 +9,7 @@ import com.almasb.fxgl.input.Input;
 import com.almasb.fxgl.input.UserAction;
 import com.almasb.fxgl.physics.CollisionHandler;
 import com.almasb.fxgl.physics.PhysicsComponent;
+import javafx.geometry.Point2D;
 import javafx.scene.input.KeyCode;
 
 import static com.almasb.fxgl.dsl.FXGLForKtKt.getGameWorld;
@@ -53,10 +54,23 @@ public class Main extends GameApplication {
 
         FXGL.getGameWorld().addEntityFactory(new Factory());
         FXGL.spawn("Background", new SpawnData(0, 0).put("width", 1920).put("height", 1080));
-        FXGL.setLevelFromMap("level2.tmx");
+        FXGL.setLevelFromMap("World/level2.tmx");
 
         player = getGameWorld().getSingleton(EntityType.PLAYER);
         selector = FXGL.spawn("Selector");
+
+        // Giới hạn khung hình và camera đi theo player
+        // Kích thước level: 60x34 ô * 32px = 1920x1088
+        // Chúng ta muốn thu nhỏ tầm nhìn một chút để tập trung vào player
+        // setZoom là một cách, hoặc đơn giản là setViewportBounds nhỏ hơn level nếu level rất to
+        // Ở đây level (1920x1088) gần bằng app size (1920x1080).
+        // Để thực sự thấy hiệu ứng camera follow, chúng ta nên đặt tầm nhìn (zoom) gần hơn.
+        
+        FXGL.getGameScene().getViewport().setZoom(1.5);
+        FXGL.getGameScene().getViewport().bindToEntity(player, FXGL.getAppWidth() / 2.0, FXGL.getAppHeight() / 2.0);
+        FXGL.getGameScene().getViewport().setBounds(0, 0, 1920, 1088);
+        // Chế độ Lazy follow giúp camera mượt hơn và "mở rộng tầm nhìn" khi tiến gần rìa (deadzone)
+        FXGL.getGameScene().getViewport().setLazy(true);
 
         // Đảm bảo tất cả các thực thể SOIL hiện có được cập nhật texture
         getGameWorld().getEntitiesByType(EntityType.SOIL).forEach(soil -> {
@@ -75,6 +89,11 @@ public class Main extends GameApplication {
             double y = Math.floor(mouseY / 32) * 32;
 
             selector.setPosition(x, y);
+
+            // Cập nhật animation của Player dựa trên vận tốc từ PhysicsComponent
+            PhysicsComponent physics = player.getComponent(PhysicsComponent.class);
+            Point2D vel = new Point2D(physics.getVelocityX(), physics.getVelocityY());
+            player.getComponent(PlayerComponent.class).move(vel);
 
             // Kiểm tra bán kính tương tác là 2 ô (64 pixels tính từ tâm)
             // Lấy tâm của player và tâm của selector
@@ -123,9 +142,10 @@ public class Main extends GameApplication {
 
     @Override
     protected void initInput() {
-        int v = 150; // Tốc độ di chuyển thực tế
+        int v = 200; // Tốc độ di chuyển thực tế
 
         Input input = FXGL.getInput();
+
 
         input.addAction(new UserAction("Move Right") {
             @Override

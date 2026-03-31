@@ -28,10 +28,11 @@ public class Factory implements EntityFactory {
         physics.setBodyDef(bd);
         physics.setBodyType(BodyType.DYNAMIC);
         return FXGL.entityBuilder(data)
-                .viewWithBBox("Player.png")
+                .bbox(new HitBox(BoundingShape.box(32, 42)))
                 .type(EntityType.PLAYER)
                 .zIndex(2)
                 .with(physics)
+                .with(new PlayerComponent())
                 .collidable()
                 .build();
 
@@ -40,7 +41,7 @@ public class Factory implements EntityFactory {
     @Spawns("Background")
     public Entity spawnBackground(SpawnData data) {
         return FXGL.entityBuilder(data)
-                .view(String.valueOf(new Rectangle()))
+                .view(new javafx.scene.shape.Rectangle(data.<Integer>get("width"), data.<Integer>get("height"), Color.valueOf("#3a9141"))) // Màu cỏ xanh
                 .with(new IrremovableComponent())
                 .zIndex(-100)
                 .build();
@@ -75,7 +76,7 @@ public class Factory implements EntityFactory {
     public Entity spawnRice(SpawnData data) {
         return FXGL.entityBuilder(data)
                 .type(EntityType.RICE)
-                .viewWithBBox("rice_1.png") // Hình ảnh mầm lúa
+                .viewWithBBox("Crops/rice_1.png") // Hình ảnh mầm lúa
                 .zIndex(1)
                 .with(new RiceComponent()) // Component quản lý sự trưởng thành
                 .build();
