@@ -21,14 +21,15 @@ public class StatusBarsView extends Parent {
     private static final double SPACING = 12;
     private static final int NUM_HEARTS = 9;
 
-    private final DoubleProperty health = new SimpleDoubleProperty(100);
-    private final DoubleProperty maxHealth = new SimpleDoubleProperty(100);
+    private final DoubleProperty health = new SimpleDoubleProperty(18);
+    private final DoubleProperty maxHealth = new SimpleDoubleProperty(18);
     private final DoubleProperty hunger = new SimpleDoubleProperty(100);
     private final DoubleProperty maxHunger = new SimpleDoubleProperty(100);
 
     private final HBox heartsContainer;
     private final List<Texture> heartTextures = new ArrayList<>();
     private final Texture fullHeart;
+    private final Texture halfHeart;
     private final Texture emptyHeart;
     private final Rectangle hungerFill;
     private final Text healthText;
@@ -42,10 +43,11 @@ public class StatusBarsView extends Parent {
         heartsContainer.setTranslateX(0);
         heartsContainer.setTranslateY(y - 4);
 
-        // Load heart sprite (giả định cấu trúc 2 frame: [0]=đầy, [1]=rỗng)
-        // Mỗi frame giả định là 16x16, FXGL sẽ tự điều chỉnh nếu subTexture hợp lệ
-        fullHeart = FXGL.texture("heart_sprite.png").subTexture(new javafx.geometry.Rectangle2D(0, 0, 16, 16));
-        emptyHeart = FXGL.texture("heart_sprite.png").subTexture(new javafx.geometry.Rectangle2D(16, 0, 16, 16));
+        // Load heart sprite (cấu trúc 3 frame: [0]=đầy, [1]=nửa, [2]=rỗng)
+        // Kích thước tệp là 96x32, mỗi khung hình 32x32
+        fullHeart = FXGL.texture("UI/heart_sprite.png").subTexture(new javafx.geometry.Rectangle2D(0, 0, 32, 32));
+        halfHeart = FXGL.texture("UI/heart_sprite.png").subTexture(new javafx.geometry.Rectangle2D(32, 0, 32, 32));
+        emptyHeart = FXGL.texture("UI/heart_sprite.png").subTexture(new javafx.geometry.Rectangle2D(64, 0, 32, 32));
 
         for (int i = 0; i < NUM_HEARTS; i++) {
             Texture heart = new Texture(fullHeart.getImage());
@@ -55,7 +57,7 @@ public class StatusBarsView extends Parent {
             heartsContainer.getChildren().add(heart);
         }
 
-        healthText = new Text("100 / 100");
+        healthText = new Text("18 / 18");
         healthText.setFont(Font.font("Arial", 16));
         healthText.setFill(Color.WHITE);
         healthText.setTranslateX(NUM_HEARTS * (32 + 4) + 10);
@@ -102,13 +104,25 @@ public class StatusBarsView extends Parent {
     }
 
     private void updateBars() {
+        // Mỗi tim có 2 nấc (đầy = 2, nửa = 1, rỗng = 0)
+        // Với 9 tim, tổng cộng có 18 nấc.
+        // Tỉ lệ máu sẽ được nhân với 18 để biết tổng số nấc hiện tại.
         double hpRatio = Math.max(0, Math.min(1, health.get() / maxHealth.get()));
-        int activeHearts = (int) Math.ceil(hpRatio * NUM_HEARTS);
+        double totalTicks = hpRatio * (NUM_HEARTS * 2);
 
         for (int i = 0; i < NUM_HEARTS; i++) {
-            if (i < activeHearts) {
+            // Xác định trạng thái của tim thứ i (0-indexed)
+            // Tim thứ i đại diện cho nấc i*2 + 1 và i*2 + 2
+            double heartVal = totalTicks - (i * 2);
+
+            if (heartVal >= 2) {
+                // Tim đầy (đủ 2 nấc)
                 heartTextures.get(i).setImage(fullHeart.getImage());
+            } else if (heartVal >= 0.5) {
+                // Tim nửa (ít nhất nửa nấc, dùng ngưỡng 0.5 để làm tròn cho đẹp)
+                heartTextures.get(i).setImage(halfHeart.getImage());
             } else {
+                // Tim rỗng
                 heartTextures.get(i).setImage(emptyHeart.getImage());
             }
         }

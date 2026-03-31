@@ -1,10 +1,10 @@
 package Project1Game;
 
 public enum ItemType {
-    HOE("Cuốc", "soil_1.png"),
-    RICE_SEED("Hạt lúa", "rice_1.png"),
-    RICE("Lúa", "rice_3.png"),
-    WATERING_CAN("Bình tưới", "soil_2.png"),
+    HOE("Cuốc", "Crops/soil_1.png"),
+    RICE_SEED("Hạt lúa", "Crops/rice_1.png"),
+    RICE("Lúa", "Crops/rice_3.png"),
+    WATERING_CAN("Bình tưới", "Crops/soil_2.png"),
     EMPTY_5("Ô trống", ""),
     EMPTY_6("Ô trống", ""),
     EMPTY_7("Ô trống", ""),

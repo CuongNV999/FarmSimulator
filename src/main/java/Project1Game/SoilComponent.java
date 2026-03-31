@@ -35,9 +35,9 @@ public class SoilComponent extends Component {
         // Xen kẽ soil_1 và soil_2 kiểu bàn cờ
         String textureName;
         if (gridX % 2 == 0) {
-            textureName = "soil_1.png";
+            textureName = "Crops/soil_1.png";
         } else {
-            textureName = "soil_2.png";
+            textureName = "Crops/soil_2.png";
         }
 
         Texture texture = FXGL.texture(textureName);

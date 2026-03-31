@@ -30,7 +30,7 @@ public class RiceComponent extends Component {
 
     private void updateView() {
         // Tạo tên file dựa trên biến stage (ví dụ: rice_1.png, rice_2.png...)
-        String imageName = "rice_" + stage + ".png";
+        String imageName = "Crops/rice_" + stage + ".png";
 
         // Load ảnh trực tiếp từ thư mục textures
         Texture texture = FXGL.texture(imageName);
