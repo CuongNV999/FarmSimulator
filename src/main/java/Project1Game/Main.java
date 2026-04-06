@@ -1,23 +1,32 @@
 package Project1Game;
 
+import java.io.InputStream;
+
+import javax.xml.parsers.DocumentBuilderFactory;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
+
 import com.almasb.fxgl.app.GameApplication;
 import com.almasb.fxgl.app.GameSettings;
 import com.almasb.fxgl.dsl.FXGL;
+import static com.almasb.fxgl.dsl.FXGLForKtKt.getGameWorld;
+import static com.almasb.fxgl.dsl.FXGLForKtKt.onKeyDown;
 import com.almasb.fxgl.entity.Entity;
 import com.almasb.fxgl.entity.SpawnData;
 import com.almasb.fxgl.input.Input;
 import com.almasb.fxgl.input.UserAction;
 import com.almasb.fxgl.physics.CollisionHandler;
 import com.almasb.fxgl.physics.PhysicsComponent;
+
 import javafx.geometry.Point2D;
 import javafx.scene.input.KeyCode;
-
-import static com.almasb.fxgl.dsl.FXGLForKtKt.getGameWorld;
-import static com.almasb.fxgl.dsl.FXGLForKtKt.onKeyDown;
 
 public class Main extends GameApplication {
     private Entity player;
     private Entity selector;
+    private Entity nearbyInteraction = null;
     private Inventory inventory;
     private ToolbarView toolbarView;
     private StatusBarsView statusBarsView;
@@ -27,6 +36,7 @@ public class Main extends GameApplication {
         gameSettings.setWidth(1280);
         gameSettings.setHeight(720);
         gameSettings.setDeveloperMenuEnabled(true);
+        gameSettings.setExperimentalTiledLargeMap(false);
     }
 
     @Override
@@ -40,20 +50,40 @@ public class Main extends GameApplication {
         });
         FXGL.getPhysicsWorld().addCollisionHandler(new CollisionHandler(EntityType.PLAYER, EntityType.COLLISION) {
             @Override
-            protected void onCollisionBegin(Entity Player, Entity COLLISION) {
+            protected void onCollisionBegin(Entity player, Entity collision) {
                 System.out.println("Va chạm vật cản!");
+            }
+        });
+        FXGL.getPhysicsWorld().addCollisionHandler(new CollisionHandler(EntityType.PLAYER, EntityType.INTERACTION) {
+            @Override
+            protected void onCollisionBegin(Entity player, Entity interaction) {
+                // Lưu entity interaction gần nhất để dùng khi nhấn phím
+                nearbyInteraction = interaction;
+                System.out.println("Gần vùng tương tác!");
+            }
+            @Override
+            protected void onCollisionEnd(Entity player, Entity interaction) {
+                nearbyInteraction = null;
             }
         });
     }
 
     @Override
     protected void initGame() {
+
         inventory = new Inventory();
 
         FXGL.getGameWorld().addEntityFactory(new Factory());
         FXGL.setLevelFromMap("Main_level.tmx");
 
+        // Debug: xem properties của tất cả entity không có type
+        getGameWorld().getEntities().stream()
+                .filter(e -> e.getType().toString().equals("0") || e.getType() == null)
+                .forEach(e -> System.out.println("No-type entity props: " + e.getProperties() + " pos=" + e.getX() + "," + e.getY()));
+
+
         player = getGameWorld().getSingleton(EntityType.PLAYER);
+        System.out.printf("Player spawn at x=%.0f y=%.0f%n", player.getX(), player.getY());
         selector = FXGL.spawn("Selector");
 
         // Giới hạn khung hình và camera đi theo player
@@ -64,6 +94,9 @@ public class Main extends GameApplication {
         FXGL.getGameScene().getViewport().setBounds(0, 0, 3840, 2176);
         // Chế độ Lazy follow giúp camera mượt hơn và "mở rộng tầm nhìn" khi tiến gần rìa (deadzone)
         FXGL.getGameScene().getViewport().setLazy(true);
+
+        // Tạo collision bodies từ tile layer có property colliable=true
+        // setupTileCollisions() đã được thay bằng object layer Collisions trong TMX
 
         // Đảm bảo tất cả các thực thể SOIL hiện có được cập nhật texture
         getGameWorld().getEntitiesByType(EntityType.SOIL).forEach(soil -> {
@@ -183,6 +216,15 @@ public class Main extends GameApplication {
                 getPlayer().getComponent(PhysicsComponent.class).setVelocityY(0);
             }
         }, KeyCode.S);
+
+        // Phím R - Tương tác với vùng gần (cửa, NPC, v.v.)
+        onKeyDown(KeyCode.R, () -> {
+            if (nearbyInteraction != null) {
+                System.out.println("Tương tác tại: " + nearbyInteraction.getX() + ", " + nearbyInteraction.getY());
+                // TODO: xử lý logic tương tác cụ thể (mở cửa, nói chuyện, v.v.)
+            }
+            return null;
+        });
 
         // Phím F - Sử dụng vật phẩm đang chọn
         onKeyDown(KeyCode.F, () -> {
@@ -314,6 +356,68 @@ public class Main extends GameApplication {
                     System.out.println("Đã trồng lúa tại: " + soil.getX() + ", " + soil.getY()
                             + " | Hạt giống còn: " + inventory.getCount(ItemType.RICE_SEED));
                 });
+    }
+
+    /**
+     * Đọc tile layer có property "colliable=true" và tạo static collision body
+     * cho mỗi tile khác 0 trong layer đó.
+     */
+    private void setupTileCollisions() {
+        try (InputStream is = getClass().getResourceAsStream("/assets/levels/Main_level.tmx")) {
+            Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(is);
+            Element map = doc.getDocumentElement();
+            int tileW = Integer.parseInt(map.getAttribute("tilewidth"));
+            int tileH = Integer.parseInt(map.getAttribute("tileheight"));
+            int mapW  = Integer.parseInt(map.getAttribute("width"));
+            int mapH  = Integer.parseInt(map.getAttribute("height"));
+
+            NodeList layers = map.getElementsByTagName("layer");
+            for (int i = 0; i < layers.getLength(); i++) {
+                Element layer = (Element) layers.item(i);
+
+                // Kiểm tra property colliable=true
+                boolean colliable = false;
+                NodeList props = layer.getElementsByTagName("property");
+                for (int p = 0; p < props.getLength(); p++) {
+                    Element prop = (Element) props.item(p);
+                    if ("colliable".equals(prop.getAttribute("name"))
+                            && "true".equals(prop.getAttribute("value"))) {
+                        colliable = true;
+                        break;
+                    }
+                }
+                if (!colliable) continue;
+
+                // Parse CSV data - xóa tất cả whitespace/newline trước khi split
+                String csv = layer.getElementsByTagName("data").item(0)
+                        .getTextContent().replaceAll("\\s+", "");
+                String[] tokens = csv.split(",");
+                int count = 0;
+                for (int t = 0; t < tokens.length; t++) {
+                    if (tokens[t].isEmpty()) continue;
+                    int tileId = Integer.parseInt(tokens[t]);
+                    if (tileId == 0) continue;
+
+                    int col = t % mapW;
+                    int row = t / mapW;
+                    // Bỏ qua tile dummy ở góc (0,0) và (mapW-1, mapH-1) dùng để fix buffer size
+                    if ((col == 0 && row == 0) || (col == mapW - 1 && row == mapH - 1)) continue;
+                    double x = col * tileW;
+                    double y = row * tileH;
+                    if (count < 5) {
+                        System.out.printf("Collision tile[%d] tileId=%d col=%d row=%d x=%.0f y=%.0f%n",
+                                count, tileId, col, row, x, y);
+                        count++;
+                    }
+                    FXGL.getGameWorld().spawn("Collisions",
+                            new SpawnData(x, y)
+                                    .put("width", tileW)
+                                    .put("height", tileH));
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("setupTileCollisions error: " + e.getMessage());
+        }
     }
 
     private static Entity getPlayer() {
