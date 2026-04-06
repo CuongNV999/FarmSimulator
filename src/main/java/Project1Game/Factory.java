@@ -1,6 +1,4 @@
 package Project1Game;
-import com.almasb.fxgl.entity.components.ViewComponent;
-import javafx.scene.paint.Color;
 import com.almasb.fxgl.dsl.FXGL;
 import com.almasb.fxgl.entity.Entity;
 import com.almasb.fxgl.entity.EntityFactory;
@@ -13,13 +11,15 @@ import com.almasb.fxgl.physics.PhysicsComponent;
 import com.almasb.fxgl.physics.box2d.dynamics.BodyDef;
 import com.almasb.fxgl.physics.box2d.dynamics.BodyType;
 import com.almasb.fxgl.physics.box2d.dynamics.FixtureDef;
-import javafx.geometry.Point2D;
-import java.util.List;
-import java.awt.*;
+
+import javafx.scene.paint.Color;
 
 public class Factory implements EntityFactory {
     @Spawns("Player")
     public Entity spawnPlayer(SpawnData data) {
+        int width = data.hasKey("width") ? (int) data.get("width") : 32;
+        int height = data.hasKey("height") ? (int) data.get("height") : 32;
+
         PhysicsComponent physics = new PhysicsComponent();
         physics.setFixtureDef(new FixtureDef().friction(0).density(0.1f));
         BodyDef bd = new BodyDef();
@@ -27,15 +27,22 @@ public class Factory implements EntityFactory {
         bd.setType(BodyType.DYNAMIC);
         physics.setBodyDef(bd);
         physics.setBodyType(BodyType.DYNAMIC);
+
+        // Bbox nhỏ hơn sprite, nằm ở phần chân - top-down collision chuẩn
+        int bboxW = 13;
+        int bboxH = 26;
+        int offsetX = 26;   // căn giữa theo chiều ngang
+        int offsetY = 23;         // nằm ở phần chân
+
         return FXGL.entityBuilder(data)
-                .bbox(new HitBox(BoundingShape.box(32, 42)))
+                .bbox(new HitBox(new javafx.geometry.Point2D(offsetX, offsetY),
+                        BoundingShape.box(bboxW, bboxH)))
                 .type(EntityType.PLAYER)
                 .zIndex(2)
                 .with(physics)
                 .with(new PlayerComponent())
                 .collidable()
                 .build();
-
     }
 
     @Spawns("Background")
@@ -49,12 +56,15 @@ public class Factory implements EntityFactory {
 
     @Spawns("Wall")
     public Entity spawnWall(SpawnData data) {
+        int width = data.hasKey("width") ? (int) data.get("width") : 32;
+        int height = data.hasKey("height") ? (int) data.get("height") : 32;
+        
         PhysicsComponent physics = new PhysicsComponent();
         physics.setBodyType(BodyType.STATIC);
         return FXGL.entityBuilder(data)
                 .type(EntityType.WALL)
-                .bbox(new HitBox(BoundingShape.box(data.<Integer>get("width"), data.<Integer>get("height"))))
-                .with(new PhysicsComponent())
+                .bbox(new HitBox(BoundingShape.box(width, height)))
+                .with(physics)
                 .collidable()
                 .build();
     }
@@ -67,8 +77,7 @@ public class Factory implements EntityFactory {
                 .type(EntityType.SOIL)
                 .bbox(new HitBox(BoundingShape.box(width, height)))
                 .zIndex(0)
-                .collidable() // Cần thiết để kiểm tra Player đang đứng trên đất
-                .with(new SoilComponent()) // Component quản lý trạng thái đất và texture
+                .with(new SoilComponent())
                 .build();
     }
 
@@ -79,6 +88,50 @@ public class Factory implements EntityFactory {
                 .viewWithBBox("Crops/rice_1.png") // Hình ảnh mầm lúa
                 .zIndex(1)
                 .with(new RiceComponent()) // Component quản lý sự trưởng thành
+                .build();
+    }
+
+    @Spawns("Collisions")
+    public Entity spawnCollisions(SpawnData data) {
+        int width = data.hasKey("width") ? (int) data.get("width") : 32;
+        int height = data.hasKey("height") ? (int) data.get("height") : 32;
+        
+        PhysicsComponent physics = new PhysicsComponent();
+        physics.setBodyType(BodyType.STATIC);
+        
+        return FXGL.entityBuilder(data)
+                .type(EntityType.COLLISION)
+                .bbox(new HitBox(BoundingShape.box(width, height)))
+                .view(new javafx.scene.shape.Rectangle(width, height, Color.TRANSPARENT))
+                .with(physics)
+                .collidable()
+                .build();
+    }
+
+    @Spawns("Interaction")
+    public Entity spawnInteraction(SpawnData data) {
+        int width = data.hasKey("width") ? (int) data.get("width") : 32;
+        int height = data.hasKey("height") ? (int) data.get("height") : 32;
+
+        PhysicsComponent physics = new PhysicsComponent();
+        physics.setBodyType(BodyType.STATIC);
+
+        return FXGL.entityBuilder(data)
+                .type(EntityType.INTERACTION)
+                .bbox(new HitBox(BoundingShape.box(width, height)))
+                .with(physics)
+                .collidable()
+                .build();
+    }
+    @Spawns("Door")
+    public Entity spawnDoor(SpawnData data) {
+        int width = data.hasKey("width") ? (int) data.get("width") : 32;
+        int height = data.hasKey("height") ? (int) data.get("height") : 32;
+
+        return FXGL.entityBuilder(data)
+                .type(EntityType.INTERACTION)
+                .bbox(new HitBox(BoundingShape.box(width, height)))
+                .collidable()
                 .build();
     }
 
