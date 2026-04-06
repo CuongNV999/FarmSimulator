@@ -24,11 +24,9 @@ public class Main extends GameApplication {
 
     @Override
     protected void initSettings(GameSettings gameSettings) {
-        gameSettings.setWidth(1920);
-        gameSettings.setHeight(1080);
-        gameSettings.setDeveloperMenuEnabled(false);
-        gameSettings.setFullScreenAllowed(true);
-        gameSettings.setFullScreenFromStart(false);
+        gameSettings.setWidth(1280);
+        gameSettings.setHeight(720);
+        gameSettings.setDeveloperMenuEnabled(true);
     }
 
     @Override
@@ -40,10 +38,10 @@ public class Main extends GameApplication {
                 System.out.println("On Collision wall");
             }
         });
-        FXGL.getPhysicsWorld().addCollisionHandler(new CollisionHandler(EntityType.PLAYER, EntityType.WATER) {
+        FXGL.getPhysicsWorld().addCollisionHandler(new CollisionHandler(EntityType.PLAYER, EntityType.COLLISION) {
             @Override
-            protected void onCollisionBegin(Entity Player, Entity WATER) {
-                System.out.println("On Collision water");
+            protected void onCollisionBegin(Entity Player, Entity COLLISION) {
+                System.out.println("Va chạm vật cản!");
             }
         });
     }
@@ -53,22 +51,17 @@ public class Main extends GameApplication {
         inventory = new Inventory();
 
         FXGL.getGameWorld().addEntityFactory(new Factory());
-        FXGL.spawn("Background", new SpawnData(0, 0).put("width", 1920).put("height", 1080));
-        FXGL.setLevelFromMap("World/level2.tmx");
+        FXGL.setLevelFromMap("Main_level.tmx");
 
         player = getGameWorld().getSingleton(EntityType.PLAYER);
         selector = FXGL.spawn("Selector");
 
         // Giới hạn khung hình và camera đi theo player
-        // Kích thước level: 60x34 ô * 32px = 1920x1088
-        // Chúng ta muốn thu nhỏ tầm nhìn một chút để tập trung vào player
-        // setZoom là một cách, hoặc đơn giản là setViewportBounds nhỏ hơn level nếu level rất to
-        // Ở đây level (1920x1088) gần bằng app size (1920x1080).
-        // Để thực sự thấy hiệu ứng camera follow, chúng ta nên đặt tầm nhìn (zoom) gần hơn.
+        // Kích thước level: 120x68 ô * 32px = 3840x2176
         
-        FXGL.getGameScene().getViewport().setZoom(1.5);
+        FXGL.getGameScene().getViewport().setZoom(1.0);
         FXGL.getGameScene().getViewport().bindToEntity(player, FXGL.getAppWidth() / 2.0, FXGL.getAppHeight() / 2.0);
-        FXGL.getGameScene().getViewport().setBounds(0, 0, 1920, 1088);
+        FXGL.getGameScene().getViewport().setBounds(0, 0, 3840, 2176);
         // Chế độ Lazy follow giúp camera mượt hơn và "mở rộng tầm nhìn" khi tiến gần rìa (deadzone)
         FXGL.getGameScene().getViewport().setLazy(true);
 
