@@ -1,20 +1,11 @@
 package Project1Game;
 
-import java.io.InputStream;
-
-import javax.xml.parsers.DocumentBuilderFactory;
-
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
-
 import com.almasb.fxgl.app.GameApplication;
 import com.almasb.fxgl.app.GameSettings;
 import com.almasb.fxgl.dsl.FXGL;
 import static com.almasb.fxgl.dsl.FXGLForKtKt.getGameWorld;
 import static com.almasb.fxgl.dsl.FXGLForKtKt.onKeyDown;
 import com.almasb.fxgl.entity.Entity;
-import com.almasb.fxgl.entity.SpawnData;
 import com.almasb.fxgl.input.Input;
 import com.almasb.fxgl.input.UserAction;
 import com.almasb.fxgl.physics.CollisionHandler;
@@ -305,6 +296,10 @@ public class Main extends GameApplication {
         System.out.println("Đã chọn: " + inventory.getSelectedItem().getDisplayName());
     }
 
+    private static Entity getPlayer() {
+        return FXGL.getGameWorld().getSingleton(EntityType.PLAYER);
+    }
+
     private void useHoe() {
         if (selector.getViewComponent().getOpacity() < 1.0) {
             System.out.println("Ngoài phạm vi tương tác!");
@@ -314,6 +309,15 @@ public class Main extends GameApplication {
         double x = selector.getX();
         double y = selector.getY();
 
+        // Kiểm tra selector có trong vùng Field không
+        boolean inField = getGameWorld().getEntitiesByType(EntityType.FIELD).stream()
+                .anyMatch(f -> f.getX() <= x && x < f.getX() + f.getWidth()
+                            && f.getY() <= y && y < f.getY() + f.getHeight());
+        if (!inField) {
+            System.out.println("Chỉ có thể đào trong vùng Field!");
+            return;
+        }
+
         // Kiểm tra xem tại vị trí này đã có Soil chưa
         boolean alreadyHasSoil = getGameWorld().getEntitiesByType(EntityType.SOIL).stream()
                 .anyMatch(soil -> Math.abs(soil.getX() - x) < 5 && Math.abs(soil.getY() - y) < 5);
@@ -322,7 +326,6 @@ public class Main extends GameApplication {
             getGameWorld().spawn("Soil", x, y);
             System.out.println("Đã tạo ô đất tại: " + x + ", " + y);
 
-            // Chạy cập nhật texture ở frame tiếp theo để đảm bảo thực thể mới đã được thêm vào world list
             FXGL.getExecutor().startAsyncFX(() -> {
                 getGameWorld().getEntitiesByType(EntityType.SOIL).forEach(soil -> {
                     soil.getComponent(SoilComponent.class).updateTexture();
@@ -356,72 +359,6 @@ public class Main extends GameApplication {
                     System.out.println("Đã trồng lúa tại: " + soil.getX() + ", " + soil.getY()
                             + " | Hạt giống còn: " + inventory.getCount(ItemType.RICE_SEED));
                 });
-    }
-
-    /**
-     * Đọc tile layer có property "colliable=true" và tạo static collision body
-     * cho mỗi tile khác 0 trong layer đó.
-     */
-    private void setupTileCollisions() {
-        try (InputStream is = getClass().getResourceAsStream("/assets/levels/Main_level.tmx")) {
-            Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(is);
-            Element map = doc.getDocumentElement();
-            int tileW = Integer.parseInt(map.getAttribute("tilewidth"));
-            int tileH = Integer.parseInt(map.getAttribute("tileheight"));
-            int mapW  = Integer.parseInt(map.getAttribute("width"));
-            int mapH  = Integer.parseInt(map.getAttribute("height"));
-
-            NodeList layers = map.getElementsByTagName("layer");
-            for (int i = 0; i < layers.getLength(); i++) {
-                Element layer = (Element) layers.item(i);
-
-                // Kiểm tra property colliable=true
-                boolean colliable = false;
-                NodeList props = layer.getElementsByTagName("property");
-                for (int p = 0; p < props.getLength(); p++) {
-                    Element prop = (Element) props.item(p);
-                    if ("colliable".equals(prop.getAttribute("name"))
-                            && "true".equals(prop.getAttribute("value"))) {
-                        colliable = true;
-                        break;
-                    }
-                }
-                if (!colliable) continue;
-
-                // Parse CSV data - xóa tất cả whitespace/newline trước khi split
-                String csv = layer.getElementsByTagName("data").item(0)
-                        .getTextContent().replaceAll("\\s+", "");
-                String[] tokens = csv.split(",");
-                int count = 0;
-                for (int t = 0; t < tokens.length; t++) {
-                    if (tokens[t].isEmpty()) continue;
-                    int tileId = Integer.parseInt(tokens[t]);
-                    if (tileId == 0) continue;
-
-                    int col = t % mapW;
-                    int row = t / mapW;
-                    // Bỏ qua tile dummy ở góc (0,0) và (mapW-1, mapH-1) dùng để fix buffer size
-                    if ((col == 0 && row == 0) || (col == mapW - 1 && row == mapH - 1)) continue;
-                    double x = col * tileW;
-                    double y = row * tileH;
-                    if (count < 5) {
-                        System.out.printf("Collision tile[%d] tileId=%d col=%d row=%d x=%.0f y=%.0f%n",
-                                count, tileId, col, row, x, y);
-                        count++;
-                    }
-                    FXGL.getGameWorld().spawn("Collisions",
-                            new SpawnData(x, y)
-                                    .put("width", tileW)
-                                    .put("height", tileH));
-                }
-            }
-        } catch (Exception e) {
-            System.err.println("setupTileCollisions error: " + e.getMessage());
-        }
-    }
-
-    private static Entity getPlayer() {
-        return FXGL.getGameWorld().getSingleton(EntityType.PLAYER);
     }
 
     public static void main(String[] args) {
