@@ -135,6 +135,16 @@ public class Factory implements EntityFactory {
                 .build();
     }
 
+    @Spawns("Field")
+    public Entity spawnField(SpawnData data) {
+        int width = data.hasKey("width") ? (int) data.get("width") : 32;
+        int height = data.hasKey("height") ? (int) data.get("height") : 32;
+        return FXGL.entityBuilder(data)
+                .type(EntityType.FIELD)
+                .bbox(new HitBox(BoundingShape.box(width, height)))
+                .build();
+    }
+
     @Spawns("Selector")
     public Entity spawnSelector(SpawnData data) {
         javafx.scene.shape.Rectangle rect = new javafx.scene.shape.Rectangle(32, 32);

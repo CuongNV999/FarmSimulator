@@ -1,0 +1,54 @@
+[33mcommit 6b300a6378862271c1eda9184e8383cd8cf76148[m[33m ([m[1;35mrefs/stash[m[33m)[m
+Merge: 3721267 bc12dc3 57f98de
+Author: CuongNV99 <vietcuong29052006@gmail.com>
+Date:   Mon Apr 6 18:47:39 2026 +0700
+
+    WIP on Test_Version: 3721267 Bổ sung main_level, tương tác, ...
+
+[33mcommit 57f98deb0049c23770a06064225f0c62a66241b7[m
+Author: CuongNV99 <vietcuong29052006@gmail.com>
+Date:   Mon Apr 6 18:47:39 2026 +0700
+
+    untracked files on Test_Version: 3721267 Bổ sung main_level, tương tác, ...
+
+[33mcommit 359d7fb91085a5253e2e174eab9b6e447c601046[m
+Merge: 6423a1a 8b2180f
+Author: CuongNV999 <vietcuong29052006@gmail.com>
+Date:   Tue Mar 31 17:35:10 2026 +0700
+
+    Merge pull request #2 from CuongNV999/Test_Version
+    
+    Thay đổi animation player và máu và thay đổi tầm nhìn
+
+[33mcommit 8b2180f6072752bc1776e996e9730d7389d46346[m
+Author: CuongNV99 <vietcuong29052006@gmail.com>
+Date:   Tue Mar 31 17:34:00 2026 +0700
+
+    Thay đổi animation player và máu và thay đổi tầm nhìn
+
+[33mcommit 6423a1adc24d8877fe40d5ff01c27f66f8e79047[m
+Merge: e16419f 97c5e68
+Author: CuongNV999 <vietcuong29052006@gmail.com>
+Date:   Thu Mar 26 18:42:09 2026 +0700
+
+    Merge pull request #1
+    
+    Chỉnh sửua thanh máu
+
+[33mcommit 97c5e68ab11499fc0aeeb9f819a7e9f28350f444[m
+Author: CuongNV99 <vietcuong29052006@gmail.com>
+Date:   Thu Mar 26 18:38:49 2026 +0700
+
+    Chỉnh sửa texutre ô trống và tương tác theo chuột
+
+[33mcommit b0a3fa879ea0804e91c03e3d3b3549281579f187[m
+Author: CuongNV99 <vietcuong29052006@gmail.com>
+Date:   Sat Mar 21 22:04:17 2026 +0700
+
+    Thêm thanh máu và thức ăn
+
+[33mcommit c2a4ac1275cac1636923776f0d956058858c74cf[m
+Author: CuongNV99 <vietcuong29052006@gmail.com>
+Date:   Sat Mar 21 11:00:04 2026 +0700
+
+    initial commit
