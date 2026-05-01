@@ -8,7 +8,7 @@ import com.almasb.fxgl.time.TimerAction;
 import javafx.geometry.Rectangle2D;
 import javafx.util.Duration;
 
-public class RiceComponent extends Component {
+public class WheatComponent extends Component {
     private int stage = 0; // 0-3, 4 giai đoạn
     private final int MAX_STAGE = 3;
     private TimerAction growTimer;
@@ -34,8 +34,6 @@ public class RiceComponent extends Component {
     private void updateView() {
         Texture frame = FXGL.texture(CROPS_FILE)
                 .subTexture(new Rectangle2D((COL_START + stage) * SPRITE_W, ROW_Y, SPRITE_W, SPRITE_H));
-        // Dịch sprite lên trên để phần gốc cây khớp với ô đất (entity position = góc trên trái)
-        frame.setTranslateY(-(SPRITE_H - TILE)); // dịch lên 32px (phần tràn ra trên)
         getEntity().getViewComponent().clearChildren();
         getEntity().getViewComponent().addChild(frame);
     }
