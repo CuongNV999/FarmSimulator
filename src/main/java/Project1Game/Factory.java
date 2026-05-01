@@ -85,9 +85,9 @@ public class Factory implements EntityFactory {
     public Entity spawnRice(SpawnData data) {
         return FXGL.entityBuilder(data)
                 .type(EntityType.RICE)
-                .viewWithBBox("Crops/rice_1.png") // Hình ảnh mầm lúa
+                .bbox(new HitBox(BoundingShape.box(32, 32)))
                 .zIndex(1)
-                .with(new RiceComponent()) // Component quản lý sự trưởng thành
+                .with(new RiceComponent())
                 .build();
     }
 
