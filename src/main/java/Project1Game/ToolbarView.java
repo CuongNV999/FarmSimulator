@@ -2,11 +2,11 @@ package Project1Game;
 
 import com.almasb.fxgl.dsl.FXGL;
 import com.almasb.fxgl.texture.Texture;
+
 import javafx.beans.binding.Bindings;
 import javafx.geometry.Pos;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
@@ -25,7 +25,7 @@ public class ToolbarView extends HBox {
         setSpacing(SLOT_GAP);
         setAlignment(Pos.CENTER);
 
-        ItemType[] slots = inventory.getSlots();
+        ItemType[] slots = inventory.getSlots(); // chỉ 9 slot hotbar
         for (int i = 0; i < slots.length; i++) {
             StackPane slotPane = createSlot(slots[i], i);
             slotPanes[i] = slotPane;
