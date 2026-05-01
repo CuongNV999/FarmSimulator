@@ -1,55 +1,43 @@
 package Project1Game;
-import javafx.geometry.Rectangle2D;
+
 import com.almasb.fxgl.dsl.FXGL;
-import com.almasb.fxgl.texture.Texture;
 import com.almasb.fxgl.entity.component.Component;
+import com.almasb.fxgl.texture.Texture;
 import com.almasb.fxgl.time.TimerAction;
+
+import javafx.geometry.Rectangle2D;
 import javafx.util.Duration;
-import java.awt.*;
 
 public class RiceComponent extends Component {
-    private int stage = 1;
-    private final int MAX_STAGE = 3; // Giả sử bạn có 3 file ảnh
+    private int stage = 0; // 0-3, 4 giai đoạn
+    private final int MAX_STAGE = 3;
     private TimerAction growTimer;
+
+    private static final String CROPS_FILE = "Crops/vectoraith_tileset_farmingsims_crops_dense_spring_32x32.png";
+    private static final int TILE = 32;
+    private static final int ROW_Y = 6 * TILE; // bắt đầu từ hàng 6 để lấy đủ 2 hàng cao
+    private static final int SPRITE_W = 32;
+    private static final int SPRITE_H = 64;    // sprite cao 2 tile
+    private static final int COL_START = 0;
 
     @Override
     public void onAdded() {
         updateView();
-        // Tự động đổi stage sau mỗi 10 giây
-        growTimer = FXGL.getGameTimer().runAtInterval(() -> {
-            grow();
-        }, Duration.seconds(10));
+        growTimer = FXGL.getGameTimer().runAtInterval(this::grow, Duration.seconds(10));
     }
 
     @Override
     public void onRemoved() {
-        if (growTimer != null) {
-            growTimer.expire();
-        }
+        if (growTimer != null) growTimer.expire();
     }
 
     private void updateView() {
-        // Tạo tên file dựa trên biến stage (ví dụ: rice_1.png, rice_2.png...)
-        String imageName = "Crops/rice_" + stage + ".png";
-
-        // Load ảnh trực tiếp từ thư mục textures
-        Texture texture = FXGL.texture(imageName);
-
-        // Phóng to rice lớn hơn ô soil để trông tự nhiên
-        double targetSize = 48.0;
-        double scale = targetSize / Math.max(texture.getWidth(), texture.getHeight());
-        texture.setFitWidth(texture.getWidth() * scale);
-        texture.setFitHeight(texture.getHeight() * scale);
-
-        // Căn giữa rice trong ô soil 32x32 (rice sẽ tràn ra ngoài ô)
-        double offsetX = (32 - texture.getFitWidth()) / 2;
-        double offsetY = (32 - texture.getFitHeight());
-        texture.setTranslateX(offsetX);
-        texture.setTranslateY(offsetY);
-
-        // Xóa hình cũ, thêm hình mới
+        Texture frame = FXGL.texture(CROPS_FILE)
+                .subTexture(new Rectangle2D((COL_START + stage) * SPRITE_W, ROW_Y, SPRITE_W, SPRITE_H));
+        // Dịch sprite lên trên để phần gốc cây khớp với ô đất (entity position = góc trên trái)
+        frame.setTranslateY(-(SPRITE_H - TILE)); // dịch lên 32px (phần tràn ra trên)
         getEntity().getViewComponent().clearChildren();
-        getEntity().getViewComponent().addChild(texture);
+        getEntity().getViewComponent().addChild(frame);
     }
 
     public void grow() {
