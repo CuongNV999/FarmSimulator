@@ -27,6 +27,13 @@ public class Factory implements EntityFactory {
         bd.setType(BodyType.DYNAMIC);
         physics.setBodyDef(bd);
         physics.setBodyType(BodyType.DYNAMIC);
+
+        // Bbox nhỏ hơn sprite, nằm ở phần chân - top-down collision chuẩn
+        int bboxW = 13;
+        int bboxH = 26;
+        int offsetX = 26;   // căn giữa theo chiều ngang
+        int offsetY = 23;         // nằm ở phần chân
+
         return FXGL.entityBuilder(data)
                 .bbox(new HitBox(new javafx.geometry.Point2D(26, 23), BoundingShape.box(13, 26)))
                 .type(EntityType.PLAYER)
@@ -190,6 +197,50 @@ public class Factory implements EntityFactory {
         return FXGL.entityBuilder(data)
                 .type(EntityType.FIELD)
                 .bbox(new HitBox(BoundingShape.box(width, height)))
+                .build();
+    }
+
+    @Spawns("Collisions")
+    public Entity spawnCollisions(SpawnData data) {
+        int width = data.hasKey("width") ? (int) data.get("width") : 32;
+        int height = data.hasKey("height") ? (int) data.get("height") : 32;
+        
+        PhysicsComponent physics = new PhysicsComponent();
+        physics.setBodyType(BodyType.STATIC);
+        
+        return FXGL.entityBuilder(data)
+                .type(EntityType.COLLISION)
+                .bbox(new HitBox(BoundingShape.box(width, height)))
+                .view(new javafx.scene.shape.Rectangle(width, height, Color.TRANSPARENT))
+                .with(physics)
+                .collidable()
+                .build();
+    }
+
+    @Spawns("Interaction")
+    public Entity spawnInteraction(SpawnData data) {
+        int width = data.hasKey("width") ? (int) data.get("width") : 32;
+        int height = data.hasKey("height") ? (int) data.get("height") : 32;
+
+        PhysicsComponent physics = new PhysicsComponent();
+        physics.setBodyType(BodyType.STATIC);
+
+        return FXGL.entityBuilder(data)
+                .type(EntityType.INTERACTION)
+                .bbox(new HitBox(BoundingShape.box(width, height)))
+                .with(physics)
+                .collidable()
+                .build();
+    }
+    @Spawns("Door")
+    public Entity spawnDoor(SpawnData data) {
+        int width = data.hasKey("width") ? (int) data.get("width") : 32;
+        int height = data.hasKey("height") ? (int) data.get("height") : 32;
+
+        return FXGL.entityBuilder(data)
+                .type(EntityType.INTERACTION)
+                .bbox(new HitBox(BoundingShape.box(width, height)))
+                .collidable()
                 .build();
     }
 
