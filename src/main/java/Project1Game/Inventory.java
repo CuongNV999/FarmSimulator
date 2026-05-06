@@ -32,6 +32,7 @@ public class Inventory {
         addItem(ItemType.RADISH_SEED, 10);
         addItem(ItemType.CABBAGE_SEED, 10);
         addItem(ItemType.LETTUCE_SEED, 10);
+        addItem(ItemType.TOMATO_SEED, 10);
         addItem(ItemType.CORN_SEED, 10);
         addItem(ItemType.WATERING_CAN, 1);
     }
