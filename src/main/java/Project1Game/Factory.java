@@ -18,8 +18,6 @@ public class Factory implements EntityFactory {
 
     @Spawns("Player")
     public Entity spawnPlayer(SpawnData data) {
-        int width = data.hasKey("width") ? (int) data.get("width") : 32;
-        int height = data.hasKey("height") ? (int) data.get("height") : 32;
         PhysicsComponent physics = new PhysicsComponent();
         physics.setFixtureDef(new FixtureDef().friction(0).density(0.1f));
         BodyDef bd = new BodyDef();
@@ -27,13 +25,6 @@ public class Factory implements EntityFactory {
         bd.setType(BodyType.DYNAMIC);
         physics.setBodyDef(bd);
         physics.setBodyType(BodyType.DYNAMIC);
-
-        // Bbox nhỏ hơn sprite, nằm ở phần chân - top-down collision chuẩn
-        int bboxW = 13;
-        int bboxH = 26;
-        int offsetX = 26;   // căn giữa theo chiều ngang
-        int offsetY = 23;         // nằm ở phần chân
-
         return FXGL.entityBuilder(data)
                 .bbox(new HitBox(new javafx.geometry.Point2D(26, 23), BoundingShape.box(13, 26)))
                 .type(EntityType.PLAYER)
@@ -79,67 +70,49 @@ public class Factory implements EntityFactory {
                 .build();
     }
 
-    // Wheat & Corn: sprite 32x64, cần dịch lên 32px để gốc khớp ô đất
+    // Wheat & Corn: sprite 32x64, offset -32 để gốc khớp ô đất
     @Spawns("Wheat")
     public Entity spawnWheat(SpawnData data) {
-        return FXGL.entityBuilder(data)
-                .type(EntityType.WHEAT)
-                .bbox(new HitBox(BoundingShape.box(32, 32)))
-                .zIndex(1)
-                .with(new CropComponent(0, 6 * 32, 64, -32))
-                .build();
+        return FXGL.entityBuilder(data).type(EntityType.WHEAT)
+                .bbox(new HitBox(BoundingShape.box(32, 32))).zIndex(1)
+                .with(new CropComponent(0, 6 * 32, 64, -32)).build();
     }
 
     @Spawns("Corn")
     public Entity spawnCorn(SpawnData data) {
-        return FXGL.entityBuilder(data)
-                .type(EntityType.CORN)
-                .bbox(new HitBox(BoundingShape.box(32, 32)))
-                .zIndex(1)
-                .with(new CropComponent(4, 6 * 32, 64, -32))
-                .build();
+        return FXGL.entityBuilder(data).type(EntityType.CORN)
+                .bbox(new HitBox(BoundingShape.box(32, 32))).zIndex(1)
+                .with(new CropComponent(4, 6 * 32, 64, -32)).build();
     }
 
-    // Radish/Cabbage/Lettuce/Tomato: sprite 32x96 (lấy thêm 1 tile phía trên)
-    // rowY bắt đầu từ hàng trước để lấy đủ phần đầu cây
+    // Radish/Cabbage/Lettuce/Tomato: sprite 32x96, offset -32
+    // rowY = (hàng thực - 1) * 32 để lấy thêm phần trên
     @Spawns("Radish")
     public Entity spawnRadish(SpawnData data) {
-        return FXGL.entityBuilder(data)
-                .type(EntityType.RADISH)
-                .bbox(new HitBox(BoundingShape.box(32, 32)))
-                .zIndex(1)
-                .with(new CropComponent(0, 0 * 32, 96, -32))
-                .build();
+        return FXGL.entityBuilder(data).type(EntityType.RADISH)
+                .bbox(new HitBox(BoundingShape.box(32, 32))).zIndex(1)
+                .with(new CropComponent(0, 0 * 32, 96, -32)).build();
     }
 
     @Spawns("Cabbage")
     public Entity spawnCabbage(SpawnData data) {
-        return FXGL.entityBuilder(data)
-                .type(EntityType.CABBAGE)
-                .bbox(new HitBox(BoundingShape.box(32, 32)))
-                .zIndex(1)
-                .with(new CropComponent(0, 2 * 32, 96, -32))
-                .build();
+        return FXGL.entityBuilder(data).type(EntityType.CABBAGE)
+                .bbox(new HitBox(BoundingShape.box(32, 32))).zIndex(1)
+                .with(new CropComponent(0, 2 * 32, 96, -32)).build();
     }
 
     @Spawns("Lettuce")
     public Entity spawnLettuce(SpawnData data) {
-        return FXGL.entityBuilder(data)
-                .type(EntityType.LETTUCE)
-                .bbox(new HitBox(BoundingShape.box(32, 32)))
-                .zIndex(1)
-                .with(new CropComponent(4, 2 * 32, 96, -32))
-                .build();
+        return FXGL.entityBuilder(data).type(EntityType.LETTUCE)
+                .bbox(new HitBox(BoundingShape.box(32, 32))).zIndex(1)
+                .with(new CropComponent(4, 2 * 32, 96, -32)).build();
     }
 
     @Spawns("Tomato")
     public Entity spawnTomato(SpawnData data) {
-        return FXGL.entityBuilder(data)
-                .type(EntityType.TOMATO)
-                .bbox(new HitBox(BoundingShape.box(32, 32)))
-                .zIndex(1)
-                .with(new CropComponent(0, 4 * 32, 96, -32))
-                .build();
+        return FXGL.entityBuilder(data).type(EntityType.TOMATO)
+                .bbox(new HitBox(BoundingShape.box(32, 32))).zIndex(1)
+                .with(new CropComponent(0, 4 * 32, 64, -32)).build();
     }
 
     @Spawns("Collisions")
@@ -157,12 +130,9 @@ public class Factory implements EntityFactory {
         }
         PhysicsComponent physics = new PhysicsComponent();
         physics.setBodyType(BodyType.STATIC);
-        return FXGL.entityBuilder(data)
-                .type(EntityType.COLLISION)
+        return FXGL.entityBuilder(data).type(EntityType.COLLISION)
                 .bbox(new HitBox(BoundingShape.box(bboxW, bboxH)))
-                .with(physics)
-                .collidable()
-                .build();
+                .with(physics).collidable().build();
     }
 
     @Spawns("Interaction")
@@ -171,77 +141,25 @@ public class Factory implements EntityFactory {
         int height = data.hasKey("height") ? (int) data.get("height") : 32;
         PhysicsComponent physics = new PhysicsComponent();
         physics.setBodyType(BodyType.STATIC);
-        return FXGL.entityBuilder(data)
-                .type(EntityType.INTERACTION)
+        return FXGL.entityBuilder(data).type(EntityType.INTERACTION)
                 .bbox(new HitBox(BoundingShape.box(width, height)))
-                .with(physics)
-                .collidable()
-                .build();
+                .with(physics).collidable().build();
     }
 
     @Spawns("Door")
     public Entity spawnDoor(SpawnData data) {
         int width = data.hasKey("width") ? (int) data.get("width") : 32;
         int height = data.hasKey("height") ? (int) data.get("height") : 32;
-        return FXGL.entityBuilder(data)
-                .type(EntityType.INTERACTION)
-                .bbox(new HitBox(BoundingShape.box(width, height)))
-                .collidable()
-                .build();
+        return FXGL.entityBuilder(data).type(EntityType.INTERACTION)
+                .bbox(new HitBox(BoundingShape.box(width, height))).collidable().build();
     }
 
     @Spawns("Field")
     public Entity spawnField(SpawnData data) {
         int width = data.hasKey("width") ? (int) data.get("width") : 32;
         int height = data.hasKey("height") ? (int) data.get("height") : 32;
-        return FXGL.entityBuilder(data)
-                .type(EntityType.FIELD)
-                .bbox(new HitBox(BoundingShape.box(width, height)))
-                .build();
-    }
-
-    @Spawns("Collisions")
-    public Entity spawnCollisions(SpawnData data) {
-        int width = data.hasKey("width") ? (int) data.get("width") : 32;
-        int height = data.hasKey("height") ? (int) data.get("height") : 32;
-        
-        PhysicsComponent physics = new PhysicsComponent();
-        physics.setBodyType(BodyType.STATIC);
-        
-        return FXGL.entityBuilder(data)
-                .type(EntityType.COLLISION)
-                .bbox(new HitBox(BoundingShape.box(width, height)))
-                .view(new javafx.scene.shape.Rectangle(width, height, Color.TRANSPARENT))
-                .with(physics)
-                .collidable()
-                .build();
-    }
-
-    @Spawns("Interaction")
-    public Entity spawnInteraction(SpawnData data) {
-        int width = data.hasKey("width") ? (int) data.get("width") : 32;
-        int height = data.hasKey("height") ? (int) data.get("height") : 32;
-
-        PhysicsComponent physics = new PhysicsComponent();
-        physics.setBodyType(BodyType.STATIC);
-
-        return FXGL.entityBuilder(data)
-                .type(EntityType.INTERACTION)
-                .bbox(new HitBox(BoundingShape.box(width, height)))
-                .with(physics)
-                .collidable()
-                .build();
-    }
-    @Spawns("Door")
-    public Entity spawnDoor(SpawnData data) {
-        int width = data.hasKey("width") ? (int) data.get("width") : 32;
-        int height = data.hasKey("height") ? (int) data.get("height") : 32;
-
-        return FXGL.entityBuilder(data)
-                .type(EntityType.INTERACTION)
-                .bbox(new HitBox(BoundingShape.box(width, height)))
-                .collidable()
-                .build();
+        return FXGL.entityBuilder(data).type(EntityType.FIELD)
+                .bbox(new HitBox(BoundingShape.box(width, height))).build();
     }
 
     @Spawns("Selector")
@@ -250,10 +168,6 @@ public class Factory implements EntityFactory {
         rect.setFill(Color.color(1, 1, 1, 0.2));
         rect.setStroke(Color.WHITE);
         rect.setStrokeWidth(2);
-        return FXGL.entityBuilder(data)
-                .type(EntityType.SELECTOR)
-                .view(rect)
-                .zIndex(10)
-                .build();
+        return FXGL.entityBuilder(data).type(EntityType.SELECTOR).view(rect).zIndex(10).build();
     }
 }
