@@ -23,6 +23,10 @@ def fix_objectgroup(content, group_name, type_name):
 original = content
 content = fix_objectgroup(content, 'Collisions', 'Collisions')
 content = fix_objectgroup(content, 'Interaction', 'Interaction')
+content = fix_objectgroup(content, 'Guider', 'Guider')
+content = fix_objectgroup(content, 'Trader', 'Trader')
+content = fix_objectgroup(content, 'NPC', 'NPC')
+content = fix_objectgroup(content, 'Field', 'Field')
 
 fixed = content.count('type="Collisions"') + content.count('type="Interaction"')
 original_count = original.count('type="Collisions"') + original.count('type="Interaction"')

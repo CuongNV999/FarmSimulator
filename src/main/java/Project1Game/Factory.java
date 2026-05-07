@@ -143,7 +143,7 @@ public class Factory implements EntityFactory {
         physics.setBodyType(BodyType.STATIC);
         return FXGL.entityBuilder(data).type(EntityType.INTERACTION)
                 .bbox(new HitBox(BoundingShape.box(width, height)))
-                .with(physics).collidable().build();
+                .with(physics).build();
     }
 
     @Spawns("Door")
@@ -160,6 +160,37 @@ public class Factory implements EntityFactory {
         int height = data.hasKey("height") ? (int) data.get("height") : 32;
         return FXGL.entityBuilder(data).type(EntityType.FIELD)
                 .bbox(new HitBox(BoundingShape.box(width, height))).build();
+    }
+
+    @Spawns("NPC")
+    public Entity spawnNPC(SpawnData data) {
+        int width = data.hasKey("width") ? (int) data.get("width") : 32;
+        int height = data.hasKey("height") ? (int) data.get("height") : 32;
+        return FXGL.entityBuilder(data).type(EntityType.NPC)
+                .bbox(new HitBox(BoundingShape.box(width, height)))
+                .build();
+    }
+
+    @Spawns("Guider")
+    public Entity spawnGuider(SpawnData data) {
+        int width = data.hasKey("width") ? (int) data.get("width") : 32;
+        int height = data.hasKey("height") ? (int) data.get("height") : 32;
+        PhysicsComponent physics = new PhysicsComponent();
+        physics.setBodyType(BodyType.STATIC);
+        return FXGL.entityBuilder(data).type(EntityType.GUIDER)
+                .bbox(new HitBox(BoundingShape.box(width, height)))
+                .with(physics).collidable().build();
+    }
+
+    @Spawns("Trader")
+    public Entity spawnTrader(SpawnData data) {
+        int width = data.hasKey("width") ? (int) data.get("width") : 32;
+        int height = data.hasKey("height") ? (int) data.get("height") : 32;
+        PhysicsComponent physics = new PhysicsComponent();
+        physics.setBodyType(BodyType.STATIC);
+        return FXGL.entityBuilder(data).type(EntityType.TRADER)
+                .bbox(new HitBox(BoundingShape.box(width, height)))
+                .with(physics).collidable().build();
     }
 
     @Spawns("Selector")

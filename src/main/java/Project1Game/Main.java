@@ -18,9 +18,12 @@ public class Main extends GameApplication {
     private Entity player;
     private Entity selector;
     private Entity nearbyInteraction = null;
+    private String nearbyNPCName = null;
+    private String[] nearbyNPCLines = null;
     private Inventory inventory;
     private ToolbarView toolbarView;
     private InventoryView inventoryView;
+    private DialogView dialogView;
     private StatusBarsView statusBarsView;
 
     @Override
@@ -49,13 +52,38 @@ public class Main extends GameApplication {
         FXGL.getPhysicsWorld().addCollisionHandler(new CollisionHandler(EntityType.PLAYER, EntityType.INTERACTION) {
             @Override
             protected void onCollisionBegin(Entity player, Entity interaction) {
-                // Lưu entity interaction gần nhất để dùng khi nhấn phím
                 nearbyInteraction = interaction;
                 System.out.println("Gần vùng tương tác!");
             }
             @Override
             protected void onCollisionEnd(Entity player, Entity interaction) {
                 nearbyInteraction = null;
+            }
+        });
+        FXGL.getPhysicsWorld().addCollisionHandler(new CollisionHandler(EntityType.PLAYER, EntityType.GUIDER) {
+            @Override
+            protected void onCollisionBegin(Entity player, Entity guider) {
+                nearbyNPCName = "Guider";
+                nearbyNPCLines = DialogData.getLines("Guider");
+            }
+            @Override
+            protected void onCollisionEnd(Entity player, Entity guider) {
+                nearbyNPCName = null;
+                nearbyNPCLines = null;
+                if (dialogView != null) dialogView.hide();
+            }
+        });
+        FXGL.getPhysicsWorld().addCollisionHandler(new CollisionHandler(EntityType.PLAYER, EntityType.TRADER) {
+            @Override
+            protected void onCollisionBegin(Entity player, Entity trader) {
+                nearbyNPCName = "Trader";
+                nearbyNPCLines = DialogData.getLines("Trader");
+            }
+            @Override
+            protected void onCollisionEnd(Entity player, Entity trader) {
+                nearbyNPCName = null;
+                nearbyNPCLines = null;
+                if (dialogView != null) dialogView.hide();
             }
         });
     }
@@ -157,6 +185,10 @@ public class Main extends GameApplication {
         inventoryView.setLayoutY((FXGL.getAppHeight() - Inventory.ROWS * (64 + 4) - 50) / 2.0);
         FXGL.getGameScene().addUINode(inventoryView);
 
+        // Dialog NPC
+        dialogView = new DialogView(FXGL.getAppWidth(), FXGL.getAppHeight());
+        FXGL.getGameScene().addUINode(dialogView);
+
         // Thanh máu và thanh thức ăn ở góc trên bên trái
         statusBarsView = new StatusBarsView();
         statusBarsView.setLayoutX(16);
@@ -221,11 +253,13 @@ public class Main extends GameApplication {
             return null;
         });
 
-        // Phím R - Tương tác với vùng gần (cửa, NPC, v.v.)
+        // Phím R - Tương tác NPC hoặc vùng interaction
         onKeyDown(KeyCode.R, () -> {
-            if (nearbyInteraction != null) {
+            if (nearbyNPCName != null && nearbyNPCLines != null) {
+                dialogView.setDialog(nearbyNPCName, nearbyNPCLines);
+                dialogView.toggle();
+            } else if (nearbyInteraction != null) {
                 System.out.println("Tương tác tại: " + nearbyInteraction.getX() + ", " + nearbyInteraction.getY());
-                // TODO: xử lý logic tương tác cụ thể (mở cửa, nói chuyện, v.v.)
             }
             return null;
         });
