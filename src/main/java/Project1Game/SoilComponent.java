@@ -1,46 +1,38 @@
 package Project1Game;
 
 import com.almasb.fxgl.dsl.FXGL;
-import com.almasb.fxgl.entity.Entity;
 import com.almasb.fxgl.entity.component.Component;
 import com.almasb.fxgl.texture.Texture;
-import javafx.geometry.Rectangle2D;
-
-import java.util.List;
+import javafx.scene.effect.ColorAdjust;
 
 public class SoilComponent extends Component {
     private boolean hasPlant = false;
+    private boolean isWet = false; // Trạng thái đất ướt
 
-    public boolean canPlant() {
-        return !hasPlant;
-    }
+    public boolean canPlant() { return !hasPlant; }
+    public void setHasPlant(boolean hasPlant) { this.hasPlant = hasPlant; }
+    public boolean isHasPlant() { return hasPlant; }
+    public boolean isWet() { return isWet; }
 
-    public void setHasPlant(boolean hasPlant) {
-        this.hasPlant = hasPlant;
-    }
-
-    @Override
-    public void onAdded() {
-        // Không gọi updateTexture() ở đây vì entity có thể chưa có position chính xác
-        // updateTexture() sẽ được gọi từ Main.initGame() sau khi tất cả entity đã được tạo
+    public void setWet(boolean wet) {
+        this.isWet = wet;
+        updateTexture(); // Cập nhật lại hình ảnh ngay khi tưới
     }
 
     public void updateTexture() {
         int tileSize = 32;
-
-        // Dùng Math.round để tránh lỗi làm tròn floating point
         int gridX = (int) Math.round(entity.getX() / tileSize);
-        int gridY = (int) Math.round(entity.getY() / tileSize);
 
-        // Xen kẽ soil_1 và soil_2 kiểu bàn cờ
-        String textureName;
-        if (gridX % 2 == 0) {
-            textureName = "Crops/soil_1.png";
-        } else {
-            textureName = "Crops/soil_2.png";
-        }
-
+        String textureName = (gridX % 2 == 0) ? "Crops/soil_1.png" : "Crops/soil_2.png";
         Texture texture = FXGL.texture(textureName);
+
+        // Nếu đất ướt, ta dùng ColorAdjust để làm ảnh tối và xanh hơn một chút (giả lập đất ướt)
+        if (isWet) {
+            ColorAdjust darken = new ColorAdjust();
+            darken.setBrightness(-0.4); // Giảm độ sáng
+            darken.setContrast(0.2);    // Tăng tương phản
+            texture.setEffect(darken);
+        }
 
         entity.getViewComponent().clearChildren();
         entity.getViewComponent().addChild(texture);
