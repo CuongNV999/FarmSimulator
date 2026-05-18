@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.12.0" orientation="orthogonal" renderorder="right-down" width="110" height="64" tilewidth="32" tileheight="32" infinite="0" nextlayerid="32" nextobjectid="7246">
+<map version="1.10" tiledversion="1.12.0" orientation="orthogonal" renderorder="right-down" width="110" height="64" tilewidth="32" tileheight="32" infinite="0" nextlayerid="33" nextobjectid="7247">
  <tileset firstgid="1" name="terrain" tilewidth="32" tileheight="32" tilecount="483" columns="21">
   <image source="../textures/Tilesets/terrain.png" width="672" height="736"/>
   <wangsets>
@@ -833,7 +833,6 @@
   <object id="7210" type="Collisions" x="2528" y="1774" width="8" height="5"/>
   <object id="7218" type="Collisions" x="443" y="1186" width="35" height="862"/>
   <object id="7219" type="Collisions" x="445" y="289" width="35" height="670"/>
-  <object id="7220" type="Collisions" x="3107" y="289" width="30" height="2627" rotation="90"/>
   <object id="7221" type="Collisions" x="3072" y="1249" width="35" height="798"/>
   <object id="7222" type="Collisions" x="3071" y="319" width="35" height="768"/>
   <object id="7223" type="Collisions" x="2751" y="1055" width="320" height="34"/>
@@ -850,6 +849,7 @@
   <object id="7240" type="Collisions" x="1025" y="1376" width="385" height="64"/>
   <object id="7241" type="Collisions" x="959" y="1441" width="32" height="95"/>
   <object id="7242" type="Collisions" x="1185" y="1515" width="62" height="52"/>
+  <object id="7246" type="Collisions" x="481" y="290" width="2625" height="34"/>
  </objectgroup>
  <group id="29" name="Interaction">
   <objectgroup id="30" name="Trader">
