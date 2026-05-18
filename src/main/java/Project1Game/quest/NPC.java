@@ -145,15 +145,23 @@ public class NPC {
 
     /** Tất cả quest đang IN_PROGRESS. */
     public List<Quest> getActiveQuests() {
-        return quests.stream()
-                .filter(q -> q.getStatus() == QuestStatus.IN_PROGRESS)
-                .toList();
+        List<Quest> list = new ArrayList<>();
+        for (Quest q : quests) {
+            if (q.getStatus() == QuestStatus.IN_PROGRESS) {
+                list.add(q);
+            }
+        }
+        return list;
     }
 
     /** Tất cả quest đã REWARDED. */
     public List<Quest> getCompletedQuests() {
-        return quests.stream()
-                .filter(q -> q.getStatus() == QuestStatus.REWARDED)
-                .toList();
+        List<Quest> list = new ArrayList<>();
+        for (Quest q : quests) {
+            if (q.getStatus() == QuestStatus.REWARDED) {
+                list.add(q);
+            }
+        }
+        return list;
     }
 }
