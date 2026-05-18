@@ -11,7 +11,7 @@ public class SoilComponent extends Component {
 
     public boolean canPlant() { return !hasPlant; }
     public void setHasPlant(boolean hasPlant) { this.hasPlant = hasPlant; }
-
+    public boolean isHasPlant() { return hasPlant; }
     public boolean isWet() { return isWet; }
 
     public void setWet(boolean wet) {
