@@ -45,6 +45,13 @@ public class CropComponent extends Component {
     }
 
     public void grow() {
+        // 1. Kiểm tra xem có phải ban ngày không trước khi xử lý logic lớn
+        if (!Main.isDayTime()) {
+            // System.out.println("Trời tối, cây ngừng phát triển...");
+            return;
+        }
+
+        // 2. Logic lớn lên cũ của bạn (Chỉ chạy khi trời sáng)
         if (stage < MAX_STAGE) {
             // Tìm thực thể SOIL tại cùng vị trí với cây
             FXGL.getGameWorld().getEntitiesByType(EntityType.SOIL).stream()
@@ -52,14 +59,14 @@ public class CropComponent extends Component {
                     .findFirst()
                     .ifPresent(soil -> {
                         SoilComponent sc = soil.getComponent(SoilComponent.class);
-                        
+
                         // Chỉ lớn lên nếu đất ĐANG ƯỚT
                         if (sc.isWet()) {
                             stage++;
                             updateView();
-                            
+
                             // Sau khi cây hút nước để lớn, đất sẽ KHÔ đi
-                            sc.setWet(false); 
+                            sc.setWet(false);
                             System.out.println(data.type + " đã lớn thêm 1 bậc nhờ có nước!");
                         } else {
                             System.out.println(data.type + " không thể lớn vì đất khô!");
@@ -67,7 +74,11 @@ public class CropComponent extends Component {
                     });
         }
     }
-
+    public int getStage() { return stage; }
+    public void setStage(int stage) {
+        this.stage = stage;
+        updateView();
+    }
     public boolean isRipe() {
         return stage == MAX_STAGE;
     }
