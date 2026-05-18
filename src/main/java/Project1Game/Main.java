@@ -29,6 +29,7 @@ public class Main extends GameApplication {
     private ToolbarView toolbarView;
     private InventoryView inventoryView;
     private StatusBarsView statusBarsView;
+<<<<<<< Updated upstream
 
     // Logic thời gian
     private double gameTime = 360; // Bắt đầu tại 360 phút (tức là 6h sáng)
@@ -38,6 +39,9 @@ public class Main extends GameApplication {
 
     private Text clockText; // Hiển thị giờ
 
+=======
+    private MinimapView minimap;
+>>>>>>> Stashed changes
     @Override
     protected void initSettings(GameSettings gameSettings) {
         gameSettings.setWidth(1280);
@@ -96,10 +100,17 @@ public class Main extends GameApplication {
 
     @Override
     protected void onUpdate(double tpf) {
+<<<<<<< Updated upstream
         // 1. Luôn cập nhật thời gian hệ thống đầu tiên, không phụ thuộc vào Player
         updateTime(tpf);
 
         // 2. Các logic tương tác liên quan đến Player và Selector
+=======
+
+        if (minimap != null) {
+            minimap.update();
+        }
+>>>>>>> Stashed changes
         if (selector != null && player != null) {
             // Lấy vị trí chuột trong thế giới game
             double mouseX = FXGL.getInput().getMouseXWorld();
@@ -198,6 +209,7 @@ public class Main extends GameApplication {
         statusBarsView.setLayoutY(16);
         FXGL.getGameScene().addUINode(statusBarsView);
 
+<<<<<<< Updated upstream
         // Tạo lớp phủ Ngày/Đêm
         nightOverlay = new Rectangle(FXGL.getAppWidth(), FXGL.getAppHeight(), Color.BLACK);
         nightOverlay.setMouseTransparent(true); // Quan trọng: Để không cản trở click chuột
@@ -225,6 +237,14 @@ public class Main extends GameApplication {
     public static boolean isDayTime() {
         // Trả về true nếu trong khoảng 5h sáng đến 22h tối
         return hour >= 5 && hour < 22;
+=======
+        minimap = new MinimapView();
+        // Đặt vị trí: Chiều rộng App - Chiều rộng Minimap - Khoảng cách lề (20)
+        minimap.setLayoutX(FXGL.getAppWidth() - 150 - 20);
+        minimap.setLayoutY(20);
+
+        FXGL.getGameScene().addUINode(minimap);
+>>>>>>> Stashed changes
     }
 
     @Override
