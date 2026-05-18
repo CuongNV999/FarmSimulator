@@ -25,18 +25,23 @@ public class Main extends GameApplication {
     private Entity player;
     private Entity selector;
     private Entity nearbyInteraction = null;
+    private String nearbyNPCName = null;
+    private String[] nearbyNPCLines = null;
     private Inventory inventory;
     private ToolbarView toolbarView;
     private InventoryView inventoryView;
+    private DialogView dialogView;
     private StatusBarsView statusBarsView;
 
-    // Logic thời gian
+    // Logic hệ thống thời gian
     private double gameTime = 360; // Bắt đầu tại 360 phút (tức là 6h sáng)
     private static int hour = 6;
     private int minute = 0;
-    private Rectangle nightOverlay; // Lớp phủ bóng tối
 
-    private Text clockText; // Hiển thị giờ
+    // Giao diện Ngày/Đêm và Bản đồ
+    private Rectangle nightOverlay; // Lớp phủ bóng tối ban đêm
+    private Text clockText;         // Chữ hiển thị đồng hồ
+    private MinimapView minimap;    // Bản đồ thu nhỏ
 
     @Override
     protected void initSettings(GameSettings gameSettings) {
@@ -71,6 +76,32 @@ public class Main extends GameApplication {
                 nearbyInteraction = null;
             }
         });
+        FXGL.getPhysicsWorld().addCollisionHandler(new CollisionHandler(EntityType.PLAYER, EntityType.GUIDER) {
+            @Override
+            protected void onCollisionBegin(Entity player, Entity guider) {
+                nearbyNPCName = "Guider";
+                nearbyNPCLines = DialogData.getLines("Guider");
+            }
+            @Override
+            protected void onCollisionEnd(Entity player, Entity guider) {
+                nearbyNPCName = null;
+                nearbyNPCLines = null;
+                if (dialogView != null) dialogView.hide();
+            }
+        });
+        FXGL.getPhysicsWorld().addCollisionHandler(new CollisionHandler(EntityType.PLAYER, EntityType.TRADER) {
+            @Override
+            protected void onCollisionBegin(Entity player, Entity trader) {
+                nearbyNPCName = "Trader";
+                nearbyNPCLines = DialogData.getLines("Trader");
+            }
+            @Override
+            protected void onCollisionEnd(Entity player, Entity trader) {
+                nearbyNPCName = null;
+                nearbyNPCLines = null;
+                if (dialogView != null) dialogView.hide();
+            }
+        });
     }
 
     @Override
@@ -83,12 +114,12 @@ public class Main extends GameApplication {
         player = getGameWorld().getSingleton(EntityType.PLAYER);
         selector = FXGL.spawn("Selector");
 
-        // Cấu hình Camera
+        // Cấu hình Camera bám theo Player
         FXGL.getGameScene().getViewport().bindToEntity(player, FXGL.getAppWidth() / 2.0, FXGL.getAppHeight() / 2.0);
         FXGL.getGameScene().getViewport().setBounds(0, 0, 3840, 2176); // Kích thước map thực tế
         FXGL.getGameScene().getViewport().setLazy(true);
 
-        // Khởi tạo texture cho tất cả ô đất có sẵn trên bản đồ
+        // Khởi tạo trạng thái hình ảnh cho tất cả ô đất có sẵn trên bản đồ
         getGameWorld().getEntitiesByType(EntityType.SOIL).forEach(soil -> {
             soil.getComponent(SoilComponent.class).updateTexture();
         });
@@ -96,81 +127,82 @@ public class Main extends GameApplication {
 
     @Override
     protected void onUpdate(double tpf) {
-        // 1. Luôn cập nhật thời gian hệ thống đầu tiên, không phụ thuộc vào Player
+        // 1. Luôn cập nhật thời gian hệ thống đầu tiên, không phụ thuộc vào trạng thái Player
         updateTime(tpf);
 
-        // 2. Các logic tương tác liên quan đến Player và Selector
+        // 2. Cập nhật hệ thống quét vị trí của Minimap độc lập
+        if (minimap != null) {
+            minimap.update();
+        }
+
+        // 3. Logic tương tác di chuyển liên quan trực tiếp đến Player và chuột Selector
         if (selector != null && player != null) {
             // Lấy vị trí chuột trong thế giới game
             double mouseX = FXGL.getInput().getMouseXWorld();
             double mouseY = FXGL.getInput().getMouseYWorld();
 
-            // Làm tròn về lưới 32x32
+            // Làm tròn tọa độ chuột về lưới ô vuông kích thước 32x32
             double x = Math.floor(mouseX / 32) * 32;
             double y = Math.floor(mouseY / 32) * 32;
             selector.setPosition(x, y);
 
-            // Cập nhật Animation Player
+            // Cập nhật hoạt ảnh di chuyển Animation Player thông qua vận tốc vật lý
             PhysicsComponent physics = player.getComponent(PhysicsComponent.class);
             player.getComponent(PlayerComponent.class).move(new Point2D(physics.getVelocityX(), physics.getVelocityY()));
 
-            // Kiểm tra bán kính tương tác (tâm player tới tâm selector)
+            // Kiểm tra bán kính khoảng cách tương tác an toàn giữa Player và ô Selector
             double distance = player.getCenter().distance(x + 16, y + 16);
             if (distance <= 96) {
                 selector.getViewComponent().setOpacity(1.0);
             } else {
-                selector.getViewComponent().setOpacity(0.3);
+                selector.getViewComponent().setOpacity(0.3); // Hiện mờ để người chơi biết ô chuột đang ở đâu
             }
         }
     }
 
     private void updateTime(double tpf) {
-        // 1. Tính toán thời gian nền tảng
-        // 1 giây đời thực = 10 phút game -> tpf * 10
+        // Tính toán chu kỳ thời gian nền tảng
+        // Tốc độ: 1 giây đời thực = 100 phút trong game (Đang tăng tốc để test nhanh hệ thống ngày đêm)
         gameTime += tpf * 100;
-        if (gameTime >= 1440) gameTime = 0; // Reset sau 24h (1440 phút)
+        if (gameTime >= 1440) gameTime = 0; // Reset bộ đếm phút sau chu kỳ 24h (1440 phút)
 
         hour = (int) (gameTime / 60);
         minute = (int) (gameTime % 60);
 
-        // ================= ĐOẠN CODE CẬP NHẬT ĐỒNG HỒ MỚI THÊM VÀO =================
-        // Thêm nhãn AM/PM cho "sang chảnh"
+        // ================= XỬ LÝ CHỮ ĐỒNG HỒ GIAO DIỆN =================
         String ampm = (hour >= 12) ? "PM" : "AM";
         int displayHour = (hour > 12) ? hour - 12 : (hour == 0 ? 12 : hour);
 
-        // Cập nhật text và màu sắc hiển thị lên màn hình
         if (clockText != null) {
             clockText.setText(String.format("%02d:%02d %s", displayHour, minute, ampm));
 
-            // Đã thêm logic đổi màu chữ tại đây
+            // Đổi tông màu chữ để hiển thị tốt nhất trên nền game
             if (hour >= 18 || hour < 6) {
-                clockText.setFill(Color.CYAN); // Màu xanh dịu ban đêm (từ 18h tối đến trước 6h sáng)
+                clockText.setFill(Color.CYAN); // Màu xanh lơ Neon sáng rõ vào ban đêm
             } else {
-                clockText.setFill(Color.GOLD);      // Màu vàng nắng ban ngày (từ 6h sáng đến trước 18h tối)
+                clockText.setFill(Color.GOLD);  // Màu vàng nắng rực rỡ vào ban ngày
             }
         }
-        // ===========================================================================
 
-        // 2. Tính toán độ mờ (Opacity) của nightOverlay (Giữ nguyên logic cũ của bạn)
+        // ================= TÍNH TOÁN HIỆU ỨNG ÁNH SÁNG (OPACITY) =================
         double opacity = 0.0;
 
         if (hour >= 18 && hour < 22) {
-            // Chiều tà (18h - 22h): Tối dần từ 0.0 -> 0.7
+            // Chiều tà (18h - 22h): Hoàng hôn đổ xuống, tối dần từ 0.0 đến 0.7
             double t = (gameTime - 18 * 60) / (4 * 60);
             opacity = t * 0.7;
         } else if (hour >= 22 || hour < 5) {
-            // Đêm khuya (22h - 5h sáng): Tối nhất (0.7)
+            // Đêm khuya (22h - 5h sáng): Đạt mức tối đa để giữ độ nhìn cho người chơi (0.7)
             opacity = 0.7;
         } else if (hour >= 5 && hour < 6) {
-            // Bình minh (5h - 6h): Sáng dần từ 0.7 -> 0.0
+            // Bình minh (5h - 6h): Mặt trời lên, sáng dần từ 0.7 trở về 0.0
             double t = (gameTime - 5 * 60) / (1 * 60);
             opacity = 0.7 * (1 - t);
         } else {
-            // Ban ngày (6h - 18h): Sáng hoàn toàn
+            // Ban ngày (6h - 18h): Sáng sủa hoàn toàn
             opacity = 0.0;
         }
 
-        // Đảm bảo nightOverlay đã được khởi tạo trong initUI() trước khi gọi để tránh NullPointerException
         if (nightOverlay != null) {
             nightOverlay.setOpacity(opacity);
         }
@@ -178,7 +210,7 @@ public class Main extends GameApplication {
 
     @Override
     protected void initUI() {
-        // Toolbar ở dưới cùng
+        // 1. Khởi tạo Toolbar nằm ở chính giữa phía dưới màn hình
         toolbarView = new ToolbarView(inventory);
         double slotSize = 80, slotGap = 6;
         double toolbarWidth = 9 * (slotSize + slotGap) - slotGap;
@@ -186,44 +218,49 @@ public class Main extends GameApplication {
         toolbarView.setLayoutY(FXGL.getAppHeight() - slotSize - 20);
         FXGL.getGameScene().addUINode(toolbarView);
 
-        // Inventory chính (ẩn mặc định)
+        // 2. Khởi tạo Inventory chính hiển thị ở giữa màn hình (ẩn mặc định)
         inventoryView = new InventoryView(inventory);
         inventoryView.setLayoutX((FXGL.getAppWidth() - Inventory.COLS * (64 + 4) - 20) / 2.0);
         inventoryView.setLayoutY((FXGL.getAppHeight() - Inventory.ROWS * (64 + 4) - 50) / 2.0);
         FXGL.getGameScene().addUINode(inventoryView);
 
-        // Thanh trạng thái
+        // Dialog NPC
+        dialogView = new DialogView(FXGL.getAppWidth(), FXGL.getAppHeight());
+        FXGL.getGameScene().addUINode(dialogView);
+
+        // Thanh máu và thanh thức ăn ở góc trên bên trái
+        // 3. Thanh trạng thái Máu và Thức ăn góc trên bên trái
         statusBarsView = new StatusBarsView();
         statusBarsView.setLayoutX(16);
         statusBarsView.setLayoutY(16);
         FXGL.getGameScene().addUINode(statusBarsView);
 
-        // Tạo lớp phủ Ngày/Đêm
+        // 4. Tạo lớp phủ bóng tối Ngày/Đêm (Đặt trước Đồng hồ và Minimap)
         nightOverlay = new Rectangle(FXGL.getAppWidth(), FXGL.getAppHeight(), Color.BLACK);
-        nightOverlay.setMouseTransparent(true); // Quan trọng: Để không cản trở click chuột
-        nightOverlay.setOpacity(0.0); // Mặc định là sáng (0% đen)
+        nightOverlay.setMouseTransparent(true); // Để không chặn tương tác nhấn chuột vào thế giới game
+        nightOverlay.setOpacity(0.0);
+        FXGL.getGameScene().addUINode(nightOverlay);
 
-        // Khởi tạo đồng hồ
+        // 5. Khởi tạo và thiết kế Đồng hồ chữ nổi (Đặt sau lớp phủ để luôn sáng rõ)
         clockText = new Text();
         clockText.setFont(Font.font("Arial", FontWeight.BOLD, 24));
         clockText.setFill(Color.GOLD);
-
-        // Đặt vị trí góc trên bên phải (cách lề 20px)
-        clockText.setTranslateX(FXGL.getAppWidth() - 150);
+        clockText.setTranslateX(FXGL.getAppWidth() - 160); // Vị trí góc trên bên phải
         clockText.setTranslateY(40);
-
-        // Thêm hiệu ứng bóng đổ cho chữ dễ nhìn hơn
-        clockText.setStroke(Color.BLACK);
+        clockText.setStroke(Color.BLACK); // Đổ viền đen mỏng bao quanh chữ
         clockText.setStrokeWidth(0.5);
-
-
-        // Thêm vào scene sau các UI khác để phủ toàn bộ màn hình
-        FXGL.getGameScene().addUINode(nightOverlay);
         FXGL.getGameScene().addUINode(clockText);
+
+        // 6. Khởi tạo hệ thống Bản đồ thu nhỏ Minimap nằm trên lớp bóng tối
+        minimap = new MinimapView();
+        minimap.setLayoutX(FXGL.getAppWidth() - 150 - 20); // Căn lề phải
+        minimap.setLayoutY(60); // Đặt phía dưới thanh hiển thị số đồng hồ một chút
+        FXGL.getGameScene().addUINode(minimap);
     }
 
+    // Hàm tĩnh bổ trợ giúp kiểm tra trạng thái ngày/đêm từ các class khác (như CropComponent)
     public static boolean isDayTime() {
-        // Trả về true nếu trong khoảng 5h sáng đến 22h tối
+        // Quy ước ban ngày cây trồng phát triển là từ 5h sáng đến trước 22h đêm
         return hour >= 5 && hour < 22;
     }
 
@@ -231,7 +268,7 @@ public class Main extends GameApplication {
     protected void initInput() {
         Input input = FXGL.getInput();
 
-        // Di chuyển WASD
+        // Hệ thống phím điều khiển di chuyển nhân vật WASD
         input.addAction(new UserAction("Move Right") {
             @Override protected void onAction() { player.getComponent(PhysicsComponent.class).setVelocityX(200); }
             @Override protected void onActionEnd() { player.getComponent(PhysicsComponent.class).setVelocityX(0); }
@@ -252,59 +289,93 @@ public class Main extends GameApplication {
             @Override protected void onActionEnd() { player.getComponent(PhysicsComponent.class).setVelocityY(0); }
         }, KeyCode.S);
 
-        // Sử dụng công cụ (Chuột trái hoặc phím F)
+        // Các phím tương tác chức năng công cụ làm nông
         input.addAction(new UserAction("Use Tool") {
-            @Override
-            protected void onActionBegin() { handleUseItem(); }
+            @Override protected void onActionBegin() { handleUseItem(); }
         }, MouseButton.PRIMARY);
 
-        onKeyDown(KeyCode.F, () -> { handleUseItem(); return null; });
+        input.addAction(new UserAction("Interact NPC") {
+        @Override
+        protected void onActionBegin() {
+            if (nearbyNPCName != null && nearbyNPCLines != null) {
+                dialogView.setDialog(nearbyNPCName, nearbyNPCLines);
+                dialogView.toggle();
+            } else if (nearbyInteraction != null) {
+                System.out.println("Tương tác tại: " + nearbyInteraction.getX() + ", " + nearbyInteraction.getY());
+            }
+        }
+    }, KeyCode.R);
 
-        // Thu hoạch (Phím E)
-        onKeyDown(KeyCode.E, () -> { handleHarvest(); return null; });
-        onKeyDown(KeyCode.G, () -> {
-            // Kiểm tra xem trong túi đồ có bình tưới không (số lượng > 0)
+    // Phím F - Sử dụng vật phẩm
+    input.addAction(new UserAction("Use Selected Item") {
+        @Override
+        protected void onActionBegin() { handleUseItem(); }
+    }, KeyCode.F);
+
+    // Phím E - Thu hoạch
+    input.addAction(new UserAction("Harvest") {
+        @Override
+        protected void onActionBegin() { handleHarvest(); }
+    }, KeyCode.E);
+
+    // Phím G - Tưới nước nhanh
+    input.addAction(new UserAction("Quick Water") {
+        @Override
+        protected void onActionBegin() {
             if (inventory.getCount(ItemType.WATERING_CAN) > 0) {
                 useWateringCan();
             } else {
                 System.out.println("Bạn chưa có bình tưới trong túi đồ!");
             }
-            return null;
-        });
-        // Mở kho đồ (Phím I hoặc Tab)
-        onKeyDown(KeyCode.I, () -> { inventoryView.toggle(); return null; });
-        onKeyDown(KeyCode.TAB, () -> { inventoryView.toggle(); return null; });
-
-        onKeyDown(KeyCode.O, () -> {
-            saveGame();
-            return null;
-        });
-
-        onKeyDown(KeyCode.P, () -> {
-            loadGame();
-            return null;
-        });
-        // Đăng ký phím số 1-9 một cách an toàn (tránh NullPointerException)
-        KeyCode[] digitKeys = {
-                KeyCode.DIGIT1, KeyCode.DIGIT2, KeyCode.DIGIT3,
-                KeyCode.DIGIT4, KeyCode.DIGIT5, KeyCode.DIGIT6,
-                KeyCode.DIGIT7, KeyCode.DIGIT8, KeyCode.DIGIT9
-        };
-        for (int i = 0; i < digitKeys.length; i++) {
-            final int slot = i;
-            onKeyDown(digitKeys[i], () -> {
-                selectSlot(slot);
-                return null;
-            });
         }
+    }, KeyCode.G);
 
-        // Cuộn chuột để chuyển slot nhanh
-        input.addEventHandler(ScrollEvent.SCROLL, e -> {
-            if (e.getDeltaY() < 0) inventory.selectNext();
-            else inventory.selectPrevious();
-            if (toolbarView != null) toolbarView.updateSelection();
-        });
+    // Phím I - Mở kho đồ
+    input.addAction(new UserAction("Toggle Inventory I") {
+        @Override
+        protected void onActionBegin() { inventoryView.toggle(); }
+    }, KeyCode.I);
+
+    // Phím TAB - Mở kho đồ
+    input.addAction(new UserAction("Toggle Inventory TAB") {
+        @Override
+        protected void onActionBegin() { inventoryView.toggle(); }
+    }, KeyCode.TAB);
+
+    // Phím O - Lưu game
+    input.addAction(new UserAction("Save Game") {
+        @Override
+        protected void onActionBegin() { saveGame(); }
+    }, KeyCode.O);
+
+    // Phím P - Tải game
+    input.addAction(new UserAction("Load Game") {
+        @Override
+        protected void onActionBegin() { loadGame(); }
+    }, KeyCode.P);
+
+
+    // ================= ĐỔI PHÍM SỐ TỪ 1 ĐẾN 9 =================
+    KeyCode[] digitKeys = {
+            KeyCode.DIGIT1, KeyCode.DIGIT2, KeyCode.DIGIT3,
+            KeyCode.DIGIT4, KeyCode.DIGIT5, KeyCode.DIGIT6,
+            KeyCode.DIGIT7, KeyCode.DIGIT8, KeyCode.DIGIT9
+    };
+    for (int i = 0; i < digitKeys.length; i++) {
+        final int slot = i;
+        input.addAction(new UserAction("Select Slot " + (i + 1)) {
+            @Override
+            protected void onActionBegin() { selectSlot(slot); }
+        }, digitKeys[i]);
     }
+
+    // Tích hợp con lăn cuộn chuột (giữ nguyên)
+    input.addEventHandler(ScrollEvent.SCROLL, e -> {
+        if (e.getDeltaY() < 0) inventory.selectNext();
+        else inventory.selectPrevious();
+        if (toolbarView != null) toolbarView.updateSelection();
+    });
+}
 
     private void selectSlot(int slot) {
         inventory.setSelectedSlot(slot);
@@ -332,16 +403,14 @@ public class Main extends GameApplication {
                     .filter(c -> c.getComponent(CropComponent.class).isRipe())
                     .findFirst()
                     .ifPresent(c -> {
-                        // Giải phóng ô đất bên dưới
                         getGameWorld().getEntitiesByType(EntityType.SOIL).stream()
                                 .filter(s -> s.getPosition().distance(c.getPosition()) < 5)
                                 .findFirst().ifPresent(s -> s.getComponent(SoilComponent.class).setHasPlant(false));
 
-                        // Thêm vật phẩm vào kho
                         ItemType harvest = getHarvestItem(type);
                         c.removeFromWorld();
                         if (harvest != null) inventory.addItem(harvest, 1);
-                        System.out.println("Thu hoạch: " + type);
+                        System.out.println("Thu hoạch thành công loại cây: " + type);
                     });
         }
     }
@@ -358,18 +427,15 @@ public class Main extends GameApplication {
         if (selector.getViewComponent().getOpacity() < 1.0) return;
         double x = selector.getX(), y = selector.getY();
 
-        // Kiểm tra xem có trong vùng Field không
         boolean inField = getGameWorld().getEntitiesByType(EntityType.FIELD).stream()
                 .anyMatch(f -> f.getX() <= x && x < f.getX() + f.getWidth()
                         && f.getY() <= y && y < f.getY() + f.getHeight());
 
         if (inField) {
-            // Kiểm tra xem chỗ này có đất chưa
             boolean hasSoil = getGameWorld().getEntitiesAt(new Point2D(x + 16, y + 16))
                     .stream().anyMatch(e -> e.isType(EntityType.SOIL));
             if (!hasSoil) {
                 getGameWorld().spawn("Soil", x, y);
-                // Cập nhật lại texture để khớp kiểu bàn cờ
                 getGameWorld().getEntitiesByType(EntityType.SOIL).forEach(s ->
                         s.getComponent(SoilComponent.class).updateTexture());
             }
@@ -394,7 +460,7 @@ public class Main extends GameApplication {
         if (selector.getViewComponent().getOpacity() < 1.0) return;
 
         getGameWorld().getEntitiesByType(EntityType.SOIL).stream()
-                .filter(s -> s.getPosition().distance(selector.getPosition()) < 15) // Tăng từ 5 lên 15
+                .filter(s -> s.getPosition().distance(selector.getPosition()) < 15)
                 .findFirst()
                 .ifPresentOrElse(soil -> {
                     soil.getComponent(SoilComponent.class).setWet(true);
@@ -403,15 +469,15 @@ public class Main extends GameApplication {
                     System.out.println("Hãy trỏ Selector vào ô đất để tưới!");
                 });
     }
-    // Trong Main.java
 
     private void saveGame() {
         SaveData data = new SaveData();
 
-        data.gameTime = this.gameTime; // LƯU THỜI GIAN HIỆN TẠI
+        data.gameTime = this.gameTime; // LƯU DỮ LIỆU THỜI GIAN
         data.health = statusBarsView.getHealth();
         data.hunger = statusBarsView.getHunger();
-        // 1. Lưu Inventory
+
+        // 1. Lưu kho đồ cá nhân Inventory
         for (ItemType type : ItemType.values()) {
             int count = inventory.getCount(type);
             if (count > 0) {
@@ -419,7 +485,7 @@ public class Main extends GameApplication {
             }
         }
 
-        // 2. Lưu Soil
+        // 2. Lưu trạng thái tất cả ô đất nông trại Soil
         getGameWorld().getEntitiesByType(EntityType.SOIL).forEach(soil -> {
             SoilComponent sc = soil.getComponent(SoilComponent.class);
             SaveData.SoilData sData = new SaveData.SoilData();
@@ -430,7 +496,7 @@ public class Main extends GameApplication {
             data.soils.add(sData);
         });
 
-        // 3. Lưu Crops
+        // 3. Lưu toàn bộ các cây nông sản đang trồng Crops
         EntityType[] cropTypes = {EntityType.WHEAT, EntityType.RADISH, EntityType.CABBAGE,
                 EntityType.LETTUCE, EntityType.TOMATO, EntityType.CORN};
         for (EntityType type : cropTypes) {
@@ -445,7 +511,7 @@ public class Main extends GameApplication {
             });
         }
 
-        // Ghi file bằng FXGL Service
+        // Thực thi ghi dữ liệu nén thành file nhị phân qua FXGL Service
         FXGL.getFileSystemService().writeDataTask(data, "save_game.dat").run();
         System.out.println("Đã lưu game tại thời điểm: " + hour + ":" + minute);
     }
@@ -453,29 +519,26 @@ public class Main extends GameApplication {
     private void loadGame() {
         FXGL.getFileSystemService().<SaveData>readDataTask("save_game.dat")
                 .onSuccess(data -> {
-                    // 1. Xóa toàn bộ Soil và Crop cũ trên Map (để không bị chồng đè)
+                    // 1. Xóa sạch dữ liệu thực thể cũ trên bản đồ để tránh hiện tượng bóng ma đè ảnh
                     getGameWorld().getEntitiesByType(EntityType.SOIL).forEach(Entity::removeFromWorld);
                     getGameWorld().getEntitiesByType(EntityType.WHEAT, EntityType.CORN, EntityType.RADISH,
                                     EntityType.CABBAGE, EntityType.LETTUCE, EntityType.TOMATO)
                             .forEach(Entity::removeFromWorld);
 
-                    this.gameTime = data.gameTime; // TẢI LẠI THỜI GIAN
-                    // Cập nhật lại thanh máu và thức ăn lên UI
+                    this.gameTime = data.gameTime; // KHÔI PHỤC THỜI GIAN TRẬN ĐẤU
                     statusBarsView.setHealth(data.health);
                     statusBarsView.setHunger(data.hunger);
                     toolbarView.updateSelection();
 
-                    // 2. Khôi phục Inventory
+                    // 2. Khôi phục kho đồ cá nhân
                     for (ItemType type : ItemType.values()) {
-                        // Reset về 0 trước
                         inventory.removeItem(type, inventory.getCount(type));
-                        // Cộng lại số lượng từ file save
                         if (data.inventoryItems.containsKey(type.name())) {
                             inventory.addItem(type, data.inventoryItems.get(type.name()));
                         }
                     }
 
-                    // 3. Khôi phục Soil
+                    // 3. Tái thiết lập cấu trúc ô đất
                     for (SaveData.SoilData sData : data.soils) {
                         Entity soil = getGameWorld().spawn("Soil", sData.x, sData.y);
                         SoilComponent sc = soil.getComponent(SoilComponent.class);
@@ -483,23 +546,22 @@ public class Main extends GameApplication {
                         sc.setHasPlant(sData.hasPlant);
                     }
 
-                    // 4. Khôi phục Crops
+                    // 4. Đổ lại dữ liệu giai đoạn trưởng thành của nông sản
                     for (SaveData.CropDataSave cData : data.crops) {
-                        // Spawn cây dựa trên tên loại cây (cData.type)
                         Entity crop = getGameWorld().spawn(capitalize(cData.type.toLowerCase()), cData.x, cData.y);
                         crop.getComponent(CropComponent.class).setStage(cData.stage);
                     }
 
                     System.out.println("Đã tải game! Thời gian hiện tại: " + hour + ":" + minute);
                 })
-                .onFailure(e -> System.out.println("Không tìm thấy file save!"))
+                .onFailure(e -> System.out.println("Không tìm thấy dữ liệu file save cũ!"))
                 .run();
     }
 
-    // Hàm hỗ trợ viết hoa chữ cái đầu (WHEAT -> Wheat)
     private String capitalize(String str) {
         return str.substring(0, 1).toUpperCase() + str.substring(1);
     }
+
     public static void main(String[] args) {
         launch(args);
     }
