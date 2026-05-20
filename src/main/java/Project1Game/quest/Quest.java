@@ -1,6 +1,6 @@
 package Project1Game.quest;
 
-import Project1Game.Inventory;
+import Project1Game.model.Inventory;
 
 import java.util.Collections;
 import java.util.List;
