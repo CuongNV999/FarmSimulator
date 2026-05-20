@@ -1,6 +1,6 @@
 package Project1Game.quest;
 
-import Project1Game.ItemType;
+import Project1Game.core.ItemType;
 
 /**
  * Tập hợp các {@link QuestObjective} cụ thể dùng trong game.

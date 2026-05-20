@@ -1,7 +1,7 @@
 package Project1Game.quest;
 
-import Project1Game.Inventory;
-import Project1Game.ItemType;
+import Project1Game.model.Inventory;
+import Project1Game.core.ItemType;
 
 import java.util.Collections;
 import java.util.LinkedHashMap;

@@ -1,0 +1,6 @@
+package Project1Game.core;
+
+public enum EntityType {
+    WALL, WATER, SOIL, WHEAT, RADISH, CABBAGE, LETTUCE, TOMATO, CORN,
+    PLAYER, SELECTOR, COLLISION, INTERACTION, FIELD, NPC, GUIDER, TRADER
+    }

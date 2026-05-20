@@ -1,6 +1,6 @@
 package Project1Game.quest;
 
-import Project1Game.ItemType;
+import Project1Game.core.ItemType;
 
 /**
  * Bản ghi sự kiện tức thời trong game, được tạo ra mỗi khi có hành động
