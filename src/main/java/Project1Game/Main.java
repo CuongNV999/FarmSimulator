@@ -51,6 +51,8 @@ public class Main extends GameApplication {
     private StatusBarsView statusBarsView;
     private DialogView dialogView;
     private MinimapView minimap;
+    private Text moneyText; // Thêm Text để hiển thị tiền
+    private TradingView tradingView; // Thêm TradingView
 
     // --- Các hệ thống logic (Systems) ---
     private TimeSystem timeSystem;
@@ -62,7 +64,7 @@ public class Main extends GameApplication {
     private Text clockText;
 
     // --- Trạng thái tương tác ---
-    private String nearbyNPCName = null;
+    private Entity nearbyNPC = null; // Thay thế nearbyNPCName bằng Entity
     private Entity nearbyDoor = null; // Thêm biến để lưu trữ cửa gần đó
     private Entity nearbySleep = null; // Thêm biến để lưu giường gần đó
     private String currentMap = "Main_level.tmx"; // Bản đồ hiện tại
@@ -80,12 +82,13 @@ public class Main extends GameApplication {
     @Override
     protected void initPhysics() {
         // Khởi tạo hệ thống vật lý và lắng nghe NPC qua System
+        // Sửa đổi: Truyền trực tiếp nearbyNPC và dialogView
         PhysicsSystem.init(new PhysicsSystem.NPCListener() {
             @Override
-            public void onNPCNear(String name) { nearbyNPCName = name; }
+            public void onNPCNear(Entity npc) { nearbyNPC = npc; }
 
             @Override
-            public void onNPCAway() { nearbyNPCName = null; }
+            public void onNPCAway() { nearbyNPC = null; }
         }, dialogView);
 
         // Thêm CollisionHandler cho DOOR
@@ -160,8 +163,17 @@ public class Main extends GameApplication {
         clockText.setTranslateX(FXGL.getAppWidth() - 150); clockText.setTranslateY(40);
         clockText.setStroke(Color.BLACK); clockText.setStrokeWidth(0.5);
 
+        // Khởi tạo Text hiển thị tiền
+        moneyText = new Text();
+        moneyText.setFont(Font.font("Arial", FontWeight.BOLD, 22));
+        moneyText.setTranslateX(20); // Vị trí X
+        moneyText.setTranslateY(FXGL.getAppHeight() - 20); // Vị trí Y (góc dưới bên trái)
+        moneyText.setFill(Color.GOLD); // Màu chữ
+        moneyText.setStroke(Color.BLACK);
+        moneyText.setStrokeWidth(0.5);
+
         // Đưa tất cả UI vào màn hình
-        FXGL.getGameScene().addUINodes(toolbarView, inventoryView, dialogView, statusBarsView, minimap, nightOverlay, clockText);
+        FXGL.getGameScene().addUINodes(toolbarView, inventoryView, dialogView, statusBarsView, minimap, nightOverlay, clockText, moneyText);
 
         // Khởi tạo các System phụ thuộc UI
         timeSystem = new TimeSystem(nightOverlay, clockText);
@@ -170,6 +182,18 @@ public class Main extends GameApplication {
         // Gọi updateLevel lần đầu sau khi tất cả UI và System đã sẵn sàng
         updateLevel("Main_level.tmx", 1792, 1024);
         currentMap = "Main_level.tmx"; // Đảm bảo currentMap được đặt đúng
+
+        // Liên kết moneyText với moneyProperty của PlayerComponent
+        // PlayerComponent chỉ có sẵn sau khi player được spawn trong updateLevel
+        player.getComponent(PlayerComponent.class).moneyProperty().addListener((obs, old, newV) -> {
+            moneyText.setText("Tiền: " + newV + " G");
+        });
+        // Cập nhật giá trị ban đầu
+        moneyText.setText("Tiền: " + player.getComponent(PlayerComponent.class).getMoney() + " G");
+
+        // Khởi tạo TradingView
+        tradingView = new TradingView(inventory, player.getComponent(PlayerComponent.class));
+        FXGL.getGameScene().addUINode(tradingView);
     }
 
     /**
@@ -177,7 +201,8 @@ public class Main extends GameApplication {
      */
     private void updateLevel(String newMapName, double x, double y) {
         // 1. LƯU TRẠNG THÁI BẢN ĐỒ HIỆN TẠI (nếu có)
-        if (currentMap != null) {
+        // CHỈ LƯU NẾU PLAYER ĐÃ TỒN TẠI (không phải lần tải map đầu tiên)
+        if (player != null && currentMap != null) {
             SaveData currentMapState = new SaveData();
             saveLoadSystem.save(currentMapState); // Lưu trạng thái các thực thể động của bản đồ hiện tại
             mapStates.put(currentMap, currentMapState); // Lưu vào mapStates
@@ -295,22 +320,29 @@ public class Main extends GameApplication {
         input.addAction(new UserAction("Interact Action Key") {
             @Override
             protected void onActionBegin() {
-                if (nearbyNPCName != null) {
-                    NPC npc = QuestManager.getInstance().getNPC(nearbyNPCName);
-                    if (npc != null) {
-                        npc.acceptNextAvailableQuest();
-                        npc.claimFirstCompleted(inventory);
-                        String text = npc.interact();
-                        dialogView.setDialog(nearbyNPCName, text.split("\n"));
-                        dialogView.show();
-                        toolbarView.updateSelection();
+                if (nearbyNPC != null) { // Kiểm tra nếu có NPC gần đó
+                    if (nearbyNPC.getType() == EntityType.TRADER) { // Kiểm tra nếu là Trader
+                        tradingView.toggle();
+                    } else {
+                        // Logic tương tác NPC thông thường (Guider, v.v.)
+                        NPC npc = QuestManager.getInstance().getNPC(nearbyNPC.getString("name")); // Giả sử NPC có thuộc tính "name"
+                        if (npc != null) {
+                            npc.acceptNextAvailableQuest();
+                            npc.claimFirstCompleted(inventory);
+                            String text = npc.interact();
+                            dialogView.setDialog(nearbyNPC.getString("name"), text.split("\n"));
+                            dialogView.show();
+                            toolbarView.updateSelection();
+                        }
                     }
                 } else if (nearbyDoor != null) { // Xử lý tương tác với cửa
                     // 1. Lưu dữ liệu từ cửa cũ trước khi chuyển map (vì map cũ sẽ bị xóa)
+                    // Lấy targetMap dưới dạng Object và chuyển đổi thành String
+// Nếu có thuộc tính "targetMap" thì lấy, không thì dùng map mặc định
                     String mapFile = nearbyDoor.getString("targetMap");
-                    // Sửa đổi cách lấy targetX và targetY để xử lý Float
-                    double tx = ((Float) nearbyDoor.getObject("targetX")).doubleValue();
-                    double ty = ((Float) nearbyDoor.getObject("targetY")).doubleValue();
+
+                    double tx = ((Number) nearbyDoor.getObject("targetX")).doubleValue();
+                    double ty = ((Number) nearbyDoor.getObject("targetY")).doubleValue();
 
                     // 2. Ẩn dialog nếu đang mở để tránh UI bị lỗi khi đổi map
                     if (dialogView.isOpen()) dialogView.hide();
@@ -321,6 +353,7 @@ public class Main extends GameApplication {
                     System.out.println("Dịch chuyển đến: " + mapFile + " tại " + tx + ", " + ty);
                 } else if (nearbySleep != null) {
                     System.out.println("--- Main: Bắt đầu đi ngủ ---");
+
                     // Debug: In trạng thái kho đồ trước khi ngủ
                     System.out.println("Kho đồ trước khi ngủ:");
                     for (InventorySlot slot : inventory.getSlots()) {
@@ -338,6 +371,8 @@ public class Main extends GameApplication {
                     // Logic đi ngủ
                     if (timeSystem != null) {
                         timeSystem.advanceToNextDay(); // Bỏ nhận xét dòng này
+                        statusBarsView.setHealth(100); // Reset máu
+                        statusBarsView.setHunger(100); // Reset đói
                         dialogView.setDialog("Thông báo", "Bạn đã ngủ một giấc thật ngon.", "Sức khỏe đã được hồi phục!");
                         dialogView.show();
                         System.out.println("Nhân vật đã đi ngủ.");
@@ -374,7 +409,7 @@ public class Main extends GameApplication {
 
         input.addAction(new UserAction("Test Quick Water") {
             @Override
-            protected void onActionBegin() {
+            protected void onActionBegin() { // Đã sửa lỗi "void void"
                 System.out.println("Test: Ép tưới cây bằng phím Q!");
                 farmingSystem.useWateringCan(selector);
             }
@@ -382,8 +417,12 @@ public class Main extends GameApplication {
 
         // 4. HỆ THỐNG GIAO DIỆN
         input.addAction(new UserAction("Close UI Window") {
-            @Override protected void onActionBegin() { if(dialogView.isOpen()) dialogView.hide(); }
-        }, KeyCode.R);
+            @Override protected void onActionBegin() {
+                if (dialogView.isOpen()) dialogView.hide();
+                if (tradingView.isOpen()) tradingView.toggle(); // Đóng TradingView khi nhấn R
+                if (inventoryView.isOpen()) inventoryView.toggle(); // Đóng InventoryView khi nhấn R
+            }
+        }, KeyCode.R); // Sử dụng R để đóng UI
 
         input.addAction(new UserAction("Toggle Inventory Window") {
             @Override protected void onActionBegin() { inventoryView.toggle(); }

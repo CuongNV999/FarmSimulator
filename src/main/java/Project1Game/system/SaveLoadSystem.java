@@ -2,6 +2,7 @@ package Project1Game.system;
 
 import Project1Game.component.farming.CropComponent;
 import Project1Game.component.farming.SoilComponent;
+import Project1Game.component.player.PlayerComponent; // Import PlayerComponent
 import Project1Game.core.EntityType;
 import Project1Game.core.ItemType;
 import Project1Game.model.Inventory;
@@ -27,6 +28,11 @@ public class SaveLoadSystem {
         data.gameTime = timeSystem.getGameTime(); // Lấy từ TimeSystem
         data.health = statusBarsView.getHealth();
         data.hunger = statusBarsView.getHunger();
+
+        // Lấy PlayerComponent từ player entity
+        Entity player = FXGL.getGameWorld().getSingleton(EntityType.PLAYER);
+        PlayerComponent playerComponent = player.getComponent(PlayerComponent.class);
+        data.playerMoney = playerComponent.getMoney(); // Lưu tiền của người chơi
 
         // Lưu Inventory
         data.inventoryItems.clear(); // Xóa dữ liệu cũ trước khi lưu mới
@@ -70,6 +76,11 @@ public class SaveLoadSystem {
         statusBarsView.setHealth(data.health);
         statusBarsView.setHunger(data.hunger);
 
+        // Lấy PlayerComponent từ player entity
+        Entity player = FXGL.getGameWorld().getSingleton(EntityType.PLAYER);
+        PlayerComponent playerComponent = player.getComponent(PlayerComponent.class);
+        playerComponent.setMoney(data.playerMoney); // Tải tiền của người chơi
+
         // Tải Inventory (cần xóa inventory hiện tại và thêm lại)
         // Lưu ý: Inventory hiện tại không có phương thức clear, nên cần tạo lại hoặc thêm logic clear
         // Tạm thời, tôi sẽ chỉ thêm lại số lượng
@@ -103,6 +114,7 @@ public class SaveLoadSystem {
             EntityType cropEntityType = EntityType.valueOf(cd.type);
             // Sửa đổi: Chuyển đổi tên enum thành dạng chữ cái đầu viết hoa, các chữ còn lại viết thường
             String spawnName = cropEntityType.name().substring(0, 1).toUpperCase() + cropEntityType.name().substring(1).toLowerCase();
+
             Entity c = FXGL.getGameWorld().spawn(spawnName, cd.x, cd.y);
             c.getComponent(CropComponent.class).setStage(cd.stage);
         }

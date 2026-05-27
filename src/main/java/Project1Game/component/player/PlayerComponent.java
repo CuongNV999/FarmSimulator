@@ -5,6 +5,8 @@ import com.almasb.fxgl.entity.component.Component;
 import com.almasb.fxgl.physics.PhysicsComponent;
 import com.almasb.fxgl.texture.AnimatedTexture;
 import com.almasb.fxgl.texture.AnimationChannel;
+import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.SimpleIntegerProperty;
 import javafx.geometry.Point2D;
 import javafx.util.Duration;
 
@@ -20,6 +22,9 @@ public class PlayerComponent extends Component {
     private boolean isRunning = false; // Mặc định là đi bộ, nếu nhấn phím chạy sẽ thành true
     private Point2D direction = new Point2D(0, 1); // Hướng nhìn cuối cùng
     private double lastDirectionX = 1; // 1: phải, -1: trái
+
+    // Thuộc tính tiền tệ
+    private final IntegerProperty money = new SimpleIntegerProperty(0);
 
     public PlayerComponent() {
         double frameDuration = 0.1;
@@ -38,6 +43,9 @@ public class PlayerComponent extends Component {
         runSide  = new AnimationChannel(FXGL.image("Player/Carry_Run/Carry_Run_Side-Sheet.png"),  6, 64, 64, Duration.seconds(frameDuration * 6), 0, 5);
 
         texture = new AnimatedTexture(idleDown);
+
+        // Khởi tạo tiền ban đầu (ví dụ: 1000)
+        money.set(1000);
     }
 
     @Override
@@ -118,5 +126,33 @@ public class PlayerComponent extends Component {
     // nhưng onUpdate ở trên đã tự động hóa việc này.
     public void setRunning(boolean running) {
         this.isRunning = running;
+    }
+
+    // --- Các phương thức quản lý tiền tệ ---
+    public int getMoney() {
+        return money.get();
+    }
+
+    public IntegerProperty moneyProperty() {
+        return money;
+    }
+
+    public void addMoney(int amount) {
+        money.set(money.get() + amount);
+        System.out.println("Tiền: " + money.get());
+    }
+
+    public boolean removeMoney(int amount) {
+        if (money.get() >= amount) {
+            money.set(money.get() - amount);
+            System.out.println("Tiền: " + money.get());
+            return true;
+        }
+        System.out.println("Không đủ tiền! Hiện có: " + money.get());
+        return false;
+    }
+
+    public void setMoney(int money) {
+        this.money.set(money);
     }
 }

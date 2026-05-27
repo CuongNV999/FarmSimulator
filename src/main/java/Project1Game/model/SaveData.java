@@ -9,9 +9,10 @@ import java.util.Map;
 public class SaveData implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    public double gameTime; // THÊM DÒNG NÀY
-    public double health;  // Lưu máu
-    public double hunger;  // Lưu thức ăn
+    public double gameTime;
+    public double health;
+    public double hunger;
+    public int playerMoney; // Thêm trường để lưu tiền của người chơi
 
     // Lưu Inventory: Tên vật phẩm -> Số lượng
     public Map<String, Integer> inventoryItems = new HashMap<>();
