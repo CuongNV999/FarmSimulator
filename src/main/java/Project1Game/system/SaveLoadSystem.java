@@ -1,5 +1,6 @@
 package Project1Game.system;
 
+import Project1Game.component.farming.CropComponent;
 import Project1Game.component.farming.SoilComponent;
 import Project1Game.core.EntityType;
 import Project1Game.core.ItemType;
@@ -8,6 +9,8 @@ import Project1Game.model.SaveData;
 import Project1Game.ui.StatusBarsView;
 import com.almasb.fxgl.dsl.FXGL;
 import com.almasb.fxgl.entity.Entity;
+
+import java.util.Arrays; // Import Arrays
 
 public class SaveLoadSystem {
     private final Inventory inventory;
@@ -20,13 +23,13 @@ public class SaveLoadSystem {
         this.timeSystem = timeSystem;
     }
 
-    public void save() {
-        SaveData data = new SaveData();
+    public void save(SaveData data) { // Nhận SaveData làm tham số
         data.gameTime = timeSystem.getGameTime(); // Lấy từ TimeSystem
         data.health = statusBarsView.getHealth();
         data.hunger = statusBarsView.getHunger();
 
         // Lưu Inventory
+        data.inventoryItems.clear(); // Xóa dữ liệu cũ trước khi lưu mới
         for (ItemType t : ItemType.values()) {
             if (inventory.getCount(t) > 0) {
                 data.inventoryItems.put(t.name(), inventory.getCount(t));
@@ -34,6 +37,7 @@ public class SaveLoadSystem {
         }
 
         // Lưu Đất (Soil)
+        data.soils.clear(); // Xóa dữ liệu cũ trước khi lưu mới
         FXGL.getGameWorld().getEntitiesByType(EntityType.SOIL).forEach(s -> {
             SaveData.SoilData sd = new SaveData.SoilData();
             sd.x = s.getX();
@@ -43,29 +47,79 @@ public class SaveLoadSystem {
             data.soils.add(sd);
         });
 
-        // Thực thi ghi file
-        FXGL.getFileSystemService().writeDataTask(data, "save_game.dat").run();
-        System.out.println("Đã lưu game thành công!");
+        // Lưu Cây trồng (Crops)
+        data.crops.clear(); // Xóa dữ liệu cũ trước khi lưu mới
+        // Lấy tất cả các loại cây trồng đã định nghĩa trong EntityType
+        EntityType[] cropTypes = {EntityType.WHEAT, EntityType.RADISH, EntityType.CABBAGE,
+                EntityType.LETTUCE, EntityType.TOMATO, EntityType.CORN};
+
+        for (EntityType cropType : cropTypes) {
+            FXGL.getGameWorld().getEntitiesByType(cropType).forEach(c -> {
+                SaveData.CropDataSave cd = new SaveData.CropDataSave();
+                cd.x = c.getX();
+                cd.y = c.getY();
+                cd.type = c.getType().toString(); // Lưu tên loại cây
+                cd.stage = c.getComponent(CropComponent.class).getStage(); // Lưu giai đoạn phát triển
+                data.crops.add(cd);
+            });
+        }
     }
 
-    public void load() {
+    public void load(SaveData data) { // Nhận SaveData làm tham số
+        timeSystem.setGameTime(data.gameTime); // Gán lại cho TimeSystem
+        statusBarsView.setHealth(data.health);
+        statusBarsView.setHunger(data.hunger);
+
+        // Tải Inventory (cần xóa inventory hiện tại và thêm lại)
+        // Lưu ý: Inventory hiện tại không có phương thức clear, nên cần tạo lại hoặc thêm logic clear
+        // Tạm thời, tôi sẽ chỉ thêm lại số lượng
+        // TODO: Cần một cách tốt hơn để reset inventory
+
+        for (ItemType t : ItemType.values()) {
+            inventory.removeItem(t, inventory.getCount(t)); // Xóa tất cả số lượng hiện có
+        }
+        for (java.util.Map.Entry<String, Integer> entry : data.inventoryItems.entrySet()) {
+            inventory.addItem(ItemType.valueOf(entry.getKey()), entry.getValue());
+        }
+
+
+        // Xóa tất cả thực thể động cũ (đất và cây)
+        EntityType[] allDynamicEntities = {EntityType.SOIL, EntityType.WHEAT, EntityType.CORN,
+                EntityType.RADISH, EntityType.CABBAGE, EntityType.LETTUCE, EntityType.TOMATO};
+        FXGL.getGameWorld().getEntitiesFiltered(e -> Arrays.asList(allDynamicEntities).contains(e.getType()))
+                .forEach(Entity::removeFromWorld);
+
+
+        // Tái tạo ô đất
+        for (SaveData.SoilData sd : data.soils) {
+            Entity s = FXGL.getGameWorld().spawn("Soil", sd.x, sd.y);
+            s.getComponent(SoilComponent.class).setWet(sd.isWet);
+            s.getComponent(SoilComponent.class).setHasPlant(sd.hasPlant);
+        }
+
+        // Tái tạo cây trồng
+        for (SaveData.CropDataSave cd : data.crops) {
+            // Chuyển đổi String type thành EntityType
+            EntityType cropEntityType = EntityType.valueOf(cd.type);
+            // Sửa đổi: Chuyển đổi tên enum thành dạng chữ cái đầu viết hoa, các chữ còn lại viết thường
+            String spawnName = cropEntityType.name().substring(0, 1).toUpperCase() + cropEntityType.name().substring(1).toLowerCase();
+            Entity c = FXGL.getGameWorld().spawn(spawnName, cd.x, cd.y);
+            c.getComponent(CropComponent.class).setStage(cd.stage);
+        }
+    }
+
+    // Phương thức lưu/tải toàn bộ game (vào file)
+    public void saveGameToFile() {
+        SaveData currentSaveData = new SaveData();
+        save(currentSaveData); // Lưu trạng thái hiện tại vào currentSaveData
+        FXGL.getFileSystemService().writeDataTask(currentSaveData, "save_game.dat").run();
+        System.out.println("Đã lưu game vào file thành công!");
+    }
+
+    public void loadGameFromFile() {
         FXGL.getFileSystemService().<SaveData>readDataTask("save_game.dat").onSuccess(data -> {
-            timeSystem.setGameTime(data.gameTime); // Gán lại cho TimeSystem
-            statusBarsView.setHealth(data.health);
-            statusBarsView.setHunger(data.hunger);
-
-            // Xóa thực thể cũ
-            FXGL.getGameWorld().getEntitiesByType(EntityType.SOIL, EntityType.WHEAT, EntityType.CORN)
-                    .forEach(Entity::removeFromWorld);
-
-            // Tái tạo ô đất
-            for (SaveData.SoilData sd : data.soils) {
-                Entity s = FXGL.getGameWorld().spawn("Soil", sd.x, sd.y);
-                s.getComponent(SoilComponent.class).setWet(sd.isWet);
-                s.getComponent(SoilComponent.class).setHasPlant(sd.hasPlant);
-            }
-
-            System.out.println("Đã tải game thành công!");
+            load(data); // Tải dữ liệu từ file vào game
+            System.out.println("Đã tải game từ file thành công!");
         }).run();
     }
 }

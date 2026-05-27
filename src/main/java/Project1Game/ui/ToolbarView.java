@@ -2,11 +2,16 @@ package Project1Game.ui;
 
 import Project1Game.core.ItemType;
 import Project1Game.model.Inventory;
+import Project1Game.model.InventorySlot;
 import com.almasb.fxgl.dsl.FXGL;
 import com.almasb.fxgl.texture.Texture;
 
 import javafx.beans.binding.Bindings;
 import javafx.geometry.Pos;
+import javafx.scene.input.ClipboardContent;
+import javafx.scene.input.DragEvent;
+import javafx.scene.input.Dragboard;
+import javafx.scene.input.TransferMode;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
@@ -22,14 +27,14 @@ public class ToolbarView extends HBox {
 
     public ToolbarView(Inventory inventory) {
         this.inventory = inventory;
-        this.slotPanes = new StackPane[inventory.getSlots().length];
+        this.slotPanes = new StackPane[Inventory.HOTBAR_SIZE]; // Kích thước hotbar
 
         setSpacing(SLOT_GAP);
         setAlignment(Pos.CENTER);
 
-        ItemType[] slots = inventory.getSlots(); // chỉ 9 slot hotbar
-        for (int i = 0; i < slots.length; i++) {
-            StackPane slotPane = createSlot(slots[i], i);
+        InventorySlot[] hotbarSlots = inventory.getHotbarSlots(); // Lấy các slot hotbar
+        for (int i = 0; i < Inventory.HOTBAR_SIZE; i++) {
+            StackPane slotPane = createSlot(hotbarSlots[i], i);
             slotPanes[i] = slotPane;
             getChildren().add(slotPane);
         }
@@ -37,7 +42,7 @@ public class ToolbarView extends HBox {
         updateSelection();
     }
 
-    private StackPane createSlot(ItemType itemType, int index) {
+    private StackPane createSlot(InventorySlot inventorySlot, int index) {
         StackPane pane = new StackPane();
         pane.setPrefSize(SLOT_SIZE, SLOT_SIZE);
 
@@ -52,13 +57,21 @@ public class ToolbarView extends HBox {
         pane.getChildren().add(bg);
 
         // Icon vật phẩm
-        if (itemType.getIconName() != null && !itemType.getIconName().isEmpty()) {
-            Texture icon = FXGL.texture(itemType.getIconName());
-            icon.setFitWidth(50);
-            icon.setFitHeight(50);
-            icon.setPreserveRatio(true);
-            pane.getChildren().add(icon);
-        }
+        Texture icon = new Texture(FXGL.image("empty.png")); // Icon mặc định trống
+        icon.setFitWidth(50);
+        icon.setFitHeight(50);
+        icon.setPreserveRatio(true);
+        pane.getChildren().add(icon);
+
+        // Liên kết icon với itemTypeProperty của InventorySlot
+        icon.imageProperty().bind(
+                Bindings.createObjectBinding(() -> {
+                    ItemType itemType = inventorySlot.getItemType();
+                    return itemType != null && itemType.getIconName() != null && !itemType.getIconName().isEmpty()
+                            ? FXGL.image(itemType.getIconName())
+                            : FXGL.image("empty.png"); // Hình ảnh trống
+                }, inventorySlot.itemTypeProperty())
+        );
 
         // Số lượng
         Text countText = new Text();
@@ -67,10 +80,10 @@ public class ToolbarView extends HBox {
         countText.textProperty().bind(
                 Bindings.createStringBinding(
                         () -> {
-                            int count = inventory.countProperty(itemType).get();
-                            return count > 0 && !itemType.getIconName().isEmpty() ? String.valueOf(count) : "";
+                            int count = inventorySlot.getCount();
+                            return count > 0 ? String.valueOf(count) : "";
                         },
-                        inventory.countProperty(itemType)
+                        inventorySlot.countProperty()
                 )
         );
         StackPane.setAlignment(countText, Pos.BOTTOM_RIGHT);
@@ -78,10 +91,18 @@ public class ToolbarView extends HBox {
         countText.setTranslateY(-2);
 
         // Tên vật phẩm (hiển thị nhỏ phía trên)
-        String displayName = itemType.getIconName().isEmpty() ? "" : itemType.getDisplayName();
-        Text nameText = new Text(displayName);
+        Text nameText = new Text();
         nameText.setFont(Font.font("Arial", 11));
         nameText.setFill(Color.LIGHTGRAY);
+        nameText.textProperty().bind(
+                Bindings.createStringBinding(
+                        () -> {
+                            ItemType itemType = inventorySlot.getItemType();
+                            return itemType != null && !itemType.getIconName().isEmpty() ? itemType.getDisplayName() : "";
+                        },
+                        inventorySlot.itemTypeProperty()
+                )
+        );
         StackPane.setAlignment(nameText, Pos.TOP_CENTER);
         nameText.setTranslateY(2);
 
@@ -94,11 +115,51 @@ public class ToolbarView extends HBox {
         keyText.setTranslateY(2);
 
         pane.getChildren().addAll(countText, nameText, keyText);
+
+        // --- Drag and Drop Source ---
+        pane.setOnDragDetected(event -> {
+            if (!inventorySlot.isEmpty()) {
+                System.out.println("Toolbar: Drag detected from slot " + index + " (Item: " + inventorySlot.getItemType() + ")");
+                Dragboard db = pane.startDragAndDrop(TransferMode.MOVE);
+                ClipboardContent content = new ClipboardContent();
+                content.putString(String.valueOf(index)); // Lưu chỉ mục của slot nguồn
+                db.setContent(content);
+                db.setDragView(icon.snapshot(null, null)); // Đặt hình ảnh kéo là icon vật phẩm
+                event.consume();
+            }
+        });
+
+        // --- Drag and Drop Target ---
+        pane.setOnDragOver(event -> {
+            if (event.getGestureSource() != pane && event.getDragboard().hasString()) {
+                System.out.println("Toolbar: Drag over slot " + index);
+                event.acceptTransferModes(TransferMode.MOVE);
+            }
+            event.consume();
+        });
+
+        pane.setOnDragDropped(event -> {
+            Dragboard db = event.getDragboard();
+            boolean success = false;
+            if (db.hasString()) {
+                int sourceIndex = Integer.parseInt(db.getString());
+                int targetIndex = index; // Chỉ mục của slot hiện tại
+
+                System.out.println("Toolbar: Item dropped from " + sourceIndex + " to " + targetIndex);
+                // Di chuyển vật phẩm trong inventory
+                inventory.moveItem(sourceIndex, targetIndex);
+                updateSelection(); // Cập nhật lại viền chọn
+                success = true;
+            }
+            event.setDropCompleted(success);
+            event.consume();
+        });
+
         return pane;
     }
 
     public void updateSelection() {
-        for (int i = 0; i < slotPanes.length; i++) {
+        for (int i = 0; i < Inventory.HOTBAR_SIZE; i++) {
             Rectangle bg = (Rectangle) slotPanes[i].getChildren().get(0);
             if (i == inventory.getSelectedSlot()) {
                 bg.setStroke(Color.GOLD);

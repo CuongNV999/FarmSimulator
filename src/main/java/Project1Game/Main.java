@@ -1,14 +1,18 @@
 package Project1Game;
 
 // --- IMPORT CÁC THÀNH PHẦN NỘI BỘ DỰ ÁN ---
+import Project1Game.component.farming.CropComponent;
 import Project1Game.component.farming.SoilComponent;
 import Project1Game.component.player.PlayerComponent;
 import Project1Game.core.EntityType;
 import Project1Game.core.ItemType;
 import Project1Game.model.Inventory;
+import Project1Game.model.InventorySlot; // Import InventorySlot
+import Project1Game.model.SaveData; // Import SaveData
 import Project1Game.system.*;
 import Project1Game.ui.*;
 import Project1Game.quest.*;
+import Project1Game.component.NPCBehaviorComponent;
 import Project1Game.factory.GameEntityFactory;
 
 // --- IMPORT THƯ VIỆN FXGL ---
@@ -18,9 +22,11 @@ import com.almasb.fxgl.dsl.FXGL;
 import com.almasb.fxgl.entity.Entity;
 import com.almasb.fxgl.input.Input;
 import com.almasb.fxgl.input.UserAction;
+import com.almasb.fxgl.physics.CollisionHandler; // Import CollisionHandler
 import com.almasb.fxgl.physics.PhysicsComponent;
 
 // --- IMPORT JAVA FX ---
+import javafx.geometry.Point2D;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.ScrollEvent;
@@ -29,6 +35,9 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class Main extends GameApplication {
     // --- Các thực thể chính ---
@@ -54,6 +63,10 @@ public class Main extends GameApplication {
 
     // --- Trạng thái tương tác ---
     private String nearbyNPCName = null;
+    private Entity nearbyDoor = null; // Thêm biến để lưu trữ cửa gần đó
+    private Entity nearbySleep = null; // Thêm biến để lưu giường gần đó
+    private String currentMap = "Main_level.tmx"; // Bản đồ hiện tại
+    private Map<String, SaveData> mapStates = new HashMap<>(); // Lưu trạng thái các bản đồ
 
     @Override
     protected void initSettings(GameSettings gameSettings) {
@@ -74,6 +87,31 @@ public class Main extends GameApplication {
             @Override
             public void onNPCAway() { nearbyNPCName = null; }
         }, dialogView);
+
+        // Thêm CollisionHandler cho DOOR
+        FXGL.getPhysicsWorld().addCollisionHandler(new CollisionHandler(EntityType.PLAYER, EntityType.DOOR) {
+            @Override
+            protected void onCollisionBegin(Entity player, Entity door) {
+                nearbyDoor = door;
+            }
+
+            @Override
+            protected void onCollisionEnd(Entity player, Entity door) {
+                nearbyDoor = null;
+            }
+        });
+
+        // Handler cho việc đi ngủ
+        FXGL.getPhysicsWorld().addCollisionHandler(new CollisionHandler(EntityType.PLAYER, EntityType.SLEEP) {
+            @Override
+            protected void onCollisionBegin(Entity player, Entity sleep) {
+                nearbySleep = sleep;
+            }
+            @Override
+            protected void onCollisionEnd(Entity player, Entity sleep) {
+                nearbySleep = null;
+            }
+        });
     }
 
     @Override
@@ -87,55 +125,10 @@ public class Main extends GameApplication {
 
         // 3. Nạp Map và Factory
         FXGL.getGameWorld().addEntityFactory(new GameEntityFactory());
-        FXGL.setLevelFromMap("Main_level.tmx");
 
-        // 4. Lấy thực thể Singleton
-        player = FXGL.getGameWorld().getSingleton(EntityType.PLAYER);
-        selector = FXGL.spawn("Selector");
-
-        // 5. Cấu hình Camera
-        FXGL.getGameScene().getViewport().bindToEntity(player, FXGL.getAppWidth() / 2.0, FXGL.getAppHeight() / 2.0);
-        FXGL.getGameScene().getViewport().setBounds(0, 0, 3840, 2176);
-        FXGL.getGameScene().getViewport().setLazy(true);
-
-        // 6. Làm mới vân bề mặt đất
-        FXGL.getGameWorld().getEntitiesByType(EntityType.SOIL)
-                .forEach(s -> s.getComponent(SoilComponent.class).updateTexture());
-
-        // 7. Tạo biên bản đồ
-        spawnBoundaries(3840, 2176);
-    }
-
-    private void spawnBoundaries(int w, int h) {
-        int t = 64;
-        FXGL.spawn("Wall", new com.almasb.fxgl.entity.SpawnData(0, -t).put("width", w).put("height", t));
-        FXGL.spawn("Wall", new com.almasb.fxgl.entity.SpawnData(0, h).put("width", w).put("height", t));
-        FXGL.spawn("Wall", new com.almasb.fxgl.entity.SpawnData(-t, 0).put("width", t).put("height", h));
-        FXGL.spawn("Wall", new com.almasb.fxgl.entity.SpawnData(w, 0).put("width", t).put("height", h));
-    }
-
-    @Override
-    protected void onUpdate(double tpf) {
-        // 1. Cập nhật các hệ thống độc lập
-        if (timeSystem != null) timeSystem.onUpdate(tpf);
-        if (minimap != null) minimap.update();
-
-        // --- ĐOẠN SỬA MỚI: CHỐNG TRÔI BẰNG CÁCH KHỬ NHIỄU VẬT LÝ ---
-        if (player != null) {
-            PhysicsComponent physics = player.getComponent(PhysicsComponent.class);
-            if (physics != null) {
-                // Nếu vận tốc cực nhỏ (dưới 15) -> Đây chắc chắn là nhiễu trôi vật lý, ép thẳng về 0
-                if (Math.abs(physics.getVelocityX()) > 0 && Math.abs(physics.getVelocityX()) < 15) {
-                    physics.setVelocityX(0);
-                }
-                if (Math.abs(physics.getVelocityY()) > 0 && Math.abs(physics.getVelocityY()) < 15) {
-                    physics.setVelocityY(0);
-                }
-            }
-        }
-
-        // 2. Cập nhật bộ chọn ô đất và đồng bộ chuyển động nhân vật
-        if (farmingSystem != null) farmingSystem.updateSelector(selector, player);
+        // Khởi tạo SaveLoadSystem trước khi gọi updateLevel lần đầu
+        // (cần statusBarsView và timeSystem đã được khởi tạo trong initUI)
+        // Tạm thời khởi tạo ở đây, sẽ chuyển sang initUI sau khi UI sẵn sàng
     }
 
     @Override
@@ -173,6 +166,104 @@ public class Main extends GameApplication {
         // Khởi tạo các System phụ thuộc UI
         timeSystem = new TimeSystem(nightOverlay, clockText);
         saveLoadSystem = new SaveLoadSystem(inventory, statusBarsView, timeSystem);
+
+        // Gọi updateLevel lần đầu sau khi tất cả UI và System đã sẵn sàng
+        updateLevel("Main_level.tmx", 1792, 1024);
+        currentMap = "Main_level.tmx"; // Đảm bảo currentMap được đặt đúng
+    }
+
+    /**
+     * Phương thức hỗ trợ nạp map và cấu hình lại toàn bộ hệ thống (Player, Camera)
+     */
+    private void updateLevel(String newMapName, double x, double y) {
+        // 1. LƯU TRẠNG THÁI BẢN ĐỒ HIỆN TẠI (nếu có)
+        if (currentMap != null) {
+            SaveData currentMapState = new SaveData();
+            saveLoadSystem.save(currentMapState); // Lưu trạng thái các thực thể động của bản đồ hiện tại
+            mapStates.put(currentMap, currentMapState); // Lưu vào mapStates
+            System.out.println("Đã lưu trạng thái bản đồ: " + currentMap);
+        }
+
+        // 2. TẢI BẢN ĐỒ MỚI
+        currentMap = newMapName; // Cập nhật bản đồ hiện tại
+        FXGL.setLevelFromMap(newMapName);
+
+        // 3. TÁI TẠO PLAYER VÀ SELECTOR
+        player = FXGL.getGameWorld().getSingleton(EntityType.PLAYER);
+        player.setPosition(new Point2D(x, y));
+        if (selector == null) selector = FXGL.spawn("Selector"); // Đảm bảo selector được spawn nếu chưa có
+
+        // 4. CẤU HÌNH CAMERA
+        double mapW = FXGL.getGameWorld().getEntitiesByType(EntityType.FIELD, EntityType.WALL).stream()
+                .mapToDouble(e -> e.getRightX()).max().orElse(3840);
+        double mapH = FXGL.getGameWorld().getEntitiesByType(EntityType.FIELD, EntityType.WALL).stream()
+                .mapToDouble(e -> e.getBottomY()).max().orElse(2176);
+
+        FXGL.getGameScene().getViewport().setBounds(0, 0, (int)mapW, (int)mapH);
+        FXGL.getGameScene().getViewport().bindToEntity(player, FXGL.getAppWidth() / 2.0, FXGL.getAppHeight() / 2.0);
+        FXGL.getGameScene().getViewport().setLazy(true);
+
+        // 5. TẢI TRẠNG THÁI BẢN ĐỒ MỚI (nếu có)
+        if (mapStates.containsKey(newMapName)) {
+            SaveData newMapState = mapStates.get(newMapName);
+            saveLoadSystem.load(newMapState); // Tải trạng thái đã lưu cho bản đồ mới
+            System.out.println("Đã tải trạng thái bản đồ: " + newMapName);
+        } else {
+            // Nếu chưa có trạng thái lưu, đây là lần đầu tiên tải bản đồ này
+            // Đảm bảo các thực thể SOIL được cập nhật texture
+            FXGL.getGameWorld().getEntitiesByType(EntityType.SOIL)
+                    .forEach(s -> s.getComponent(SoilComponent.class).updateTexture());
+            // Tạo biên bản đồ nếu cần (chỉ cho Main_level)
+            if (newMapName.equals("Main_level.tmx")) {
+                spawnBoundaries(3840, 2176);
+            }
+            System.out.println("Tải bản đồ mới lần đầu: " + newMapName);
+        }
+    }
+
+    private void spawnBoundaries(int w, int h) {
+        int t = 64;
+        FXGL.spawn("Wall", new com.almasb.fxgl.entity.SpawnData(0, -t).put("width", w).put("height", t));
+        FXGL.spawn("Wall", new com.almasb.fxgl.entity.SpawnData(0, h).put("width", w).put("height", t));
+        FXGL.spawn("Wall", new com.almasb.fxgl.entity.SpawnData(-t, 0).put("width", t).put("height", h));
+        FXGL.spawn("Wall", new com.almasb.fxgl.entity.SpawnData(w, 0).put("width", t).put("height", h));
+    }
+
+    @Override
+    protected void onUpdate(double tpf) {
+        // 1. Cập nhật các hệ thống độc lập
+        if (timeSystem != null) timeSystem.onUpdate(tpf);
+        if (minimap != null) minimap.update();
+
+        // AI: Kiểm tra 10 giờ sáng để NPC đi vào nhà
+        if (currentMap.equals("Main_level.tmx") && timeSystem != null) {
+            // Giả sử timeSystem có phương thức lấy giờ/phút
+            if (timeSystem.getHour() == 22 && timeSystem.getMinute() == 0) { // 10:00 PM
+                FXGL.getGameWorld().getEntitiesByType(EntityType.GUIDER, EntityType.TRADER).forEach(npc -> {
+                    NPCBehaviorComponent ai = npc.getComponent(NPCBehaviorComponent.class);
+                    if (!ai.isGoingHome()) {
+                        ai.goHome(new Point2D(1791, 687));
+                    }
+                });
+            }
+        }
+
+        // --- ĐOẠN SỬA MỚI: CHỐNG TRÔI BẰNG CÁCH KHỬ NHIỄU VẬT LÝ ---
+        if (player != null) {
+            PhysicsComponent physics = player.getComponent(PhysicsComponent.class);
+            if (physics != null) {
+                // Nếu vận tốc cực nhỏ (dưới 15) -> Đây chắc chắn là nhiễu trôi vật lý, ép thẳng về 0
+                if (Math.abs(physics.getVelocityX()) > 0 && Math.abs(physics.getVelocityX()) < 15) {
+                    physics.setVelocityX(0);
+                }
+                if (Math.abs(physics.getVelocityY()) > 0 && Math.abs(physics.getVelocityY()) < 15) {
+                    physics.setVelocityY(0);
+                }
+            }
+        }
+
+        // 2. Cập nhật bộ chọn ô đất và đồng bộ chuyển động nhân vật
+        if (farmingSystem != null) farmingSystem.updateSelector(selector, player);
     }
 
     @Override
@@ -200,7 +291,7 @@ public class Main extends GameApplication {
             @Override protected void onActionEnd() { player.getComponent(PhysicsComponent.class).setVelocityY(0); }
         }, KeyCode.S);
 
-        // 2. TƯƠNG TÁC TỔNG HỢP (NPC / THU HOẠCH)
+        // 2. TƯƠNG TÁC TỔNG HỢP (NPC / THU HOẠCH / CỬA)
         input.addAction(new UserAction("Interact Action Key") {
             @Override
             protected void onActionBegin() {
@@ -214,7 +305,59 @@ public class Main extends GameApplication {
                         dialogView.show();
                         toolbarView.updateSelection();
                     }
-                } else {
+                } else if (nearbyDoor != null) { // Xử lý tương tác với cửa
+                    // 1. Lưu dữ liệu từ cửa cũ trước khi chuyển map (vì map cũ sẽ bị xóa)
+                    String mapFile = nearbyDoor.getString("targetMap");
+                    // Sửa đổi cách lấy targetX và targetY để xử lý Float
+                    double tx = ((Float) nearbyDoor.getObject("targetX")).doubleValue();
+                    double ty = ((Float) nearbyDoor.getObject("targetY")).doubleValue();
+
+                    // 2. Ẩn dialog nếu đang mở để tránh UI bị lỗi khi đổi map
+                    if (dialogView.isOpen()) dialogView.hide();
+
+                    nearbyDoor = null;
+                    updateLevel(mapFile, tx, ty);
+
+                    System.out.println("Dịch chuyển đến: " + mapFile + " tại " + tx + ", " + ty);
+                } else if (nearbySleep != null) {
+                    System.out.println("--- Main: Bắt đầu đi ngủ ---");
+                    // Debug: In trạng thái kho đồ trước khi ngủ
+                    System.out.println("Kho đồ trước khi ngủ:");
+                    for (InventorySlot slot : inventory.getSlots()) {
+                        if (!slot.isEmpty()) {
+                            System.out.println("  - " + slot.getItemType().getDisplayName() + ": " + slot.getCount());
+                        }
+                    }
+                    // Debug: In trạng thái một số cây trồng (ví dụ: lúa mì)
+                    FXGL.getGameWorld().getEntitiesByType(EntityType.WHEAT).forEach(wheat -> {
+                        CropComponent cc = wheat.getComponent(CropComponent.class);
+                        System.out.println("  - Lúa mì tại (" + wheat.getX() + ", " + wheat.getY() + ") - Stage: " + cc.getStage());
+                    });
+
+
+                    // Logic đi ngủ
+                    if (timeSystem != null) {
+                        timeSystem.advanceToNextDay(); // Bỏ nhận xét dòng này
+                        dialogView.setDialog("Thông báo", "Bạn đã ngủ một giấc thật ngon.", "Sức khỏe đã được hồi phục!");
+                        dialogView.show();
+                        System.out.println("Nhân vật đã đi ngủ.");
+                    }
+
+                    // Debug: In trạng thái kho đồ sau khi ngủ
+                    System.out.println("Kho đồ sau khi ngủ:");
+                    for (InventorySlot slot : inventory.getSlots()) {
+                        if (!slot.isEmpty()) {
+                            System.out.println("  - " + slot.getItemType().getDisplayName() + ": " + slot.getCount());
+                        }
+                    }
+                    // Debug: In trạng thái một số cây trồng sau khi ngủ
+                    FXGL.getGameWorld().getEntitiesByType(EntityType.WHEAT).forEach(wheat -> {
+                        CropComponent cc = wheat.getComponent(CropComponent.class);
+                        System.out.println("  - Lúa mì tại (" + wheat.getX() + ", " + wheat.getY() + ") - Stage: " + cc.getStage());
+                    });
+                    System.out.println("--- Main: Kết thúc đi ngủ ---");
+                }
+                else {
                     farmingSystem.handleHarvest(selector);
                 }
             }
@@ -248,11 +391,11 @@ public class Main extends GameApplication {
 
         // 5. LƯU & TẢI (F5 / F9)
         input.addAction(new UserAction("Quick Save") {
-            @Override protected void onActionBegin() { saveLoadSystem.save(); }
+            @Override protected void onActionBegin() { saveLoadSystem.saveGameToFile(); } // Gọi phương thức lưu vào file
         }, KeyCode.F5);
 
         input.addAction(new UserAction("Quick Load") {
-            @Override protected void onActionBegin() { saveLoadSystem.load(); }
+            @Override protected void onActionBegin() { saveLoadSystem.loadGameFromFile(); } // Gọi phương thức tải từ file
         }, KeyCode.F9);
 
         // 6. CHỌN SLOT 1-9

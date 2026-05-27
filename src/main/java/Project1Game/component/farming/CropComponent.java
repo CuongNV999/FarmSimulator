@@ -29,7 +29,8 @@ public class CropComponent extends Component {
     @Override
     public void onAdded() {
         updateView();
-        growTimer = FXGL.getGameTimer().runAtInterval(this::grow, data.growthInterval);
+        // Sử dụng data.growthTime thay vì data.growthInterval
+        growTimer = FXGL.getGameTimer().runAtInterval(this::grow, data.growthTime);
 
         // Đảm bảo ban đầu kiểm tra đúng trạng thái ngày đêm
         canGrow = Main.isDayTime();
@@ -88,5 +89,10 @@ public class CropComponent extends Component {
     }
     public boolean isRipe() {
         return stage == MAX_STAGE;
+    }
+
+    // Phương thức mới để truy cập CropData
+    public CropData getData() {
+        return data;
     }
 }
