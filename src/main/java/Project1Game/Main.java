@@ -281,14 +281,25 @@ public class Main extends GameApplication {
         WeatherSystem.getInstance().onUpdate(tpf);
         if (minimap != null) minimap.update();
 
-        // AI: Đi vào nhà lúc 9:00 PM và xuất hiện lại lúc 6:00 AM
+        // AI: Đi vào nhà lúc 8:00 PM và xuất hiện lại lúc 6:00 AM
         if (currentMap.equals("Main_level.tmx") && timeSystem != null) {
-            // 9:00 PM: đi vào nhà
-            if (timeSystem.getHour() == 21 && timeSystem.getMinute() == 0) {
-                FXGL.getGameWorld().getEntitiesByType(EntityType.GUIDER, EntityType.TRADER).forEach(npc -> {
+            // 8:00 PM: đi vào nhà
+            if (timeSystem.getHour() == 20 && timeSystem.getMinute() == 0) {
+                FXGL.getGameWorld().getEntitiesByType(EntityType.GUIDER).forEach(npc -> {
                     NPCBehaviorComponent ai = npc.getComponent(NPCBehaviorComponent.class);
                     if (!ai.isGoingHome() && !ai.isHidden()) {
-                        ai.goHome(new Point2D(1791, 687));
+                        FXGL.getGameWorld().getEntitiesByType(EntityType.GUIDER_IN).stream().findFirst().ifPresent(target -> {
+                            ai.goHome(target.getPosition());
+                        });
+                    }
+                });
+                
+                FXGL.getGameWorld().getEntitiesByType(EntityType.TRADER).forEach(npc -> {
+                    NPCBehaviorComponent ai = npc.getComponent(NPCBehaviorComponent.class);
+                    if (!ai.isGoingHome() && !ai.isHidden()) {
+                        FXGL.getGameWorld().getEntitiesByType(EntityType.TRADER_IN).stream().findFirst().ifPresent(target -> {
+                            ai.goHome(target.getPosition());
+                        });
                     }
                 });
             }
