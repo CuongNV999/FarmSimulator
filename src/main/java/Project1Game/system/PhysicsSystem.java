@@ -10,7 +10,7 @@ public class PhysicsSystem {
 
     // Interface hoặc Callback để báo về Main khi cần đổi tên NPC
     public interface NPCListener {
-        void onNPCNear(String name);
+        void onNPCNear(Entity npc); // Thay đổi từ String name thành Entity npc
         void onNPCAway();
     }
 
@@ -27,7 +27,7 @@ public class PhysicsSystem {
         // Va chạm NPC Guider
         FXGL.getPhysicsWorld().addCollisionHandler(new CollisionHandler(EntityType.PLAYER, EntityType.GUIDER) {
             @Override protected void onCollisionBegin(Entity p, Entity g) {
-                listener.onNPCNear("Bác Nông Dân");
+                listener.onNPCNear(g); // Truyền Entity của Guider
             }
             @Override protected void onCollisionEnd(Entity p, Entity g) {
                 listener.onNPCAway();
@@ -35,6 +35,17 @@ public class PhysicsSystem {
             }
         });
 
-        // Bạn có thể thêm các Handler khác vào đây (Trader, Water, v.v.)
+        // THÊM: Va chạm NPC Trader
+        FXGL.getPhysicsWorld().addCollisionHandler(new CollisionHandler(EntityType.PLAYER, EntityType.TRADER) {
+            @Override protected void onCollisionBegin(Entity p, Entity t) {
+                listener.onNPCNear(t); // Truyền Entity của Trader
+            }
+            @Override protected void onCollisionEnd(Entity p, Entity t) {
+                listener.onNPCAway();
+                if (dialogView != null) dialogView.hide();
+            }
+        });
+
+        // Bạn có thể thêm các Handler khác vào đây (Water, v.v.)
     }
 }

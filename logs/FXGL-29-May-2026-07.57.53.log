@@ -1,0 +1,381 @@
+07:56:56.776 [Project1Game.Main.main() ] DEBUG Logger               - Configured Logger
+07:56:56.783 [Project1Game.Main.main() ] DEBUG GameApplication      - Logging settings
+Title: Java Farming Professional
+Version: 2.5
+Width: 1280
+Height: 720
+Fullscreen: false
+Intro: false
+Profiling: false
+Single step:false
+App Mode: DEVELOPER
+Menu Key: ESCAPE
+Stage Style: DECORATED
+Scene Factory: class com.almasb.fxgl.app.scene.SceneFactory
+
+07:56:57.891 [JavaFX Application Thread] DEBUG FXGLApplication      - Initializing FXGL
+07:56:57.894 [JavaFX Application Thread] INFO  Engine               - FXGL-25 (05.02.2026 22.57) on WINDOWS (J:25.0.3 FX:25.0.1)
+07:56:57.894 [JavaFX Application Thread] DEBUG Engine               - JRE Vendor Name: Oracle Corporation
+07:56:57.895 [JavaFX Application Thread] DEBUG Engine               - Running on OS: Windows 11 version 10.0
+07:56:57.896 [JavaFX Application Thread] DEBUG Engine               - Architecture: amd64
+07:56:57.896 [JavaFX Application Thread] INFO  Engine               - Source code and latest versions at: https://github.com/AlmasB/FXGL
+07:56:57.896 [JavaFX Application Thread] INFO  Engine               -       Ask questions and discuss at: https://github.com/AlmasB/FXGL/discussions
+07:56:58.046 [JavaFX Application Thread] DEBUG PrimaryStageWindow   - Creating a JavaFX scene
+07:56:58.092 [JavaFX Application Thread] DEBUG PrimaryStageWindow   - Target settings size: 1280.0 x 720.0
+07:56:58.092 [JavaFX Application Thread] DEBUG PrimaryStageWindow   - Scaled scene size:    1280.0 x 720.0
+07:56:58.092 [JavaFX Application Thread] DEBUG PrimaryStageWindow   - Scaled ratio: (1.0, 1.0)
+07:56:58.094 [JavaFX Application Thread] DEBUG PrimaryStageWindow   - Set initial scene to FXGLStartupScene
+07:56:58.097 [JavaFX Application Thread] DEBUG PrimaryStageWindow   - Opening main window
+07:56:58.464 [JavaFX Application Thread] DEBUG PrimaryStageWindow   - Window border size: (14.4000244140625, 37.5999755859375)
+07:56:58.464 [JavaFX Application Thread] DEBUG PrimaryStageWindow   - Scaled size: 1280.0 x 720.0
+07:56:58.464 [JavaFX Application Thread] DEBUG PrimaryStageWindow   - Scaled ratio: (1.0, 1.0)
+07:56:58.466 [JavaFX Application Thread] DEBUG PrimaryStageWindow   - Scene size: 1280.0 x 720.0
+07:56:58.466 [JavaFX Application Thread] DEBUG PrimaryStageWindow   - Stage size: 1294.4000244140625 x 757.5999755859375
+07:56:58.477 [FXGL Background Thread 1 ] DEBUG Engine               - Initializing environment variables
+07:56:58.551 [FXGL Background Thread 1 ] DEBUG FXGLAssetLoaderServi - User app class for loading assets: class Project1Game.Main
+07:56:58.552 [FXGL Background Thread 1 ] DEBUG GameApplicationServi - Applying CSS: fxgl_dark.css
+07:56:58.552 [FXGL Background Thread 1 ] DEBUG FXGLAssetLoaderServi - Loading from file system: jar:file:/C:/Users/HP/.m2/repository/com/github/almasb/fxgl/25/fxgl-25.jar!/fxglassets/ui/css/fxgl_dark.css
+07:56:58.645 [FXGL Background Thread 1 ] DEBUG GameApplicationServi - Initializing application scenes
+07:56:58.738 [FXGL Background Thread 1 ] DEBUG GameWorld            - Game world initialized
+07:56:58.811 [FXGL Background Thread 1 ] DEBUG PhysicsWorld         - Physics world initialized: appHeight=720, physics.ppm=50.0
+07:56:58.812 [FXGL Background Thread 1 ] DEBUG PhysicsWorld         - Using strategy: BRUTE_FORCE
+07:56:58.820 [FXGL Background Thread 1 ] DEBUG GameScene            - Game scene initialized: 1280x720
+07:56:58.836 [FXGL Background Thread 1 ] DEBUG FXGL.DefaultMenu     - createMenuBodyGameMenu()
+07:56:58.859 [FXGL Background Thread 1 ] DEBUG FXGL.DefaultMenu     - createOptionsMenu()
+07:56:58.874 [FXGL Background Thread 1 ] DEBUG FXGLAssetLoaderServi - Loading from file system: jar:file:/C:/Users/HP/.m2/repository/com/github/almasb/fxgl/25/fxgl-25.jar!/fxglassets/textures/particles/smoke.png
+07:56:58.983 [FXGL Background Thread 1 ] DEBUG FXGLAssetLoaderServi - Loading from file system: jar:file:/C:/Users/HP/.m2/repository/com/github/almasb/fxgl/25/fxgl-25.jar!/fxglassets/textures/particles/trace_horizontal.png
+07:56:59.013 [FXGL Background Thread 1 ] DEBUG GameApplicationServi - Application scenes initialized
+07:56:59.024 [FXGL Background Thread 1 ] DEBUG SystemBundleService  - Loading FXGL system data
+07:56:59.027 [FXGL Background Thread 1 ] DEBUG FileSystemAccess     - Reading from: D:\projects\helloworld\FarmSimulator\system\fxgl.bundle
+07:56:59.031 [FXGL Background Thread 1 ] DEBUG SystemBundleService  - Bundle FXGL: {}
+07:56:59.032 [FXGL Background Thread 1 ] DEBUG UpdaterService       - Checking for updates
+07:56:59.064 [FXGL Background Thread 4 ] DEBUG FXGLApplication      - Loading fonts
+07:56:59.065 [FXGL Background Thread 4 ] DEBUG FXGLAssetLoaderServi - Loading from file system: jar:file:/C:/Users/HP/.m2/repository/com/github/almasb/fxgl/25/fxgl-25.jar!/fxglassets/ui/fonts/VarelaRound-Regular.ttf
+07:56:59.066 [FXGL Background Thread 1 ] DEBUG FXGLApplication      - Loading default localization
+07:56:59.066 [FXGL Background Thread 1 ] DEBUG FXGLAssetLoaderServi - Loading from file system: jar:file:/C:/Users/HP/.m2/repository/com/github/almasb/fxgl/25/fxgl-25.jar!/fxglassets/languages/english.lang
+07:56:59.093 [FXGL Background Thread 1 ] INFO  FXGLApplication      - FXGL initialization took: 0.616 sec
+07:56:59.121 [JavaFX Application Thread] DEBUG Input                - Registered new binding: Move Right - D
+07:56:59.121 [JavaFX Application Thread] DEBUG Input                - Registered new binding: Move Left - A
+07:56:59.122 [JavaFX Application Thread] DEBUG Input                - Registered new binding: Move Up - W
+07:56:59.122 [JavaFX Application Thread] DEBUG Input                - Registered new binding: Move Down - S
+07:56:59.122 [JavaFX Application Thread] DEBUG Input                - Registered new binding: Interact Action Key - E
+07:56:59.123 [JavaFX Application Thread] DEBUG Input                - Registered new binding: Use Tool Keyboard - F
+07:56:59.125 [JavaFX Application Thread] DEBUG Input                - Registered new binding: Use Tool Mouse - LMB
+07:56:59.125 [JavaFX Application Thread] DEBUG Input                - Registered new binding: Test Quick Water - Q
+07:56:59.126 [JavaFX Application Thread] DEBUG Input                - Registered new binding: Close UI Window - R
+07:56:59.126 [JavaFX Application Thread] DEBUG Input                - Registered new binding: Toggle Inventory Window - Tab
+07:56:59.126 [JavaFX Application Thread] DEBUG Input                - Registered new binding: Quick Save - F5
+07:56:59.126 [JavaFX Application Thread] DEBUG Input                - Registered new binding: Quick Load - F9
+07:56:59.127 [JavaFX Application Thread] DEBUG Input                - Registered new binding: Select Inventory Slot 1 - 1
+07:56:59.127 [JavaFX Application Thread] DEBUG Input                - Registered new binding: Select Inventory Slot 2 - 2
+07:56:59.127 [JavaFX Application Thread] DEBUG Input                - Registered new binding: Select Inventory Slot 3 - 3
+07:56:59.127 [JavaFX Application Thread] DEBUG Input                - Registered new binding: Select Inventory Slot 4 - 4
+07:56:59.128 [JavaFX Application Thread] DEBUG Input                - Registered new binding: Select Inventory Slot 5 - 5
+07:56:59.128 [JavaFX Application Thread] DEBUG Input                - Registered new binding: Select Inventory Slot 6 - 6
+07:56:59.128 [JavaFX Application Thread] DEBUG Input                - Registered new binding: Select Inventory Slot 7 - 7
+07:56:59.128 [JavaFX Application Thread] DEBUG Input                - Registered new binding: Select Inventory Slot 8 - 8
+07:56:59.128 [JavaFX Application Thread] DEBUG Input                - Registered new binding: Select Inventory Slot 9 - 9
+07:56:59.130 [JavaFX Application Thread] DEBUG FXGLAssetLoaderServi - Loading from file system: jar:file:/C:/Users/HP/.m2/repository/com/github/almasb/fxgl/25/fxgl-25.jar!/fxglassets/textures/fxgl_icon.png
+07:56:59.159 [FXGL Background Thread 4 ] DEBUG FXGLAssetLoaderServi - Loading from file system: jar:file:/C:/Users/HP/.m2/repository/com/github/almasb/fxgl/25/fxgl-25.jar!/fxglassets/ui/fonts/Abel-Regular.ttf
+07:56:59.170 [JavaFX Application Thread] DEBUG FXGLAssetLoaderServi - Loading from file system: jar:file:/C:/Users/HP/.m2/repository/com/github/almasb/fxgl/25/fxgl-25.jar!/fxglassets/textures/fxgl_default_cursor.png
+07:56:59.174 [JavaFX Application Thread] DEBUG Input                - Registered new binding: Screenshot - CTRL+8
+07:56:59.175 [JavaFX Application Thread] DEBUG Input                - Registered new binding: Dev Options - 1
+07:56:59.176 [JavaFX Application Thread] DEBUG Input                - Registered new binding: Dev Console - 2
+07:56:59.177 [JavaFX Application Thread] DEBUG Input                - Registered new binding: System info dump - CTRL+9
+07:56:59.178 [JavaFX Application Thread] DEBUG Input                - Registered new binding: Restart - CTRL+R
+07:56:59.180 [JavaFX Application Thread] DEBUG Input                - Registered new binding: Toggle Debug Camera - CTRL+7
+07:56:59.188 [JavaFX Application Thread] DEBUG LoopRunner           - Starting loop
+07:56:59.189 [FXGL Background Thread 4 ] DEBUG FXGLAssetLoaderServi - Loading from file system: jar:file:/C:/Users/HP/.m2/repository/com/github/almasb/fxgl/25/fxgl-25.jar!/fxglassets/ui/fonts/TerminalLandMono-Regular.otf
+07:56:59.225 [JavaFX Application Thread] DEBUG LoopRunner           - Initializing JavaFX AnimationTimerLoop
+07:56:59.230 [JavaFX Application Thread] DEBUG GameApplicationServi - Starting new game
+07:56:59.231 [JavaFX Application Thread] DEBUG Input                - Clearing active input actions
+07:56:59.256 [FXGL Background Thread 4 ] DEBUG FXGLAssetLoaderServi - Loading from file system: jar:file:/C:/Users/HP/.m2/repository/com/github/almasb/fxgl/25/fxgl-25.jar!/fxglassets/ui/fonts/Courier-Prime.ttf
+07:56:59.259 [JavaFX Application Thread] DEBUG GameApplicationServi - Removing overlay from FXGLStartupScene and adding to FXGLLoadingScene
+07:56:59.268 [JavaFX Application Thread] DEBUG PrimaryStageWindow   - FXGLStartupScene -> FXGLLoadingScene
+07:56:59.269 [JavaFX Application Thread] DEBUG GameApplicationServi - Clearing previous game
+07:56:59.269 [JavaFX Application Thread] DEBUG GameScene            - Clearing game scene
+07:56:59.269 [JavaFX Application Thread] DEBUG GameWorld            - Clearing game world
+07:56:59.269 [JavaFX Application Thread] DEBUG PhysicsWorld         - Clearing physics world
+07:56:59.272 [FXGL Background Thread 1 ] DEBUG FXGLApplication      - Initializing game
+07:56:59.318 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Asset "/assets/textures/empty.png" was not found!
+07:56:59.318 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Failed to load IMAGE
+07:56:59.624 [JavaFX Application Thread] DEBUG FXGLApplication      - Registering font factories with UI factory
+07:56:59.816 [FXGL Background Thread 1 ] DEBUG FXGLAssetLoaderServi - Loading from file system: file:/D:/projects/helloworld/FarmSimulator/target/classes/assets/textures/Crops/soil_1.png
+07:56:59.827 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Asset "/assets/textures/empty.png" was not found!
+07:56:59.827 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Failed to load IMAGE
+07:56:59.828 [FXGL Background Thread 1 ] DEBUG FXGLAssetLoaderServi - Loading from file system: file:/D:/projects/helloworld/FarmSimulator/target/classes/assets/textures/Crops/rice_1.png
+07:56:59.831 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Asset "/assets/textures/empty.png" was not found!
+07:56:59.832 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Failed to load IMAGE
+07:56:59.834 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Asset "/assets/textures/empty.png" was not found!
+07:56:59.834 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Failed to load IMAGE
+07:56:59.836 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Asset "/assets/textures/empty.png" was not found!
+07:56:59.836 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Failed to load IMAGE
+07:56:59.838 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Asset "/assets/textures/empty.png" was not found!
+07:56:59.838 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Failed to load IMAGE
+07:56:59.840 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Asset "/assets/textures/empty.png" was not found!
+07:56:59.840 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Failed to load IMAGE
+07:56:59.851 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Asset "/assets/textures/empty.png" was not found!
+07:56:59.852 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Failed to load IMAGE
+07:56:59.852 [FXGL Background Thread 1 ] DEBUG FXGLAssetLoaderServi - Loading from file system: file:/D:/projects/helloworld/FarmSimulator/target/classes/assets/textures/Crops/soil_2.png
+07:56:59.856 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Asset "/assets/textures/empty.png" was not found!
+07:56:59.856 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Failed to load IMAGE
+07:56:59.857 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Asset "/assets/textures/empty.png" was not found!
+07:56:59.857 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Failed to load IMAGE
+07:56:59.872 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Asset "/assets/textures/empty.png" was not found!
+07:56:59.873 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Failed to load IMAGE
+07:56:59.874 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Asset "/assets/textures/empty.png" was not found!
+07:56:59.875 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Failed to load IMAGE
+07:56:59.881 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Asset "/assets/textures/empty.png" was not found!
+07:56:59.882 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Failed to load IMAGE
+07:56:59.883 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Asset "/assets/textures/empty.png" was not found!
+07:56:59.884 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Failed to load IMAGE
+07:56:59.885 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Asset "/assets/textures/empty.png" was not found!
+07:56:59.885 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Failed to load IMAGE
+07:56:59.886 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Asset "/assets/textures/empty.png" was not found!
+07:56:59.886 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Failed to load IMAGE
+07:56:59.888 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Asset "/assets/textures/empty.png" was not found!
+07:56:59.888 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Failed to load IMAGE
+07:56:59.889 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Asset "/assets/textures/empty.png" was not found!
+07:56:59.889 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Failed to load IMAGE
+07:56:59.890 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Asset "/assets/textures/empty.png" was not found!
+07:56:59.891 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Failed to load IMAGE
+07:56:59.892 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Asset "/assets/textures/empty.png" was not found!
+07:56:59.892 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Failed to load IMAGE
+07:56:59.893 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Asset "/assets/textures/empty.png" was not found!
+07:56:59.894 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Failed to load IMAGE
+07:56:59.895 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Asset "/assets/textures/empty.png" was not found!
+07:56:59.895 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Failed to load IMAGE
+07:56:59.897 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Asset "/assets/textures/empty.png" was not found!
+07:56:59.897 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Failed to load IMAGE
+07:56:59.898 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Asset "/assets/textures/empty.png" was not found!
+07:56:59.898 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Failed to load IMAGE
+07:56:59.900 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Asset "/assets/textures/empty.png" was not found!
+07:56:59.900 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Failed to load IMAGE
+07:56:59.901 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Asset "/assets/textures/empty.png" was not found!
+07:56:59.902 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Failed to load IMAGE
+07:56:59.903 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Asset "/assets/textures/empty.png" was not found!
+07:56:59.903 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Failed to load IMAGE
+07:56:59.904 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Asset "/assets/textures/empty.png" was not found!
+07:56:59.904 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Failed to load IMAGE
+07:56:59.905 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Asset "/assets/textures/empty.png" was not found!
+07:56:59.906 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Failed to load IMAGE
+07:56:59.906 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Asset "/assets/textures/empty.png" was not found!
+07:56:59.906 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Failed to load IMAGE
+07:56:59.907 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Asset "/assets/textures/empty.png" was not found!
+07:56:59.908 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Failed to load IMAGE
+07:56:59.908 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Asset "/assets/textures/empty.png" was not found!
+07:56:59.909 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Failed to load IMAGE
+07:56:59.910 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Asset "/assets/textures/empty.png" was not found!
+07:56:59.910 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Failed to load IMAGE
+07:56:59.910 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Asset "/assets/textures/empty.png" was not found!
+07:56:59.913 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Failed to load IMAGE
+07:56:59.914 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Asset "/assets/textures/empty.png" was not found!
+07:56:59.915 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Failed to load IMAGE
+07:56:59.916 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Asset "/assets/textures/empty.png" was not found!
+07:56:59.916 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Failed to load IMAGE
+07:56:59.917 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Asset "/assets/textures/empty.png" was not found!
+07:56:59.917 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Failed to load IMAGE
+07:56:59.918 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Asset "/assets/textures/empty.png" was not found!
+07:56:59.918 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Failed to load IMAGE
+07:56:59.919 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Asset "/assets/textures/empty.png" was not found!
+07:56:59.920 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Failed to load IMAGE
+07:56:59.921 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Asset "/assets/textures/empty.png" was not found!
+07:56:59.921 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Failed to load IMAGE
+07:56:59.922 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Asset "/assets/textures/empty.png" was not found!
+07:56:59.922 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Failed to load IMAGE
+07:56:59.923 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Asset "/assets/textures/empty.png" was not found!
+07:56:59.923 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Failed to load IMAGE
+07:56:59.925 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Asset "/assets/textures/empty.png" was not found!
+07:56:59.925 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Failed to load IMAGE
+07:56:59.926 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Asset "/assets/textures/empty.png" was not found!
+07:56:59.926 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Failed to load IMAGE
+07:56:59.927 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Asset "/assets/textures/empty.png" was not found!
+07:56:59.928 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Failed to load IMAGE
+07:56:59.929 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Asset "/assets/textures/empty.png" was not found!
+07:56:59.930 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Failed to load IMAGE
+07:56:59.931 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Asset "/assets/textures/empty.png" was not found!
+07:56:59.932 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Failed to load IMAGE
+07:56:59.933 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Asset "/assets/textures/empty.png" was not found!
+07:56:59.933 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Failed to load IMAGE
+07:56:59.934 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Asset "/assets/textures/empty.png" was not found!
+07:56:59.935 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Failed to load IMAGE
+07:56:59.935 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Asset "/assets/textures/empty.png" was not found!
+07:56:59.935 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Failed to load IMAGE
+07:56:59.936 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Asset "/assets/textures/empty.png" was not found!
+07:56:59.937 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Failed to load IMAGE
+07:56:59.937 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Asset "/assets/textures/empty.png" was not found!
+07:56:59.937 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Failed to load IMAGE
+07:56:59.939 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Asset "/assets/textures/empty.png" was not found!
+07:56:59.939 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Failed to load IMAGE
+07:56:59.940 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Asset "/assets/textures/empty.png" was not found!
+07:56:59.940 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Failed to load IMAGE
+07:56:59.942 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Asset "/assets/textures/empty.png" was not found!
+07:56:59.942 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Failed to load IMAGE
+07:56:59.943 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Asset "/assets/textures/empty.png" was not found!
+07:56:59.943 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Failed to load IMAGE
+07:56:59.944 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Asset "/assets/textures/empty.png" was not found!
+07:56:59.944 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Failed to load IMAGE
+07:56:59.945 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Asset "/assets/textures/empty.png" was not found!
+07:56:59.945 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Failed to load IMAGE
+07:56:59.946 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Asset "/assets/textures/empty.png" was not found!
+07:56:59.947 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Failed to load IMAGE
+07:56:59.947 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Asset "/assets/textures/empty.png" was not found!
+07:56:59.948 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Failed to load IMAGE
+07:56:59.949 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Asset "/assets/textures/empty.png" was not found!
+07:56:59.949 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Failed to load IMAGE
+07:56:59.950 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Asset "/assets/textures/empty.png" was not found!
+07:56:59.950 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Failed to load IMAGE
+07:56:59.951 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Asset "/assets/textures/empty.png" was not found!
+07:56:59.951 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Failed to load IMAGE
+07:56:59.952 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Asset "/assets/textures/empty.png" was not found!
+07:56:59.952 [FXGL Background Thread 1 ] WARN  FXGLAssetLoaderServi - Failed to load IMAGE
+07:56:59.958 [FXGL Background Thread 1 ] DEBUG FXGLAssetLoaderServi - Loading from file system: file:/D:/projects/helloworld/FarmSimulator/target/classes/assets/textures/UI/heart_sprite.png
+07:57:00.037 [FXGL Background Thread 1 ] WARN  TMXLevelLoader       - TiledMap generated from 1.12.0. Supported version: 1.9.0. Some features may not be parsed fully.
+07:57:00.171 [FXGL Background Thread 1 ] DEBUG TMXLevelLoader       - Parsed TiledMap: file:/D:/projects/helloworld/FarmSimulator/target/classes/assets/levels/Main_level.tmx
+07:57:00.173 [FXGL Background Thread 1 ] DEBUG TMXLevelLoader       - Creating tile layer entities
+07:57:00.180 [FXGL Background Thread 1 ] DEBUG TilesetLoader        - Loading view for layer BackgroundLayer
+07:57:00.195 [FXGL Background Thread 1 ] DEBUG TilesetLoader        - Created buffer with size 3520.0x2048.0
+07:57:00.351 [FXGL Background Thread 1 ] DEBUG TilesetLoader        - Loading view for layer DecorationLayer
+07:57:00.366 [FXGL Background Thread 1 ] DEBUG TilesetLoader        - Created buffer with size 3520.0x2048.0
+07:57:00.462 [FXGL Background Thread 1 ] DEBUG TilesetLoader        - Loading view for layer OverheadLayer
+07:57:00.480 [FXGL Background Thread 1 ] DEBUG TilesetLoader        - Created buffer with size 3520.0x2048.0
+07:57:00.487 [FXGL Background Thread 1 ] DEBUG TMXLevelLoader       - Creating object layer entities
+07:57:00.524 [FXGL Background Thread 1 ] DEBUG FXGLAssetLoaderServi - Loading from file system: file:/D:/projects/helloworld/FarmSimulator/target/classes/assets/textures/Player/Carry_Idle/Carry_Idle_Down-Sheet.png
+07:57:00.531 [FXGL Background Thread 1 ] DEBUG FXGLAssetLoaderServi - Loading from file system: file:/D:/projects/helloworld/FarmSimulator/target/classes/assets/textures/Player/Carry_Idle/Carry_Idle_Up-Sheet.png
+07:57:00.536 [FXGL Background Thread 1 ] DEBUG FXGLAssetLoaderServi - Loading from file system: file:/D:/projects/helloworld/FarmSimulator/target/classes/assets/textures/Player/Carry_Idle/Carry_Idle_Side-Sheet.png
+07:57:00.539 [FXGL Background Thread 1 ] DEBUG FXGLAssetLoaderServi - Loading from file system: file:/D:/projects/helloworld/FarmSimulator/target/classes/assets/textures/Player/Carry_Walk/Carry_Walk_Down-Sheet.png
+07:57:00.541 [FXGL Background Thread 1 ] DEBUG FXGLAssetLoaderServi - Loading from file system: file:/D:/projects/helloworld/FarmSimulator/target/classes/assets/textures/Player/Carry_Walk/Carry_Walk_Up-Sheet.png
+07:57:00.542 [FXGL Background Thread 1 ] DEBUG FXGLAssetLoaderServi - Loading from file system: file:/D:/projects/helloworld/FarmSimulator/target/classes/assets/textures/Player/Carry_Walk/Carry_Walk_Side-Sheet.png
+07:57:00.545 [FXGL Background Thread 1 ] DEBUG FXGLAssetLoaderServi - Loading from file system: file:/D:/projects/helloworld/FarmSimulator/target/classes/assets/textures/Player/Carry_Run/Carry_Run_Down-Sheet.png
+07:57:00.549 [FXGL Background Thread 1 ] DEBUG FXGLAssetLoaderServi - Loading from file system: file:/D:/projects/helloworld/FarmSimulator/target/classes/assets/textures/Player/Carry_Run/Carry_Run_Up-Sheet.png
+07:57:00.553 [FXGL Background Thread 1 ] DEBUG FXGLAssetLoaderServi - Loading from file system: file:/D:/projects/helloworld/FarmSimulator/target/classes/assets/textures/Player/Carry_Run/Carry_Run_Side-Sheet.png
+07:57:00.980 [FXGL Background Thread 1 ] DEBUG FXGLAssetLoaderServi - Loading from file system: file:/D:/projects/helloworld/FarmSimulator/target/classes/assets/textures/NPC/Trader/Trader.png
+07:57:01.003 [FXGL Background Thread 1 ] DEBUG FXGLAssetLoaderServi - Loading from file system: file:/D:/projects/helloworld/FarmSimulator/target/classes/assets/textures/NPC/Guider/Guider.png
+07:57:01.008 [FXGL Background Thread 1 ] DEBUG GameWorld            - Clearing removable entities
+07:57:01.010 [FXGL Background Thread 1 ] DEBUG GameWorld            - Setting level: com.almasb.fxgl.entity.level.Level@16a9d478
+07:57:01.157 [FXGL Background Thread 1 ] INFO  FXGLApplication      - Game initialization took: 1.884 sec
+07:57:01.159 [JavaFX Application Thread] DEBUG Input                - Clearing active input actions
+07:57:01.213 [JavaFX Application Thread] DEBUG GameApplicationServi - Removing overlay from FXGLLoadingScene and adding to GameScene
+07:57:01.223 [JavaFX Application Thread] DEBUG PrimaryStageWindow   - FXGLLoadingScene -> GameScene
+07:57:02.063 [FXGL Background Thread 3 ] DEBUG Engine               - Logging environment variables
+07:57:02.064 [FXGL Background Thread 3 ] DEBUG Engine               - achievements: []
+07:57:02.064 [FXGL Background Thread 3 ] DEBUG Engine               - actualHeight: 720.0
+07:57:02.064 [FXGL Background Thread 3 ] DEBUG Engine               - actualHeightProperty: ReadOnlyDoubleProperty [value: 720.0]
+07:57:02.064 [FXGL Background Thread 3 ] DEBUG Engine               - actualWidth: 1280.0
+07:57:02.064 [FXGL Background Thread 3 ] DEBUG Engine               - actualWidthProperty: ReadOnlyDoubleProperty [value: 1280.0]
+07:57:02.064 [FXGL Background Thread 3 ] DEBUG Engine               - appIcon: fxgl_icon.png
+07:57:02.065 [FXGL Background Thread 3 ] DEBUG Engine               - applicationMode: DEVELOPER
+07:57:02.065 [FXGL Background Thread 3 ] DEBUG Engine               - cSSList: [fxgl_dark.css]
+07:57:02.065 [FXGL Background Thread 3 ] DEBUG Engine               - collisionDetectionStrategy: BRUTE_FORCE
+07:57:02.065 [FXGL Background Thread 3 ] DEBUG Engine               - configClass: Optional.empty
+07:57:02.065 [FXGL Background Thread 3 ] DEBUG Engine               - credits: []
+07:57:02.065 [FXGL Background Thread 3 ] DEBUG Engine               - defaultCursor: CursorInfo(imageName=fxgl_default_cursor.png, hotspotX=7.0, hotspotY=6.0)
+07:57:02.066 [FXGL Background Thread 3 ] DEBUG Engine               - devBBoxColorProperty: ObjectProperty [value: 0xff0000ff]
+07:57:02.066 [FXGL Background Thread 3 ] DEBUG Engine               - devEnableDebugCameraProperty: BooleanProperty [value: false]
+07:57:02.066 [FXGL Background Thread 3 ] DEBUG Engine               - devSensorColorProperty: ObjectProperty [value: 0xffff00ff]
+07:57:02.066 [FXGL Background Thread 3 ] DEBUG Engine               - devShowBBoxProperty: BooleanProperty [value: false]
+07:57:02.066 [FXGL Background Thread 3 ] DEBUG Engine               - devShowPositionProperty: BooleanProperty [value: false]
+07:57:02.066 [FXGL Background Thread 3 ] DEBUG Engine               - enabledMenuItems: []
+07:57:02.066 [FXGL Background Thread 3 ] DEBUG Engine               - engineServices: [class com.almasb.fxgl.app.services.FXGLAssetLoaderService, class com.almasb.fxgl.app.FXGLApplication$GameApplicationService, class com.almasb.fxgl.app.services.FXGLDialogService, class com.almasb.fxgl.app.services.IOTaskExecutorService, class com.almasb.fxgl.io.FileSystemService, class com.almasb.fxgl.localization.LocalizationService, class com.almasb.fxgl.app.services.SystemBundleService, class com.almasb.fxgl.profile.SaveLoadService, class com.almasb.fxgl.ui.FXGLUIFactoryServiceProvider, class com.almasb.fxgl.ui.FXGLDialogFactoryServiceProvider, class com.almasb.fxgl.audio.AudioPlayer, class com.almasb.fxgl.notification.impl.NotificationServiceProvider, class com.almasb.fxgl.achievement.AchievementService, class com.almasb.fxgl.cutscene.CutsceneService, class com.almasb.fxgl.minigames.MiniGameService, class com.almasb.fxgl.net.NetService, class com.almasb.fxgl.app.services.UpdaterService, class com.almasb.fxgl.dev.DevService]
+07:57:02.066 [FXGL Background Thread 3 ] DEBUG Engine               - fontGame: Abel-Regular.ttf
+07:57:02.067 [FXGL Background Thread 3 ] DEBUG Engine               - fontMono: TerminalLandMono-Regular.otf
+07:57:02.067 [FXGL Background Thread 3 ] DEBUG Engine               - fontSizeScaleUI: 1.0
+07:57:02.067 [FXGL Background Thread 3 ] DEBUG Engine               - fontText: Courier-Prime.ttf
+07:57:02.067 [FXGL Background Thread 3 ] DEBUG Engine               - fontUI: VarelaRound-Regular.ttf
+07:57:02.068 [FXGL Background Thread 3 ] DEBUG Engine               - fpsRefreshRate: 500.0 ms
+07:57:02.068 [FXGL Background Thread 3 ] DEBUG Engine               - fullScreen: BooleanProperty [value: false]
+07:57:02.068 [FXGL Background Thread 3 ] DEBUG Engine               - gameDifficulty: MEDIUM
+07:57:02.068 [FXGL Background Thread 3 ] DEBUG Engine               - gameDifficultyProperty: ObjectProperty [value: MEDIUM]
+07:57:02.068 [FXGL Background Thread 3 ] DEBUG Engine               - globalMusicVolume: 0.5
+07:57:02.068 [FXGL Background Thread 3 ] DEBUG Engine               - globalMusicVolumeProperty: DoubleProperty [value: 0.5]
+07:57:02.068 [FXGL Background Thread 3 ] DEBUG Engine               - globalSoundVolume: 0.5
+07:57:02.068 [FXGL Background Thread 3 ] DEBUG Engine               - globalSoundVolumeProperty: DoubleProperty [value: 0.5]
+07:57:02.068 [FXGL Background Thread 3 ] DEBUG Engine               - height: 720
+07:57:02.068 [FXGL Background Thread 3 ] DEBUG Engine               - is3D: false
+07:57:02.068 [FXGL Background Thread 3 ] DEBUG Engine               - isAndroid: false
+07:57:02.068 [FXGL Background Thread 3 ] DEBUG Engine               - isBrowser: false
+07:57:02.069 [FXGL Background Thread 3 ] DEBUG Engine               - isClickFeedbackEnabled: false
+07:57:02.069 [FXGL Background Thread 3 ] DEBUG Engine               - isCloseConfirmation: false
+07:57:02.069 [FXGL Background Thread 3 ] DEBUG Engine               - isDesktop: true
+07:57:02.069 [FXGL Background Thread 3 ] DEBUG Engine               - isDeveloperMenuEnabled: true
+07:57:02.069 [FXGL Background Thread 3 ] DEBUG Engine               - isEmbedded: false
+07:57:02.069 [FXGL Background Thread 3 ] DEBUG Engine               - isEntityPreloadEnabled: true
+07:57:02.069 [FXGL Background Thread 3 ] DEBUG Engine               - isExperimentalTiledLargeMap: false
+07:57:02.069 [FXGL Background Thread 3 ] DEBUG Engine               - isFileSystemWriteAllowed: true
+07:57:02.069 [FXGL Background Thread 3 ] DEBUG Engine               - isFullScreenAllowed: false
+07:57:02.069 [FXGL Background Thread 3 ] DEBUG Engine               - isFullScreenFromStart: false
+07:57:02.069 [FXGL Background Thread 3 ] DEBUG Engine               - isGameMenuEnabled: true
+07:57:02.069 [FXGL Background Thread 3 ] DEBUG Engine               - isIOS: false
+07:57:02.069 [FXGL Background Thread 3 ] DEBUG Engine               - isIntroEnabled: false
+07:57:02.069 [FXGL Background Thread 3 ] DEBUG Engine               - isLinux: false
+07:57:02.070 [FXGL Background Thread 3 ] DEBUG Engine               - isMac: false
+07:57:02.070 [FXGL Background Thread 3 ] DEBUG Engine               - isMainMenuEnabled: false
+07:57:02.070 [FXGL Background Thread 3 ] DEBUG Engine               - isManualResizeEnabled: false
+07:57:02.070 [FXGL Background Thread 3 ] DEBUG Engine               - isMobile: false
+07:57:02.070 [FXGL Background Thread 3 ] DEBUG Engine               - isNative: false
+07:57:02.070 [FXGL Background Thread 3 ] DEBUG Engine               - isPauseMusicWhenMinimized: true
+07:57:02.070 [FXGL Background Thread 3 ] DEBUG Engine               - isPreserveResizeRatio: false
+07:57:02.070 [FXGL Background Thread 3 ] DEBUG Engine               - isProfilingEnabled: false
+07:57:02.070 [FXGL Background Thread 3 ] DEBUG Engine               - isScaleAffectedOnResize: true
+07:57:02.070 [FXGL Background Thread 3 ] DEBUG Engine               - isSingleStep: false
+07:57:02.070 [FXGL Background Thread 3 ] DEBUG Engine               - isUserProfileEnabled: false
+07:57:02.070 [FXGL Background Thread 3 ] DEBUG Engine               - isWindows: true
+07:57:02.070 [FXGL Background Thread 3 ] DEBUG Engine               - language: ObjectProperty [value: ENGLISH]
+07:57:02.070 [FXGL Background Thread 3 ] DEBUG Engine               - menuKey: ESCAPE
+07:57:02.070 [FXGL Background Thread 3 ] DEBUG Engine               - mouseSensitivity: 0.2
+07:57:02.070 [FXGL Background Thread 3 ] DEBUG Engine               - notificationViewClass: class com.almasb.fxgl.notification.view.XboxNotificationView
+07:57:02.071 [FXGL Background Thread 3 ] DEBUG Engine               - pixelsPerMeter: 50.0
+07:57:02.071 [FXGL Background Thread 3 ] DEBUG Engine               - platform: WINDOWS
+07:57:02.071 [FXGL Background Thread 3 ] DEBUG Engine               - prefHeightProperty: ReadOnlyDoubleProperty [value: 720.0]
+07:57:02.071 [FXGL Background Thread 3 ] DEBUG Engine               - prefWidthProperty: ReadOnlyDoubleProperty [value: 1280.0]
+07:57:02.071 [FXGL Background Thread 3 ] DEBUG Engine               - profileDir: profiles/
+07:57:02.071 [FXGL Background Thread 3 ] DEBUG Engine               - profileName: StringProperty [value: DEFAULT]
+07:57:02.071 [FXGL Background Thread 3 ] DEBUG Engine               - randomSeed: -1
+07:57:02.071 [FXGL Background Thread 3 ] DEBUG Engine               - runtimeInfo: RuntimeInfo(platform=WINDOWS, version=25, build=05.02.2026 22.57)
+07:57:02.071 [FXGL Background Thread 3 ] DEBUG Engine               - saveFileExt: sav
+07:57:02.072 [FXGL Background Thread 3 ] DEBUG Engine               - scaledHeightProp$fxgl: DoubleProperty [bound, value: 720.0]
+07:57:02.072 [FXGL Background Thread 3 ] DEBUG Engine               - scaledWidthProp$fxgl: DoubleProperty [bound, value: 1280.0]
+07:57:02.072 [FXGL Background Thread 3 ] DEBUG Engine               - sceneFactory: com.almasb.fxgl.app.scene.SceneFactory@51d198c
+07:57:02.072 [FXGL Background Thread 3 ] DEBUG Engine               - secondsIn24h: 60
+07:57:02.072 [FXGL Background Thread 3 ] DEBUG Engine               - soundMenuBack: menu/back.wav
+07:57:02.072 [FXGL Background Thread 3 ] DEBUG Engine               - soundMenuPress: menu/press.wav
+07:57:02.072 [FXGL Background Thread 3 ] DEBUG Engine               - soundMenuSelect: menu/select.wav
+07:57:02.072 [FXGL Background Thread 3 ] DEBUG Engine               - soundNotification: core/notification.wav
+07:57:02.072 [FXGL Background Thread 3 ] DEBUG Engine               - stageStyle: DECORATED
+07:57:02.072 [FXGL Background Thread 3 ] DEBUG Engine               - supportedLanguages: [ENGLISH, FRENCH, GERMAN, HUNGARIAN, RUSSIAN]
+07:57:02.072 [FXGL Background Thread 3 ] DEBUG Engine               - ticksPerSecond: -1
+07:57:02.072 [FXGL Background Thread 3 ] DEBUG Engine               - title: Java Farming Professional
+07:57:02.072 [FXGL Background Thread 3 ] DEBUG Engine               - urlGithub: https://github.com/AlmasB/FXGL
+07:57:02.072 [FXGL Background Thread 3 ] DEBUG Engine               - urlLeaderboard: http://fxgl-top.herokuapp.com/
+07:57:02.072 [FXGL Background Thread 3 ] DEBUG Engine               - urlPOM: https://raw.githubusercontent.com/AlmasB/FXGL/release/README.md
+07:57:02.073 [FXGL Background Thread 3 ] DEBUG Engine               - userAppClass: class Project1Game.Main
+07:57:02.073 [FXGL Background Thread 3 ] DEBUG Engine               - version: 2.5
+07:57:02.073 [FXGL Background Thread 3 ] DEBUG Engine               - versionCheckDays: 7
+07:57:02.073 [FXGL Background Thread 3 ] DEBUG Engine               - width: 1280
+07:57:02.073 [FXGL Background Thread 3 ] DEBUG Engine               - Logging services
+07:57:02.073 [FXGL Background Thread 3 ] DEBUG Engine               - class com.almasb.fxgl.app.services.FXGLAssetLoaderService
+07:57:02.073 [FXGL Background Thread 3 ] DEBUG Engine               - class com.almasb.fxgl.app.FXGLApplication$GameApplicationService
+07:57:02.073 [FXGL Background Thread 3 ] DEBUG Engine               - class com.almasb.fxgl.app.services.FXGLDialogService
+07:57:02.073 [FXGL Background Thread 3 ] DEBUG Engine               - class com.almasb.fxgl.app.services.IOTaskExecutorService
+07:57:02.073 [FXGL Background Thread 3 ] DEBUG Engine               - class com.almasb.fxgl.io.FileSystemService
+07:57:02.073 [FXGL Background Thread 3 ] DEBUG Engine               - class com.almasb.fxgl.localization.LocalizationService
+07:57:02.073 [FXGL Background Thread 3 ] DEBUG Engine               - class com.almasb.fxgl.app.services.SystemBundleService
+07:57:02.073 [FXGL Background Thread 3 ] DEBUG Engine               - class com.almasb.fxgl.profile.SaveLoadService
+07:57:02.073 [FXGL Background Thread 3 ] DEBUG Engine               - class com.almasb.fxgl.ui.FXGLUIFactoryServiceProvider
+07:57:02.073 [FXGL Background Thread 3 ] DEBUG Engine               - class com.almasb.fxgl.ui.FXGLDialogFactoryServiceProvider
+07:57:02.074 [FXGL Background Thread 3 ] DEBUG Engine               - class com.almasb.fxgl.audio.AudioPlayer
+07:57:02.074 [FXGL Background Thread 3 ] DEBUG Engine               - class com.almasb.fxgl.notification.impl.NotificationServiceProvider
+07:57:02.074 [FXGL Background Thread 3 ] DEBUG Engine               - class com.almasb.fxgl.achievement.AchievementService
+07:57:02.074 [FXGL Background Thread 3 ] DEBUG Engine               - class com.almasb.fxgl.cutscene.CutsceneService
+07:57:02.074 [FXGL Background Thread 3 ] DEBUG Engine               - class com.almasb.fxgl.minigames.MiniGameService
+07:57:02.074 [FXGL Background Thread 3 ] DEBUG Engine               - class com.almasb.fxgl.net.NetService
+07:57:02.074 [FXGL Background Thread 3 ] DEBUG Engine               - class com.almasb.fxgl.app.services.UpdaterService
+07:57:02.074 [FXGL Background Thread 3 ] DEBUG Engine               - class com.almasb.fxgl.dev.DevService
+07:57:45.542 [JavaFX Application Thread] DEBUG FXGLAssetLoaderServi - Loading from file system: file:/D:/projects/helloworld/FarmSimulator/target/classes/assets/textures/Crops/rice_3.png
+07:57:53.007 [JavaFX Application Thread] DEBUG FXGLApplication      - Exiting FXGL
+07:57:53.007 [JavaFX Application Thread] DEBUG LoopRunner           - Stopping loop
+07:57:53.009 [JavaFX Application Thread] DEBUG SystemBundleService  - Saving FXGL system data
+07:57:53.012 [JavaFX Application Thread] DEBUG FileSystemAccess     - Writing to: D:\projects\helloworld\FarmSimulator\system\fxgl.bundle
+07:57:53.016 [JavaFX Application Thread] DEBUG Async                - Shutting down background threads
+07:57:53.016 [JavaFX Application Thread] DEBUG PrimaryStageWindow   - Closing main window
+07:57:53.042 [JavaFX Application Thread] DEBUG Logger               - Closing Logger

@@ -2,12 +2,17 @@ package Project1Game.ui;
 
 import Project1Game.core.ItemType;
 import Project1Game.model.Inventory;
+import Project1Game.model.InventorySlot;
 import com.almasb.fxgl.dsl.FXGL;
 import com.almasb.fxgl.texture.Texture;
 
 import javafx.beans.binding.Bindings;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.input.ClipboardContent;
+import javafx.scene.input.DragEvent;
+import javafx.scene.input.Dragboard;
+import javafx.scene.input.TransferMode;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
@@ -43,14 +48,16 @@ public class InventoryView extends VBox {
         grid.setVgap(SLOT_GAP);
         grid.setPadding(new Insets(8));
 
-        // Bỏ qua 9 slot hotbar đầu, lấy 27 slot còn lại
-        ItemType[] all = inventory.getAllSlots();
-        int startIdx = Inventory.HOTBAR_SIZE;
+        // Lấy tất cả các slot từ inventory
+        InventorySlot[] allSlots = inventory.getSlots();
+        // Bắt đầu từ sau các slot hotbar
+        int inventoryStartIndex = Inventory.HOTBAR_SIZE;
+
         for (int i = 0; i < ROWS * COLS; i++) {
-            int idx = startIdx + i;
-            ItemType type = idx < all.length ? all[idx] : null;
-            StackPane slot = createSlot(type);
-            grid.add(slot, i % COLS, i / COLS);
+            int fullIndex = inventoryStartIndex + i; // Chỉ số đầy đủ trong mảng slots của Inventory
+            InventorySlot slot = allSlots[fullIndex];
+            StackPane slotPane = createSlot(slot, fullIndex);
+            grid.add(slotPane, i % COLS, i / COLS);
         }
 
         setAlignment(Pos.CENTER);
@@ -63,7 +70,7 @@ public class InventoryView extends VBox {
         setVisible(false);
     }
 
-    private StackPane createSlot(ItemType type) {
+    private StackPane createSlot(InventorySlot inventorySlot, int fullIndex) {
         StackPane pane = new StackPane();
         pane.setPrefSize(SLOT_SIZE, SLOT_SIZE);
 
@@ -75,30 +82,75 @@ public class InventoryView extends VBox {
         bg.setArcHeight(6);
         pane.getChildren().add(bg);
 
-        if (type != null && type.getIconName() != null && !type.getIconName().isEmpty()) {
-            Texture icon = FXGL.texture(type.getIconName());
-            icon.setFitWidth(40);
-            icon.setFitHeight(40);
-            icon.setPreserveRatio(true);
-            pane.getChildren().add(icon);
+        // Icon vật phẩm
+        Texture icon = new Texture(FXGL.image("empty.png")); // Icon mặc định trống
+        icon.setFitWidth(40);
+        icon.setFitHeight(40);
+        icon.setPreserveRatio(true);
+        pane.getChildren().add(icon);
 
-            Text countText = new Text();
-            countText.setFont(Font.font("Arial", 14));
-            countText.setFill(Color.WHITE);
-            countText.textProperty().bind(
+        // Liên kết icon với itemTypeProperty của InventorySlot
+        icon.imageProperty().bind(
+                Bindings.createObjectBinding(() -> {
+                    ItemType itemType = inventorySlot.getItemType();
+                    return itemType != null && itemType.getIconName() != null && !itemType.getIconName().isEmpty()
+                            ? FXGL.image(itemType.getIconName())
+                            : FXGL.image("empty.png"); // Hình ảnh trống
+                }, inventorySlot.itemTypeProperty())
+        );
+
+        // Số lượng
+        Text countText = new Text();
+        countText.setFont(Font.font("Arial", 14));
+        countText.setFill(Color.WHITE);
+        countText.textProperty().bind(
                 Bindings.createStringBinding(
-                    () -> {
-                        int count = inventory.countProperty(type).get();
-                        return count > 0 ? String.valueOf(count) : "";
-                    },
-                    inventory.countProperty(type)
+                        () -> {
+                            int count = inventorySlot.getCount();
+                            return count > 0 ? String.valueOf(count) : "";
+                        },
+                        inventorySlot.countProperty()
                 )
-            );
-            StackPane.setAlignment(countText, Pos.BOTTOM_RIGHT);
-            countText.setTranslateX(-3);
-            countText.setTranslateY(-2);
-            pane.getChildren().add(countText);
-        }
+        );
+        StackPane.setAlignment(countText, Pos.BOTTOM_RIGHT);
+        countText.setTranslateX(-3);
+        countText.setTranslateY(-2);
+        pane.getChildren().add(countText);
+
+        // --- Drag and Drop Source ---
+        pane.setOnDragDetected(event -> {
+            if (!inventorySlot.isEmpty()) {
+                Dragboard db = pane.startDragAndDrop(TransferMode.MOVE);
+                ClipboardContent content = new ClipboardContent();
+                content.putString(String.valueOf(fullIndex)); // Lưu chỉ mục đầy đủ của slot nguồn
+                db.setContent(content);
+                db.setDragView(icon.snapshot(null, null)); // Đặt hình ảnh kéo là icon vật phẩm
+                event.consume();
+            }
+        });
+
+        // --- Drag and Drop Target ---
+        pane.setOnDragOver(event -> {
+            if (event.getGestureSource() != pane && event.getDragboard().hasString()) {
+                event.acceptTransferModes(TransferMode.MOVE);
+            }
+            event.consume();
+        });
+
+        pane.setOnDragDropped(event -> {
+            Dragboard db = event.getDragboard();
+            boolean success = false;
+            if (db.hasString()) {
+                int sourceIndex = Integer.parseInt(db.getString());
+                int targetIndex = fullIndex; // Chỉ mục đầy đủ của slot hiện tại
+
+                // Di chuyển vật phẩm trong inventory
+                inventory.moveItem(sourceIndex, targetIndex);
+                success = true;
+            }
+            event.setDropCompleted(success);
+            event.consume();
+        });
 
         return pane;
     }

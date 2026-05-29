@@ -3,6 +3,9 @@ package Project1Game.factory;
 import Project1Game.component.farming.CropComponent;
 import Project1Game.component.farming.SoilComponent;
 import Project1Game.component.player.PlayerComponent;
+import Project1Game.component.NPCAnimationComponent;
+import Project1Game.component.NPCBehaviorComponent;
+import Project1Game.component.TraderComponent; // Import TraderComponent
 import Project1Game.core.EntityType;
 import Project1Game.config.CropData;
 import com.almasb.fxgl.dsl.FXGL;
@@ -12,12 +15,21 @@ import com.almasb.fxgl.physics.box2d.dynamics.BodyType;
 import com.almasb.fxgl.physics.box2d.dynamics.FixtureDef;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
-
+import com.almasb.fxgl.core.collection.UpdatableObjectProperty; // Import UpdatableObjectProperty
 
 /**
  * Factory quản lý việc tạo tất cả thực thể trong game.
  */
 public class GameEntityFactory implements EntityFactory {
+
+    /**
+     * Xử lý các đối tượng không có Type trong Tiled để tránh crash game.
+     */
+    @Spawns("")
+    public Entity spawnEmpty(SpawnData data) {
+        System.err.println("Cảnh báo: Phát hiện đối tượng không có Type tại: " + data.getX() + "," + data.getY());
+        return new Entity(); // Trả về entity rỗng thay vì để game crash
+    }
 
     // ================= NHÂN VẬT CHÍNH =================
     @Spawns("Player")
@@ -124,7 +136,70 @@ public class GameEntityFactory implements EntityFactory {
 
     @Spawns("Door")
     public Entity spawnDoor(SpawnData data) {
-        return spawnInteraction(data);
+        double w = data.hasKey("width") ? ((Number) data.get("width")).doubleValue() : 32.0;
+        double h = data.hasKey("height") ? ((Number) data.get("height")).doubleValue() : 32.0;
+
+        String targetMapValue = data.hasKey("targetMap") ? (String) data.get("targetMap") : "default_map.tmx";
+
+        double targetXValue = 0.0;
+        if (data.hasKey("targetX")) {
+            Object obj = data.get("targetX");
+            if (obj instanceof UpdatableObjectProperty) {
+                obj = ((UpdatableObjectProperty<?>) obj).getValue();
+            }
+            if (obj instanceof Number) {
+                targetXValue = ((Number) obj).doubleValue();
+            } else {
+                try { targetXValue = Double.parseDouble(String.valueOf(obj)); } catch (NumberFormatException e) {}
+            }
+        }
+
+        double targetYValue = 0.0;
+        if (data.hasKey("targetY")) {
+            Object obj = data.get("targetY");
+            if (obj instanceof UpdatableObjectProperty) {
+                obj = ((UpdatableObjectProperty<?>) obj).getValue();
+            }
+            if (obj instanceof Number) {
+                targetYValue = ((Number) obj).doubleValue();
+            } else {
+                try { targetYValue = Double.parseDouble(String.valueOf(obj)); } catch (NumberFormatException e) {}
+            }
+        }
+
+        return FXGL.entityBuilder(data)
+                .type(EntityType.DOOR)
+                .bbox(new HitBox(BoundingShape.box(w, h)))
+                .zIndex(1)
+                .with("targetMap", targetMapValue)
+                // ĐỔI TÊN Ở ĐÂY để tránh xung đột với Tiled
+                .with("teleportX", targetXValue)
+                .with("teleportY", targetYValue)
+                .collidable()
+                .build();
+    }
+
+    // Chuyển sang các phương thức riêng biệt gọi chung logic để tránh lỗi repeatable annotation
+    @Spawns("House_in")
+    public Entity spawnHouseIn(SpawnData data) {
+        return spawnDoor(data);
+    }
+
+    @Spawns("House_out")
+    public Entity spawnHouseOut(SpawnData data) {
+        return spawnDoor(data);
+    }
+
+    @Spawns("Sleep")
+    public Entity spawnSleep(SpawnData data) {
+        double w = data.hasKey("width") ? ((Number) data.get("width")).doubleValue() : 32.0;
+        double h = data.hasKey("height") ? ((Number) data.get("height")).doubleValue() : 32.0;
+
+        return FXGL.entityBuilder(data)
+                .type(EntityType.SLEEP)
+                .bbox(new HitBox(BoundingShape.box(w, h)))
+                .collidable()
+                .build();
     }
 
     @Spawns("Selector")
@@ -139,9 +214,15 @@ public class GameEntityFactory implements EntityFactory {
 
     @Spawns("Guider")
     public Entity spawnGuider(SpawnData data) {
+        PhysicsComponent physics = new PhysicsComponent();
+        physics.setBodyType(BodyType.KINEMATIC);
+        
         return FXGL.entityBuilder(data).type(EntityType.GUIDER)
-                .bbox(new HitBox(BoundingShape.box(32, 48)))
-                .with(new PhysicsComponent())
+                .bbox(new HitBox(BoundingShape.box(32, 64)))
+                .with(physics)
+                .with(new NPCAnimationComponent())
+                .with(new NPCBehaviorComponent())
+                .with("name", "Bác Nông Dân")
                 .collidable()
                 .build();
     }
@@ -160,10 +241,17 @@ public class GameEntityFactory implements EntityFactory {
 
     @Spawns("Trader")
     public Entity spawnTrader(SpawnData data) {
+        PhysicsComponent physics = new PhysicsComponent();
+        physics.setBodyType(BodyType.KINEMATIC);
+
         return FXGL.entityBuilder(data)
                 .type(EntityType.TRADER)
-                .bbox(new HitBox(BoundingShape.box(32, 48)))
-                .with(new PhysicsComponent())
+                .bbox(new HitBox(BoundingShape.box(32, 64)))
+                .with(physics)
+                .with(new NPCAnimationComponent("NPC/Trader/Trader.png")) // Gắn animation component cho Trader
+                .with(new NPCBehaviorComponent()) // Thêm component điều khiển hành vi
+                .with(new TraderComponent()) // Gắn TraderComponent vào Trader entity
+                .with("name", "Trader")
                 .collidable()
                 .build();
     }

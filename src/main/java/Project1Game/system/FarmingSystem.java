@@ -2,6 +2,7 @@ package Project1Game.system;
 
 import Project1Game.component.farming.CropComponent;
 import Project1Game.component.farming.SoilComponent;
+import Project1Game.config.CropData; // Import CropData
 import Project1Game.core.EntityType;
 import Project1Game.core.ItemType;
 import Project1Game.model.Inventory;
@@ -106,8 +107,12 @@ public class FarmingSystem {
                                 .findFirst().ifPresent(s -> s.getComponent(SoilComponent.class).setHasPlant(false));
 
                         ItemType res = ItemType.valueOf(t.name());
+                        CropData cropData = c.getComponent(CropComponent.class).getData(); // Lấy CropData từ CropComponent
+
                         c.removeFromWorld();
-                        inventory.addItem(res, 1);
+                        int yield = cropData.yield;
+                        inventory.addItem(res, yield);
+                        System.out.println("Thu hoạch " + res.getDisplayName() + " với số lượng " + yield + "!"); // In ra sản lượng
                         QuestManager.getInstance().broadcast(new QuestContext(QuestContext.EventType.HARVEST, res));
                     });
         }

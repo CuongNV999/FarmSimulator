@@ -22,6 +22,9 @@ public class CropComponent extends Component {
 
     private final CropData data;
 
+    private javafx.event.EventHandler<DayNightEvent> nightHandler;
+    private javafx.event.EventHandler<DayNightEvent> dayHandler;
+
     public CropComponent(CropData data) {
         this.data = data;
     }
@@ -29,25 +32,36 @@ public class CropComponent extends Component {
     @Override
     public void onAdded() {
         updateView();
-        growTimer = FXGL.getGameTimer().runAtInterval(this::grow, data.growthInterval);
+        // Sử dụng data.growthTime thay vì data.growthInterval
+        growTimer = FXGL.getGameTimer().runAtInterval(this::grow, data.growthTime);
 
         // Đảm bảo ban đầu kiểm tra đúng trạng thái ngày đêm
         canGrow = Main.isDayTime();
 
-        // Lắng nghe sự kiện từ EventBus
-        FXGL.getEventBus().addEventHandler(DayNightEvent.SET_NIGHT, e -> {
+        // Định nghĩa handler
+        nightHandler = e -> {
             canGrow = false;
             System.out.println(data.type + " ngừng lớn vì trời tối.");
-        });
+        };
 
-        FXGL.getEventBus().addEventHandler(DayNightEvent.SET_DAY, e -> {
+        dayHandler = e -> {
             canGrow = true;
             System.out.println(data.type + " bắt đầu lớn lại vì có nắng.");
-        });
+        };
+
+        // Lắng nghe sự kiện từ EventBus
+        FXGL.getEventBus().addEventHandler(DayNightEvent.SET_NIGHT, nightHandler);
+        FXGL.getEventBus().addEventHandler(DayNightEvent.SET_DAY, dayHandler);
     }
     @Override
     public void onRemoved() {
         if (growTimer != null) growTimer.expire();
+        if (nightHandler != null) {
+            FXGL.getEventBus().removeEventHandler(DayNightEvent.SET_NIGHT, nightHandler);
+        }
+        if (dayHandler != null) {
+            FXGL.getEventBus().removeEventHandler(DayNightEvent.SET_DAY, dayHandler);
+        }
     }
 
     private void updateView() {
@@ -67,16 +81,26 @@ public class CropComponent extends Component {
             return;
         }
 
+        // Drought slows down growth by 50%
+        if (Project1Game.system.WeatherSystem.getCurrentWeather() == Project1Game.system.WeatherSystem.Weather.DROUGHT) {
+            if (Math.random() < 0.5) {
+                return;
+            }
+        }
+
         if (stage < MAX_STAGE) {
             FXGL.getGameWorld().getEntitiesByType(EntityType.SOIL).stream()
                     .filter(s -> s.getPosition().distance(entity.getPosition()) < 5)
                     .findFirst()
                     .ifPresent(soil -> {
                         SoilComponent sc = soil.getComponent(SoilComponent.class);
+                        boolean isRaining = (Project1Game.system.WeatherSystem.getCurrentWeather() == Project1Game.system.WeatherSystem.Weather.RAINY);
                         if (sc.isWet()) {
                             stage++;
                             updateView();
-                            sc.setWet(false);
+                            if (!isRaining) {
+                                sc.setWet(false);
+                            }
                         }
                     });
         }
@@ -88,5 +112,10 @@ public class CropComponent extends Component {
     }
     public boolean isRipe() {
         return stage == MAX_STAGE;
+    }
+
+    // Phương thức mới để truy cập CropData
+    public CropData getData() {
+        return data;
     }
 }

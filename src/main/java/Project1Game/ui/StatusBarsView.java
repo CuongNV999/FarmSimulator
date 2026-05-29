@@ -32,7 +32,6 @@ public class StatusBarsView extends Parent {
     private final Texture halfHeart;
     private final Texture emptyHeart;
     private final Rectangle hungerFill;
-    private final Text healthText;
     private final Text hungerText;
 
     public StatusBarsView() {
@@ -57,11 +56,7 @@ public class StatusBarsView extends Parent {
             heartsContainer.getChildren().add(heart);
         }
 
-        healthText = new Text("18 / 18");
-        healthText.setFont(Font.font("Arial", 16));
-        healthText.setFill(Color.WHITE);
-        healthText.setTranslateX(NUM_HEARTS * (32 + 4) + 10);
-        healthText.setTranslateY(y + 20);
+
 
         // --- Thanh thức ăn ---
         y += BAR_HEIGHT + SPACING;
@@ -92,7 +87,7 @@ public class StatusBarsView extends Parent {
         hungerText.setTranslateY(y + 20);
 
         getChildren().addAll(
-                heartsContainer, healthText,
+                heartsContainer,
                 hungerBg, hungerFill, hungerLabel, hungerText
         );
 
@@ -126,7 +121,7 @@ public class StatusBarsView extends Parent {
                 heartTextures.get(i).setImage(emptyHeart.getImage());
             }
         }
-        healthText.setText((int) health.get() + " / " + (int) maxHealth.get());
+
 
         double foodRatio = Math.max(0, Math.min(1, hunger.get() / maxHunger.get()));
         hungerFill.setWidth(BAR_WIDTH * foodRatio);

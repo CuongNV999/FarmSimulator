@@ -12,7 +12,9 @@ public class SoilComponent extends Component {
     public boolean canPlant() { return !hasPlant; }
     public void setHasPlant(boolean hasPlant) { this.hasPlant = hasPlant; }
     public boolean isHasPlant() { return hasPlant; }
-    public boolean isWet() { return isWet; }
+    public boolean isWet() {
+        return isWet || (Project1Game.system.WeatherSystem.getCurrentWeather() == Project1Game.system.WeatherSystem.Weather.RAINY);
+    }
 
     public void setWet(boolean wet) {
         this.isWet = wet;
@@ -27,7 +29,7 @@ public class SoilComponent extends Component {
         Texture texture = FXGL.texture(textureName);
 
         // Nếu đất ướt, ta dùng ColorAdjust để làm ảnh tối và xanh hơn một chút (giả lập đất ướt)
-        if (isWet) {
+        if (isWet()) {
             ColorAdjust darken = new ColorAdjust();
             darken.setBrightness(-0.4); // Giảm độ sáng
             darken.setContrast(0.2);    // Tăng tương phản

@@ -40,6 +40,8 @@ public class TimeSystem {
             gameTime = 0;
         }
 
+        WeatherSystem.getInstance().updateTime(gameTime);
+
         int oldHour = hour;
         hour = (int) (gameTime / 60);
         minute = (int) (gameTime % 60);
@@ -111,4 +113,17 @@ public class TimeSystem {
 
     public int getHour() { return hour; }
     public int getMinute() { return minute; }
+
+    /**
+     * Tiến thời gian đến sáng hôm sau (ví dụ: 6:00 AM).
+     */
+    public void advanceToNextDay() {
+        gameTime = FULL_LIGHT * 60; // Đặt lại về 6:00 AM
+        hour = FULL_LIGHT;
+        minute = 0;
+        updateUI(); // Cập nhật UI ngay lập tức
+        updateVisuals(); // Cập nhật hiệu ứng hình ảnh
+        FXGL.getEventBus().fireEvent(new DayNightEvent(DayNightEvent.SET_DAY)); // Kích hoạt sự kiện ngày mới
+        System.out.println("Thời gian đã được đặt lại về 6:00 AM.");
+    }
 }
