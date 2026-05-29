@@ -31,6 +31,34 @@ public class NPCBehaviorComponent extends Component {
     // Visibility/Active state
     private boolean isHidden = false;
 
+    // Static list to track hidden NPCs that were removed from the world
+    private static final List<com.almasb.fxgl.entity.Entity> hiddenNPCs = new java.util.ArrayList<>();
+
+    public static List<com.almasb.fxgl.entity.Entity> getHiddenNPCs() {
+        return hiddenNPCs;
+    }
+
+    public static void clearHiddenNPCs() {
+        hiddenNPCs.clear();
+    }
+
+    private com.almasb.fxgl.entity.Entity homeDoorEntity = null;
+
+    private boolean checkIntersection(com.almasb.fxgl.entity.Entity a, com.almasb.fxgl.entity.Entity b) {
+        if (a == null || b == null) return false;
+        double ax = a.getX();
+        double ay = a.getY();
+        double aw = a.getWidth() > 0 ? a.getWidth() : 32;
+        double ah = a.getHeight() > 0 ? a.getHeight() : 64;
+        
+        double bx = b.getX();
+        double by = b.getY();
+        double bw = b.getWidth() > 0 ? b.getWidth() : 32;
+        double bh = b.getHeight() > 0 ? b.getHeight() : 32;
+        
+        return ax < bx + bw && ax + aw > bx && ay < by + bh && ay + ah > by;
+    }
+
     @Override
     public void onAdded() {
         physics = entity.getComponent(PhysicsComponent.class);
@@ -65,6 +93,18 @@ public class NPCBehaviorComponent extends Component {
             } else if (entity.isType(Project1Game.core.EntityType.TRADER)) {
                 entity.setProperty("name", "Trader");
             }
+
+            // Check if spawned during night time (8:00 PM to 6:00 AM)
+            if (Project1Game.Main.getInstance() != null) {
+                Project1Game.system.TimeSystem ts = Project1Game.Main.getInstance().getTimeSystem();
+                if (ts != null) {
+                    int currentHour = ts.getHour();
+                    if (currentHour >= 20 || currentHour < 6) {
+                        disappear();
+                        return;
+                    }
+                }
+            }
         }
 
         if (isHidden) {
@@ -76,6 +116,21 @@ public class NPCBehaviorComponent extends Component {
             // Nếu mất quá 25 giây mà chưa về được nhà (do kẹt quá sâu), tự động dịch chuyển
             // về nhà
             if (totalHomeTimer > 25.0) {
+                disappear();
+                return;
+            }
+
+            // Check if NPC's collision box or center touches the door
+            boolean touchesDoor = false;
+            if (homeDoorEntity != null) {
+                touchesDoor = checkIntersection(entity, homeDoorEntity)
+                           || entity.getCenter().distance(homeDoorEntity.getCenter()) < 32
+                           || entity.getPosition().distance(target) < 30;
+            } else {
+                touchesDoor = entity.getPosition().distance(target) < 30;
+            }
+
+            if (touchesDoor) {
                 disappear();
                 return;
             }
@@ -199,7 +254,20 @@ public class NPCBehaviorComponent extends Component {
         }
     }
 
+    public void goHome(com.almasb.fxgl.entity.Entity doorEntity) {
+        this.homeDoorEntity = doorEntity;
+        this.target = doorEntity.getPosition();
+        this.isMovingToHouse = true;
+        this.isRoaming = false;
+        this.roamTarget = null;
+        this.totalHomeTimer = 0.0;
+        this.stuckTimer = 0.0;
+        recalculatePath();
+        physics.setLinearVelocity(Point2D.ZERO);
+    }
+
     public void goHome(Point2D doorPosition) {
+        this.homeDoorEntity = null;
         this.target = doorPosition;
         this.isMovingToHouse = true;
         this.isRoaming = false;
@@ -258,8 +326,10 @@ public class NPCBehaviorComponent extends Component {
     public void disappear() {
         stopMoving();
         isHidden = true;
-        entity.getViewComponent().setOpacity(0.0); // Make invisible
-        entity.getComponent(CollidableComponent.class).setValue(false); // Disable collision
+        if (!hiddenNPCs.contains(entity)) {
+            hiddenNPCs.add(entity);
+        }
+        entity.removeFromWorld(); // Safe delete from active game world
         System.out.println("NPC " + entity.getString("name") + " đã đi vào nhà và biến mất.");
     }
 

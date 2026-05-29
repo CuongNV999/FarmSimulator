@@ -41,6 +41,14 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class Main extends GameApplication {
+    private static Main instance;
+    public static Main getInstance() {
+        return instance;
+    }
+    public TimeSystem getTimeSystem() {
+        return timeSystem;
+    }
+
     // --- Các thực thể chính ---
     private Entity player;
     private Entity selector;
@@ -62,7 +70,7 @@ public class Main extends GameApplication {
     private FarmingSystem farmingSystem;
 
     // --- Node UI đặc thù phục vụ System ---
-    private Rectangle nightOverlay;
+    private NightLightingOverlay nightOverlay;
     private Text clockText;
 
     // --- Trạng thái tương tác ---
@@ -124,6 +132,7 @@ public class Main extends GameApplication {
 
     @Override
     protected void initGame() {
+        instance = this;
         // 1. Khởi tạo dữ liệu và System nông nghiệp
         inventory = new Inventory();
         farmingSystem = new FarmingSystem(inventory);
@@ -141,6 +150,7 @@ public class Main extends GameApplication {
 
     @Override
     protected void initUI() {
+        FXGL.getGameScene().setBackgroundColor(Color.BLACK);
         // Khởi tạo các thành phần View
         toolbarView = new ToolbarView(inventory);
         toolbarView.setLayoutX((FXGL.getAppWidth() - 9 * 86) / 2.0);
@@ -159,9 +169,7 @@ public class Main extends GameApplication {
         minimap.setLayoutX(FXGL.getAppWidth() - 170); minimap.setLayoutY(60);
 
         // Khởi tạo UI đặc thù cho Thời gian
-        nightOverlay = new Rectangle(FXGL.getAppWidth(), FXGL.getAppHeight(), Color.BLACK);
-        nightOverlay.setMouseTransparent(true);
-        nightOverlay.setOpacity(0);
+        nightOverlay = new NightLightingOverlay(FXGL.getAppWidth(), FXGL.getAppHeight());
 
         clockText = new Text();
         clockText.setFont(Font.font("Arial", FontWeight.BOLD, 22));
@@ -223,6 +231,22 @@ public class Main extends GameApplication {
         // 2. TẢI BẢN ĐỒ MỚI
         currentMap = newMapName; // Cập nhật bản đồ hiện tại
         FXGL.setLevelFromMap(newMapName);
+
+        // Clear hidden NPCs from the previous level
+        Project1Game.component.npc.NPCBehaviorComponent.clearHiddenNPCs();
+
+        // Configure weather visuals and night lighting based on the environment
+        if (newMapName.equals("Main_house.tmx")) {
+            WeatherSystem.getInstance().setVisualsEnabled(false);
+            if (nightOverlay != null) {
+                nightOverlay.setEnabled(false);
+            }
+        } else {
+            WeatherSystem.getInstance().setVisualsEnabled(true);
+            if (nightOverlay != null) {
+                nightOverlay.setEnabled(true);
+            }
+        }
 
         // 3. TÁI TẠO PLAYER VÀ SELECTOR
         player = FXGL.getGameWorld().getSingleton(EntityType.PLAYER);
@@ -286,6 +310,11 @@ public class Main extends GameApplication {
         WeatherSystem.getInstance().onUpdate(tpf);
         if (minimap != null) minimap.update();
 
+        if (nightOverlay != null && player != null) {
+            PlayerComponent pc = player.getComponent(PlayerComponent.class);
+            nightOverlay.update(player.getCenter(), pc.getDirection());
+        }
+
         // AI: Đi vào nhà lúc 8:00 PM và xuất hiện lại lúc 6:00 AM
         if (currentMap.equals("Main_level.tmx") && timeSystem != null) {
             // 8:00 PM: đi vào nhà
@@ -294,7 +323,7 @@ public class Main extends GameApplication {
                     NPCBehaviorComponent ai = npc.getComponent(NPCBehaviorComponent.class);
                     if (!ai.isGoingHome() && !ai.isHidden()) {
                         FXGL.getGameWorld().getEntitiesByType(EntityType.GUIDER_IN).stream().findFirst().ifPresent(target -> {
-                            ai.goHome(target.getPosition());
+                            ai.goHome(target);
                         });
                     }
                 });
@@ -303,19 +332,22 @@ public class Main extends GameApplication {
                     NPCBehaviorComponent ai = npc.getComponent(NPCBehaviorComponent.class);
                     if (!ai.isGoingHome() && !ai.isHidden()) {
                         FXGL.getGameWorld().getEntitiesByType(EntityType.TRADER_IN).stream().findFirst().ifPresent(target -> {
-                            ai.goHome(target.getPosition());
+                            ai.goHome(target);
                         });
                     }
                 });
             }
             // 6:00 AM: xuất hiện trở lại
             if (timeSystem.getHour() == 6 && timeSystem.getMinute() == 0) {
-                FXGL.getGameWorld().getEntitiesByType(EntityType.GUIDER, EntityType.TRADER).forEach(npc -> {
+                java.util.List<Entity> toReappear = new java.util.ArrayList<>(Project1Game.component.npc.NPCBehaviorComponent.getHiddenNPCs());
+                for (Entity npc : toReappear) {
+                    FXGL.getGameWorld().addEntity(npc);
                     NPCBehaviorComponent ai = npc.getComponent(NPCBehaviorComponent.class);
-                    if (ai.isHidden()) {
+                    if (ai != null) {
                         ai.reappear();
                     }
-                });
+                }
+                Project1Game.component.npc.NPCBehaviorComponent.clearHiddenNPCs();
             }
         }
 

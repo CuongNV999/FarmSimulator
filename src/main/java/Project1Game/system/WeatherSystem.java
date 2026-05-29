@@ -45,6 +45,46 @@ public class WeatherSystem {
     private final Line[] rainDrops = new Line[MAX_RAIN_DROPS];
     private final double[] rainSpeeds = new double[MAX_RAIN_DROPS];
 
+    private boolean visualsEnabled = true;
+
+    public void setVisualsEnabled(boolean enabled) {
+        this.visualsEnabled = enabled;
+        if (!enabled) {
+            // Delay setting overlay/weather visual states by 0.2s for smoother transition
+            javafx.animation.PauseTransition pause = new javafx.animation.PauseTransition(javafx.util.Duration.seconds(0.2));
+            pause.setOnFinished(e -> {
+                if (!visualsEnabled) {
+                    applyVisualsState();
+                }
+            });
+            pause.play();
+        } else {
+            applyVisualsState();
+        }
+    }
+
+    private void applyVisualsState() {
+        if (weatherText != null) {
+            weatherText.setVisible(visualsEnabled);
+        }
+        if (weatherOverlay != null) {
+            if (visualsEnabled) {
+                if (currentWeather == Weather.RAINY) {
+                    weatherOverlay.setFill(Color.rgb(60, 75, 90, 0.25));
+                } else if (currentWeather == Weather.DROUGHT) {
+                    weatherOverlay.setFill(Color.rgb(240, 130, 40, 0.20));
+                } else {
+                    weatherOverlay.setFill(Color.TRANSPARENT);
+                }
+            } else {
+                weatherOverlay.setFill(Color.TRANSPARENT);
+            }
+        }
+        if (rainPane != null) {
+            rainPane.setVisible(visualsEnabled && currentWeather == Weather.RAINY);
+        }
+    }
+
     private WeatherSystem() {}
 
     public static WeatherSystem getInstance() {
@@ -155,18 +195,7 @@ public class WeatherSystem {
             weatherText.setFill(newWeather.color);
         }
 
-        if (weatherOverlay != null) {
-            if (newWeather == Weather.RAINY) {
-                weatherOverlay.setFill(Color.rgb(60, 75, 90, 0.25));
-                if (rainPane != null) rainPane.setVisible(true);
-            } else if (newWeather == Weather.DROUGHT) {
-                weatherOverlay.setFill(Color.rgb(240, 130, 40, 0.20));
-                if (rainPane != null) rainPane.setVisible(false);
-            } else {
-                weatherOverlay.setFill(Color.TRANSPARENT);
-                if (rainPane != null) rainPane.setVisible(false);
-            }
-        }
+        applyVisualsState();
 
         // Trigger texture updates on all soils in the world
         try {

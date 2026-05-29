@@ -133,6 +133,10 @@ public class PlayerComponent extends Component {
         return money.get();
     }
 
+    public Point2D getDirection() {
+        return direction;
+    }
+
     public IntegerProperty moneyProperty() {
         return money;
     }
