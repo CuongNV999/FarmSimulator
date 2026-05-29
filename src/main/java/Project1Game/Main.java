@@ -54,6 +54,7 @@ public class Main extends GameApplication {
     private MinimapView minimap;
     private Text moneyText; // Thêm Text để hiển thị tiền
     private TradingView tradingView; // Thêm TradingView
+    private AdminView adminView; // Thêm AdminView
 
     // --- Các hệ thống logic (Systems) ---
     private TimeSystem timeSystem;
@@ -195,6 +196,10 @@ public class Main extends GameApplication {
         // Khởi tạo TradingView
         tradingView = new TradingView(inventory, player.getComponent(PlayerComponent.class));
         FXGL.getGameScene().addUINode(tradingView);
+
+        // Khởi tạo AdminView
+        adminView = new AdminView(inventory, player.getComponent(PlayerComponent.class));
+        FXGL.getGameScene().addUINode(adminView);
 
         if (shouldLoadSaveOnStart) {
             saveLoadSystem.loadGameFromFile();
@@ -500,12 +505,17 @@ public class Main extends GameApplication {
                 if (dialogView.isOpen()) dialogView.hide();
                 if (tradingView.isOpen()) tradingView.toggle(); // Đóng TradingView khi nhấn R
                 if (inventoryView.isOpen()) inventoryView.toggle(); // Đóng InventoryView khi nhấn R
+                if (adminView.isOpen()) adminView.toggle(); // Đóng AdminView khi nhấn R
             }
         }, KeyCode.R); // Sử dụng R để đóng UI
 
         input.addAction(new UserAction("Toggle Inventory Window") {
             @Override protected void onActionBegin() { inventoryView.toggle(); }
         }, KeyCode.TAB);
+
+        input.addAction(new UserAction("Toggle Admin Panel") {
+            @Override protected void onActionBegin() { adminView.toggle(); }
+        }, KeyCode.BACK_QUOTE);
 
         // 5. LƯU & TẢI (F5 / F9)
         input.addAction(new UserAction("Quick Save") {
