@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.12.0" orientation="orthogonal" renderorder="right-down" width="110" height="64" tilewidth="32" tileheight="32" infinite="0" nextlayerid="34" nextobjectid="7254">
+<map version="1.10" tiledversion="1.12.0" orientation="orthogonal" renderorder="right-down" width="110" height="64" tilewidth="32" tileheight="32" infinite="0" nextlayerid="34" nextobjectid="7256">
  <tileset firstgid="1" name="terrain" tilewidth="32" tileheight="32" tilecount="483" columns="21">
   <image source="../textures/Tilesets/terrain.png" width="672" height="736"/>
   <wangsets>
@@ -340,9 +340,11 @@
  <group id="31" name="NPC">
   <objectgroup id="28" name="Guider">
    <object id="7233" type="NPC" x="1952" y="863" width="32" height="32"/>
+   <object id="7255" type="Guider_in" x="2526" y="1074" width="35" height="14"/>
   </objectgroup>
   <objectgroup id="27" name="Trader">
    <object id="7235" type="NPC" x="1312" y="1472" width="32" height="32"/>
+   <object id="7254" type="Trader_in" x="959" y="876" width="34" height="22"/>
   </objectgroup>
  </group>
  <objectgroup id="23" name="Collisions" class="Collisions">
@@ -863,8 +865,8 @@
    <object id="7253" type="House_in" x="1791" y="687" width="34" height="37">
     <properties>
      <property name="targetMap" value="Main_house.tmx"/>
-     <property name="targetX" type="float" value="200"/>
-     <property name="targetY" type="float" value="400"/>
+     <property name="targetX" type="float" value="463"/>
+     <property name="targetY" type="float" value="554"/>
     </properties>
    </object>
   </objectgroup>

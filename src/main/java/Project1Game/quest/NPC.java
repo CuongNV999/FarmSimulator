@@ -9,19 +9,6 @@ import java.util.Optional;
 
 /**
  * NPC giao quest cho người chơi.
- *
- * <p>NPC nắm giữ một danh sách quest (tất cả do constructor đăng ký).
- * Người chơi tương tác theo luồng:</p>
- * <ol>
- *   <li>Gọi {@link #interact()} → NPC trả về lời thoại giới thiệu quest tiếp theo
- *       còn chờ (NOT_STARTED) hoặc ghi nhận quest đã COMPLETED để trao thưởng.</li>
- *   <li>Người chơi gọi {@link #acceptQuest(String)} để nhận quest.</li>
- *   <li>Khi người chơi hoàn thành điều kiện, gọi {@link #claimReward(String, Inventory)}
- *       để nhận thưởng.</li>
- * </ol>
- *
- * QuestManager sẽ đẩy sự kiện game vào mọi quest đang IN_PROGRESS qua
- * {@link #notifyEvent(QuestContext)}.
  */
 public class NPC {
 
@@ -39,10 +26,6 @@ public class NPC {
     public void registerQuest(Quest quest) {
         quests.add(quest);
     }
-
-    // ------------------------------------------------------------------ //
-    //  Tương tác                                                           //
-    // ------------------------------------------------------------------ //
 
     /**
      * Người chơi đến nói chuyện với NPC.
@@ -128,17 +111,12 @@ public class NPC {
 
     /**
      * Đẩy sự kiện game tới tất cả quest đang IN_PROGRESS.
-     * Gọi từ Main hoặc GameEventBus mỗi khi người chơi làm gì đó.
      */
     public void notifyEvent(QuestContext ctx) {
         quests.stream()
               .filter(q -> q.getStatus() == QuestStatus.IN_PROGRESS)
               .forEach(q -> q.onEvent(ctx));
     }
-
-    // ------------------------------------------------------------------ //
-    //  Getters                                                             //
-    // ------------------------------------------------------------------ //
 
     public String getName()           { return name; }
     public List<Quest> getQuests()    { return Collections.unmodifiableList(quests); }

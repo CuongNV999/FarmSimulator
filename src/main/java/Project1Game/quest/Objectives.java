@@ -4,10 +4,6 @@ import Project1Game.core.ItemType;
 
 /**
  * Tập hợp các {@link QuestObjective} cụ thể dùng trong game.
- *
- * <p>Mỗi lớp inner-static là một loại điều kiện riêng biệt,
- * tuân theo nguyên tắc <b>Open/Closed</b>: thêm loại mới không cần
- * sửa code cũ.</p>
  */
 public final class Objectives {
 
@@ -17,10 +13,6 @@ public final class Objectives {
     /*  1. Thu hoạch N cây của một loại                                   */
     /* ================================================================== */
 
-    /**
-     * Hoàn thành khi người chơi thu hoạch đủ {@code required} cây
-     * của loại {@code targetItem}.
-     */
     public static class HarvestObjective extends QuestObjective {
 
         private final ItemType targetItem;
@@ -43,10 +35,6 @@ public final class Objectives {
     /*  2. Gieo hạt N lần                                                  */
     /* ================================================================== */
 
-    /**
-     * Hoàn thành khi người chơi gieo đủ {@code required} hạt
-     * (bất kỳ loại, hoặc một loại cụ thể nếu truyền {@code seedType}).
-     */
     public static class PlantObjective extends QuestObjective {
 
         private final ItemType seedType; // null = chấp nhận mọi loại hạt
@@ -94,11 +82,6 @@ public final class Objectives {
     /*  4. Gom đủ N item vào túi                                           */
     /* ================================================================== */
 
-    /**
-     * Hoàn thành khi người chơi có trong túi ít nhất {@code required}
-     * đơn vị của {@code targetItem}.  Khác HarvestObjective ở chỗ
-     * dùng sự kiện {@link QuestContext.EventType#COLLECT}.
-     */
     public static class CollectObjective extends QuestObjective {
 
         private final ItemType targetItem;

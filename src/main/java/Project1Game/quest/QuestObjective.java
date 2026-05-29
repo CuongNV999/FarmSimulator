@@ -3,10 +3,6 @@ package Project1Game.quest;
 /**
  * Đại diện cho <b>một</b> điều kiện (objective) trong Quest.
  * Mỗi Quest có thể chứa nhiều objective; tất cả phải DONE thì Quest mới COMPLETED.
- *
- * <p>Lớp này được thiết kế theo <b>Template Method</b>:
- * {@link #checkProgress(QuestContext)} là hook trừu tượng, các lớp con hiện thực
- * logic kiểm tra cụ thể (thu hoạch, gieo hạt, v.v.).</p>
  */
 public abstract class QuestObjective {
 
@@ -21,10 +17,6 @@ public abstract class QuestObjective {
         this.current     = 0;
     }
 
-    // ------------------------------------------------------------------ //
-    //  Template hook – lớp con override                                   //
-    // ------------------------------------------------------------------ //
-
     /**
      * Được gọi mỗi khi có sự kiện game.
      * Lớp con gọi {@link #addProgress(int)} nếu sự kiện phù hợp.
@@ -32,10 +24,6 @@ public abstract class QuestObjective {
      * @param ctx snapshot trạng thái game tại thời điểm sự kiện
      */
     public abstract void checkProgress(QuestContext ctx);
-
-    // ------------------------------------------------------------------ //
-    //  Progress management                                                 //
-    // ------------------------------------------------------------------ //
 
     protected void addProgress(int amount) {
         current = Math.min(current + amount, required);

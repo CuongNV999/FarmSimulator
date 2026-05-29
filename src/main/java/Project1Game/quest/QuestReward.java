@@ -14,14 +14,6 @@ import java.util.Map;
 /**
  * Phần thưởng khi hoàn thành một Quest.
  * Có thể tặng vật phẩm và/hoặc tiền vàng (gold).
- *
- * <pre>
- * QuestReward reward = new QuestReward.Builder()
- *         .gold(50)
- *         .item(ItemType.WHEAT_SEED, 5)
- *         .item(ItemType.CORN_SEED, 3)
- *         .build();
- * </pre>
  */
 public class QuestReward {
 
@@ -67,9 +59,6 @@ public class QuestReward {
         return sb.length() > 0 ? sb.toString() : "Không có";
     }
 
-    /* ------------------------------------------------------------------ */
-    /*  Builder                                                             */
-    /* ------------------------------------------------------------------ */
     public static class Builder {
         private int gold = 0;
         private final Map<ItemType, Integer> items = new LinkedHashMap<>();

@@ -6,8 +6,6 @@ import Project1Game.core.ItemType;
  * Bản ghi sự kiện tức thời trong game, được tạo ra mỗi khi có hành động
  * đáng chú ý (thu hoạch, gieo hạt, tưới nước, …) và truyền tới
  * {@link QuestObjective#checkProgress(QuestContext)}.
- *
- * <p>Dùng pattern <b>Value Object</b>: bất biến sau khi tạo.</p>
  */
 public final class QuestContext {
 

@@ -1,4 +1,4 @@
-package Project1Game.component;
+package Project1Game.component.npc;
 
 import com.almasb.fxgl.dsl.FXGL;
 import com.almasb.fxgl.entity.component.Component;

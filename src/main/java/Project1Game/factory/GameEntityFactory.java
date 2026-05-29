@@ -3,9 +3,9 @@ package Project1Game.factory;
 import Project1Game.component.farming.CropComponent;
 import Project1Game.component.farming.SoilComponent;
 import Project1Game.component.player.PlayerComponent;
-import Project1Game.component.NPCAnimationComponent;
-import Project1Game.component.NPCBehaviorComponent;
-import Project1Game.component.TraderComponent; // Import TraderComponent
+import Project1Game.component.npc.NPCAnimationComponent;
+import Project1Game.component.npc.NPCBehaviorComponent;
+import Project1Game.component.npc.TraderComponent; // Import TraderComponent
 import Project1Game.core.EntityType;
 import Project1Game.config.CropData;
 import com.almasb.fxgl.dsl.FXGL;
@@ -215,7 +215,14 @@ public class GameEntityFactory implements EntityFactory {
     @Spawns("Guider")
     public Entity spawnGuider(SpawnData data) {
         PhysicsComponent physics = new PhysicsComponent();
-        physics.setBodyType(BodyType.KINEMATIC);
+        physics.setFixtureDef(new FixtureDef().friction(0f).density(0.1f));
+        physics.setBodyType(BodyType.DYNAMIC);
+        physics.setOnPhysicsInitialized(() -> {
+            if (physics.getBody() != null) {
+                physics.getBody().setLinearDamping(12.0f);
+                physics.getBody().setFixedRotation(true);
+            }
+        });
         
         return FXGL.entityBuilder(data).type(EntityType.GUIDER)
                 .bbox(new HitBox(BoundingShape.box(32, 64)))
@@ -242,7 +249,14 @@ public class GameEntityFactory implements EntityFactory {
     @Spawns("Trader")
     public Entity spawnTrader(SpawnData data) {
         PhysicsComponent physics = new PhysicsComponent();
-        physics.setBodyType(BodyType.KINEMATIC);
+        physics.setFixtureDef(new FixtureDef().friction(0f).density(0.1f));
+        physics.setBodyType(BodyType.DYNAMIC);
+        physics.setOnPhysicsInitialized(() -> {
+            if (physics.getBody() != null) {
+                physics.getBody().setLinearDamping(12.0f);
+                physics.getBody().setFixedRotation(true);
+            }
+        });
 
         return FXGL.entityBuilder(data)
                 .type(EntityType.TRADER)
@@ -254,5 +268,15 @@ public class GameEntityFactory implements EntityFactory {
                 .with("name", "Trader")
                 .collidable()
                 .build();
+    }
+
+    @Spawns("Trader_in")
+    public Entity spawnTraderIn(SpawnData data) {
+        return FXGL.entityBuilder(data).type(EntityType.TRADER_IN).build();
+    }
+
+    @Spawns("Guider_in")
+    public Entity spawnGuiderIn(SpawnData data) {
+        return FXGL.entityBuilder(data).type(EntityType.GUIDER_IN).build();
     }
 }
