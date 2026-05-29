@@ -24,21 +24,27 @@ public class SaveLoadSystem {
         this.timeSystem = timeSystem;
     }
 
-    public void save(SaveData data) { // Nhận SaveData làm tham số
-        data.gameTime = timeSystem.getGameTime(); // Lấy từ TimeSystem
-        data.health = statusBarsView.getHealth();
-        data.hunger = statusBarsView.getHunger();
+    public void save(SaveData data) {
+        save(data, false);
+    }
 
-        // Lấy PlayerComponent từ player entity
-        Entity player = FXGL.getGameWorld().getSingleton(EntityType.PLAYER);
-        PlayerComponent playerComponent = player.getComponent(PlayerComponent.class);
-        data.playerMoney = playerComponent.getMoney(); // Lưu tiền của người chơi
+    public void save(SaveData data, boolean isMapTransition) {
+        if (!isMapTransition) {
+            data.gameTime = timeSystem.getGameTime(); // Lấy từ TimeSystem
+            data.health = statusBarsView.getHealth();
+            data.hunger = statusBarsView.getHunger();
 
-        // Lưu Inventory
-        data.inventoryItems.clear(); // Xóa dữ liệu cũ trước khi lưu mới
-        for (ItemType t : ItemType.values()) {
-            if (inventory.getCount(t) > 0) {
-                data.inventoryItems.put(t.name(), inventory.getCount(t));
+            // Lấy PlayerComponent từ player entity
+            Entity player = FXGL.getGameWorld().getSingleton(EntityType.PLAYER);
+            PlayerComponent playerComponent = player.getComponent(PlayerComponent.class);
+            data.playerMoney = playerComponent.getMoney(); // Lưu tiền của người chơi
+
+            // Lưu Inventory
+            data.inventoryItems.clear(); // Xóa dữ liệu cũ trước khi lưu mới
+            for (ItemType t : ItemType.values()) {
+                if (inventory.getCount(t) > 0) {
+                    data.inventoryItems.put(t.name(), inventory.getCount(t));
+                }
             }
         }
 
@@ -71,28 +77,27 @@ public class SaveLoadSystem {
         }
     }
 
-    public void load(SaveData data) { // Nhận SaveData làm tham số
-        timeSystem.setGameTime(data.gameTime); // Gán lại cho TimeSystem
-        statusBarsView.setHealth(data.health);
-        statusBarsView.setHunger(data.hunger);
+    public void load(SaveData data) {
+        load(data, false);
+    }
 
-        // Lấy PlayerComponent từ player entity
-        Entity player = FXGL.getGameWorld().getSingleton(EntityType.PLAYER);
-        PlayerComponent playerComponent = player.getComponent(PlayerComponent.class);
-        playerComponent.setMoney(data.playerMoney); // Tải tiền của người chơi
+    public void load(SaveData data, boolean isMapTransition) {
+        if (!isMapTransition) {
+            timeSystem.setGameTime(data.gameTime); // Gán lại cho TimeSystem
+            statusBarsView.setHealth(data.health);
+            statusBarsView.setHunger(data.hunger);
 
-        // Tải Inventory (cần xóa inventory hiện tại và thêm lại)
-        // Lưu ý: Inventory hiện tại không có phương thức clear, nên cần tạo lại hoặc thêm logic clear
-        // Tạm thời, tôi sẽ chỉ thêm lại số lượng
-        // TODO: Cần một cách tốt hơn để reset inventory
+            // Lấy PlayerComponent từ player entity
+            Entity player = FXGL.getGameWorld().getSingleton(EntityType.PLAYER);
+            PlayerComponent playerComponent = player.getComponent(PlayerComponent.class);
+            playerComponent.setMoney(data.playerMoney); // Tải tiền của người chơi
 
-        for (ItemType t : ItemType.values()) {
-            inventory.removeItem(t, inventory.getCount(t)); // Xóa tất cả số lượng hiện có
+            // Tải Inventory (cần xóa inventory hiện tại và thêm lại)
+            inventory.clear();
+            for (java.util.Map.Entry<String, Integer> entry : data.inventoryItems.entrySet()) {
+                inventory.addItem(ItemType.valueOf(entry.getKey()), entry.getValue());
+            }
         }
-        for (java.util.Map.Entry<String, Integer> entry : data.inventoryItems.entrySet()) {
-            inventory.addItem(ItemType.valueOf(entry.getKey()), entry.getValue());
-        }
-
 
         // Xóa tất cả thực thể động cũ (đất và cây)
         EntityType[] allDynamicEntities = {EntityType.SOIL, EntityType.WHEAT, EntityType.CORN,

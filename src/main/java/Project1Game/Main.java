@@ -13,6 +13,7 @@ import Project1Game.system.*;
 import Project1Game.ui.*;
 import Project1Game.quest.*;
 import Project1Game.component.NPCBehaviorComponent;
+import Project1Game.component.TraderComponent;
 import Project1Game.factory.GameEntityFactory;
 
 // --- IMPORT THƯ VIỆN FXGL ---
@@ -204,7 +205,7 @@ public class Main extends GameApplication {
         // CHỈ LƯU NẾU PLAYER ĐÃ TỒN TẠI (không phải lần tải map đầu tiên)
         if (player != null && currentMap != null) {
             SaveData currentMapState = new SaveData();
-            saveLoadSystem.save(currentMapState); // Lưu trạng thái các thực thể động của bản đồ hiện tại
+            saveLoadSystem.save(currentMapState, true); // Lưu trạng thái các thực thể động của bản đồ hiện tại (truyền true cho chuyển cảnh)
             mapStates.put(currentMap, currentMapState); // Lưu vào mapStates
             System.out.println("Đã lưu trạng thái bản đồ: " + currentMap);
         }
@@ -218,30 +219,39 @@ public class Main extends GameApplication {
         player.setPosition(new Point2D(x, y));
         if (selector == null) selector = FXGL.spawn("Selector"); // Đảm bảo selector được spawn nếu chưa có
 
-        // 4. CẤU HÌNH CAMERA
-        double mapW = FXGL.getGameWorld().getEntitiesByType(EntityType.FIELD, EntityType.WALL).stream()
-                .mapToDouble(e -> e.getRightX()).max().orElse(3840);
-        double mapH = FXGL.getGameWorld().getEntitiesByType(EntityType.FIELD, EntityType.WALL).stream()
-                .mapToDouble(e -> e.getBottomY()).max().orElse(2176);
+        // 4. CẤU HÌNH CAMERA & KÍCH THƯỚC BẢN ĐỒ
+        double mapW = 3520;
+        double mapH = 2048;
+        if (newMapName.equals("Main_house.tmx")) {
+            mapW = 1024;
+            mapH = 1024;
+        } else {
+            // Tự động tính toán dựa trên các thực thể có sẵn
+            double maxW = FXGL.getGameWorld().getEntitiesByType(EntityType.FIELD, EntityType.WALL, EntityType.COLLISION).stream()
+                    .mapToDouble(e -> e.getRightX()).max().orElse(3520);
+            double maxH = FXGL.getGameWorld().getEntitiesByType(EntityType.FIELD, EntityType.WALL, EntityType.COLLISION).stream()
+                    .mapToDouble(e -> e.getBottomY()).max().orElse(2048);
+            mapW = Math.max(mapW, maxW);
+            mapH = Math.max(mapH, maxH);
+        }
 
         FXGL.getGameScene().getViewport().setBounds(0, 0, (int)mapW, (int)mapH);
         FXGL.getGameScene().getViewport().bindToEntity(player, FXGL.getAppWidth() / 2.0, FXGL.getAppHeight() / 2.0);
         FXGL.getGameScene().getViewport().setLazy(true);
 
+        // Tạo biên bản đồ (Wall) bao quanh map để chặn người chơi đi ra ngoài
+        spawnBoundaries((int)mapW, (int)mapH);
+
         // 5. TẢI TRẠNG THÁI BẢN ĐỒ MỚI (nếu có)
         if (mapStates.containsKey(newMapName)) {
             SaveData newMapState = mapStates.get(newMapName);
-            saveLoadSystem.load(newMapState); // Tải trạng thái đã lưu cho bản đồ mới
+            saveLoadSystem.load(newMapState, true); // Tải trạng thái đã lưu cho bản đồ mới (truyền true cho chuyển cảnh)
             System.out.println("Đã tải trạng thái bản đồ: " + newMapName);
         } else {
             // Nếu chưa có trạng thái lưu, đây là lần đầu tiên tải bản đồ này
             // Đảm bảo các thực thể SOIL được cập nhật texture
             FXGL.getGameWorld().getEntitiesByType(EntityType.SOIL)
                     .forEach(s -> s.getComponent(SoilComponent.class).updateTexture());
-            // Tạo biên bản đồ nếu cần (chỉ cho Main_level)
-            if (newMapName.equals("Main_level.tmx")) {
-                spawnBoundaries(3840, 2176);
-            }
             System.out.println("Tải bản đồ mới lần đầu: " + newMapName);
         }
     }
@@ -260,14 +270,23 @@ public class Main extends GameApplication {
         if (timeSystem != null) timeSystem.onUpdate(tpf);
         if (minimap != null) minimap.update();
 
-        // AI: Kiểm tra 10 giờ sáng để NPC đi vào nhà
+        // AI: Đi vào nhà lúc 9:00 PM và xuất hiện lại lúc 6:00 AM
         if (currentMap.equals("Main_level.tmx") && timeSystem != null) {
-            // Giả sử timeSystem có phương thức lấy giờ/phút
-            if (timeSystem.getHour() == 22 && timeSystem.getMinute() == 0) { // 10:00 PM
+            // 9:00 PM: đi vào nhà
+            if (timeSystem.getHour() == 21 && timeSystem.getMinute() == 0) {
                 FXGL.getGameWorld().getEntitiesByType(EntityType.GUIDER, EntityType.TRADER).forEach(npc -> {
                     NPCBehaviorComponent ai = npc.getComponent(NPCBehaviorComponent.class);
-                    if (!ai.isGoingHome()) {
+                    if (!ai.isGoingHome() && !ai.isHidden()) {
                         ai.goHome(new Point2D(1791, 687));
+                    }
+                });
+            }
+            // 6:00 AM: xuất hiện trở lại
+            if (timeSystem.getHour() == 6 && timeSystem.getMinute() == 0) {
+                FXGL.getGameWorld().getEntitiesByType(EntityType.GUIDER, EntityType.TRADER).forEach(npc -> {
+                    NPCBehaviorComponent ai = npc.getComponent(NPCBehaviorComponent.class);
+                    if (ai.isHidden()) {
+                        ai.reappear();
                     }
                 });
             }
@@ -320,29 +339,56 @@ public class Main extends GameApplication {
         input.addAction(new UserAction("Interact Action Key") {
             @Override
             protected void onActionBegin() {
-                if (nearbyNPC != null) { // Kiểm tra nếu có NPC gần đó
-                    if (nearbyNPC.getType() == EntityType.TRADER) { // Kiểm tra nếu là Trader
-                        tradingView.toggle();
+                // Sử dụng khoảng cách làm fallback nếu cảm biến vật lý chưa kích hoạt (do va chạm vật lý đặc)
+                Entity targetNPC = nearbyNPC;
+                if (targetNPC != null && targetNPC.getComponent(NPCBehaviorComponent.class).isHidden()) {
+                    targetNPC = null;
+                }
+                if (targetNPC == null && player != null) {
+                    targetNPC = FXGL.getGameWorld().getEntitiesByType(EntityType.GUIDER, EntityType.TRADER).stream()
+                            .filter(e -> e.distance(player) < 70 && !e.getComponent(NPCBehaviorComponent.class).isHidden())
+                            .findFirst()
+                            .orElse(null);
+                }
+
+                Entity targetDoor = nearbyDoor;
+                if (targetDoor == null && player != null) {
+                    targetDoor = FXGL.getGameWorld().getEntitiesByType(EntityType.DOOR).stream()
+                            .filter(e -> e.distance(player) < 70)
+                            .findFirst()
+                            .orElse(null);
+                }
+
+                Entity targetSleep = nearbySleep;
+                if (targetSleep == null && player != null) {
+                    targetSleep = FXGL.getGameWorld().getEntitiesByType(EntityType.SLEEP).stream()
+                            .filter(e -> e.distance(player) < 70)
+                            .findFirst()
+                            .orElse(null);
+                }
+
+                if (targetNPC != null) { // Kiểm tra nếu có NPC gần đó
+                    if (targetNPC.getType() == EntityType.TRADER) { // Kiểm tra nếu là Trader
+                        tradingView.open(targetNPC.getComponent(TraderComponent.class));
                     } else {
                         // Logic tương tác NPC thông thường (Guider, v.v.)
-                        NPC npc = QuestManager.getInstance().getNPC(nearbyNPC.getString("name")); // Giả sử NPC có thuộc tính "name"
+                        NPC npc = QuestManager.getInstance().getNPC(targetNPC.getString("name")); // Giả sử NPC có thuộc tính "name"
                         if (npc != null) {
                             npc.acceptNextAvailableQuest();
                             npc.claimFirstCompleted(inventory);
                             String text = npc.interact();
-                            dialogView.setDialog(nearbyNPC.getString("name"), text.split("\n"));
+                            dialogView.setDialog(targetNPC.getString("name"), text.split("\n"));
                             dialogView.show();
                             toolbarView.updateSelection();
                         }
                     }
-                } else if (nearbyDoor != null) { // Xử lý tương tác với cửa
+                } else if (targetDoor != null) { // Xử lý tương tác với cửa
                     // 1. Lưu dữ liệu từ cửa cũ trước khi chuyển map (vì map cũ sẽ bị xóa)
-                    // Lấy targetMap dưới dạng Object và chuyển đổi thành String
-// Nếu có thuộc tính "targetMap" thì lấy, không thì dùng map mặc định
-                    String mapFile = nearbyDoor.getString("targetMap");
+                    String mapFile = targetDoor.getString("targetMap");
 
-                    double tx = ((Number) nearbyDoor.getObject("targetX")).doubleValue();
-                    double ty = ((Number) nearbyDoor.getObject("targetY")).doubleValue();
+                    // Đọc từ teleportX/teleportY thay vì targetX/targetY cũ
+                    double tx = targetDoor.getDouble("teleportX");
+                    double ty = targetDoor.getDouble("teleportY");
 
                     // 2. Ẩn dialog nếu đang mở để tránh UI bị lỗi khi đổi map
                     if (dialogView.isOpen()) dialogView.hide();
@@ -351,7 +397,7 @@ public class Main extends GameApplication {
                     updateLevel(mapFile, tx, ty);
 
                     System.out.println("Dịch chuyển đến: " + mapFile + " tại " + tx + ", " + ty);
-                } else if (nearbySleep != null) {
+                } else if (targetSleep != null) {
                     System.out.println("--- Main: Bắt đầu đi ngủ ---");
 
                     // Debug: In trạng thái kho đồ trước khi ngủ

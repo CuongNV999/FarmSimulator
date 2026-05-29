@@ -51,14 +51,34 @@ public class Inventory {
         System.out.println("Kho đồ đầy, không thể thêm " + type);
     }
 
-    // Xóa vật phẩm khỏi kho đồ
+    // Xóa vật phẩm khỏi kho đồ (hỗ trợ nhiều ô chứa)
     public boolean removeItem(ItemType type, int amount) {
+        if (getCount(type) < amount) {
+            return false; // Không đủ vật phẩm trong toàn bộ kho đồ
+        }
+
+        int remaining = amount;
         for (InventorySlot slot : slots) {
             if (slot.getItemType() == type) {
-                return slot.remove(amount);
+                int count = slot.getCount();
+                if (count >= remaining) {
+                    slot.remove(remaining);
+                    remaining = 0;
+                    break;
+                } else {
+                    slot.clear();
+                    remaining -= count;
+                }
             }
         }
-        return false;
+        return remaining == 0;
+    }
+
+    // Xóa toàn bộ vật phẩm khỏi kho đồ
+    public void clear() {
+        for (InventorySlot slot : slots) {
+            slot.clear();
+        }
     }
 
     // Lấy số lượng vật phẩm theo loại

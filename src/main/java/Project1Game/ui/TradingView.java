@@ -1,6 +1,7 @@
 package Project1Game.ui;
 
 import Project1Game.component.player.PlayerComponent;
+import Project1Game.component.TraderComponent;
 import Project1Game.core.ItemType;
 import Project1Game.model.Inventory;
 import com.almasb.fxgl.dsl.FXGL;
@@ -29,6 +30,11 @@ public class TradingView extends VBox {
     private final Inventory inventory;
     private final PlayerComponent playerComponent;
     private boolean visible = false;
+
+    private TraderComponent currentTrader;
+    private final VBox buySectionContainer = new VBox();
+    private final VBox sellSectionContainer = new VBox();
+    private final Text relationshipText = new Text();
 
     // Danh sách các vật phẩm có thể mua (hạt giống)
     private final List<ItemType> buyableItems = Arrays.asList(
@@ -65,16 +71,39 @@ public class TradingView extends VBox {
                 Bindings.concat("Tiền của bạn: ", playerComponent.moneyProperty(), " G")
         );
 
-        // Phần mua hàng
-        VBox buySection = createBuySection();
-        // Phần bán hàng
-        VBox sellSection = createSellSection();
+        // Text hiển thị quan hệ
+        relationshipText.setFont(Font.font("Arial", FontWeight.BOLD, 18));
+        relationshipText.setFill(Color.LIGHTGOLDENRODYELLOW);
 
-        HBox mainContent = new HBox(30, buySection, sellSection);
+        HBox mainContent = new HBox(30, buySectionContainer, sellSectionContainer);
         mainContent.setAlignment(Pos.CENTER);
 
-        getChildren().addAll(title, moneyDisplay, mainContent);
+        getChildren().addAll(title, moneyDisplay, relationshipText, mainContent);
         setVisible(false); // Mặc định ẩn
+    }
+
+    public void open(TraderComponent tc) {
+        this.currentTrader = tc;
+
+        // Cập nhật text quan hệ
+        if (currentTrader != null) {
+            relationshipText.setText("Mức quan hệ với Trader: " + currentTrader.getRelationship().name());
+        } else {
+            relationshipText.setText("");
+        }
+
+        // Tái tạo nội dung mua/bán với giá đã điều chỉnh
+        buySectionContainer.getChildren().clear();
+        buySectionContainer.getChildren().add(createBuySection());
+
+        sellSectionContainer.getChildren().clear();
+        sellSectionContainer.getChildren().add(createSellSection());
+
+        visible = true;
+        setVisible(true);
+        // Cập nhật vị trí để nó luôn ở giữa màn hình
+        setTranslateX((FXGL.getAppWidth() - getPrefWidth()) / 2);
+        setTranslateY((FXGL.getAppHeight() - getPrefHeight()) / 2);
     }
 
     private VBox createBuySection() {
@@ -153,14 +182,21 @@ public class TradingView extends VBox {
         nameText.setFill(Color.WHITE);
         content.getChildren().add(nameText);
 
-        // Giá
+        // Giá đã được điều chỉnh dựa vào quan hệ
+        int basePrice = isBuying ? itemType.getBuyPrice() : itemType.getSellPrice();
+        int adjustedPrice = basePrice;
+        if (currentTrader != null) {
+            adjustedPrice = currentTrader.getAdjustedPrice(basePrice, isBuying);
+        }
+
+        // Giá hiển thị
         Text priceText = new Text();
         priceText.setFont(Font.font("Arial", 11));
         priceText.setFill(Color.YELLOW);
         if (isBuying) {
-            priceText.setText("Giá mua: " + itemType.getBuyPrice() + " G");
+            priceText.setText("Giá mua: " + adjustedPrice + " G");
         } else {
-            priceText.setText("Giá bán: " + itemType.getSellPrice() + " G");
+            priceText.setText("Giá bán: " + adjustedPrice + " G");
         }
         content.getChildren().add(priceText);
 
@@ -172,9 +208,9 @@ public class TradingView extends VBox {
         actionButton.setStrokeWidth(0.5);
         actionButton.setOnMouseClicked(e -> {
             if (isBuying) {
-                handleBuyItem(itemType);
+                handleBuyItem(itemType, basePrice);
             } else {
-                handleSellItem(itemType);
+                handleSellItem(itemType, basePrice);
             }
         });
         content.getChildren().add(actionButton);
@@ -183,21 +219,57 @@ public class TradingView extends VBox {
         return pane;
     }
 
-    private void handleBuyItem(ItemType itemType) {
-        if (playerComponent.removeMoney(itemType.getBuyPrice())) {
+    private void handleBuyItem(ItemType itemType, int basePrice) {
+        if (currentTrader != null && currentTrader.willRefuseTrade()) {
+            FXGL.getNotificationService().pushNotification("Trader đang bực bội và từ chối giao dịch!");
+            return;
+        }
+
+        int price = basePrice;
+        if (currentTrader != null) {
+            price = currentTrader.getAdjustedPrice(basePrice, true);
+        }
+
+        if (playerComponent.removeMoney(price)) {
             inventory.addItem(itemType, 1);
             FXGL.getNotificationService().pushNotification("Đã mua " + itemType.getDisplayName() + "!");
+            if (currentTrader != null) {
+                currentTrader.updateRelationship(true, true);
+                open(currentTrader); // Cập nhật lại UI hiển thị giá/quan hệ mới
+            }
         } else {
             FXGL.getNotificationService().pushNotification("Không đủ tiền để mua " + itemType.getDisplayName() + "!");
+            if (currentTrader != null) {
+                currentTrader.updateRelationship(false, true);
+                open(currentTrader);
+            }
         }
     }
 
-    private void handleSellItem(ItemType itemType) {
+    private void handleSellItem(ItemType itemType, int basePrice) {
+        if (currentTrader != null && currentTrader.willRefuseTrade()) {
+            FXGL.getNotificationService().pushNotification("Trader đang bực bội và từ chối giao dịch!");
+            return;
+        }
+
+        int price = basePrice;
+        if (currentTrader != null) {
+            price = currentTrader.getAdjustedPrice(basePrice, false);
+        }
+
         if (inventory.removeItem(itemType, 1)) {
-            playerComponent.addMoney(itemType.getSellPrice());
+            playerComponent.addMoney(price);
             FXGL.getNotificationService().pushNotification("Đã bán " + itemType.getDisplayName() + "!");
+            if (currentTrader != null) {
+                currentTrader.updateRelationship(true, false);
+                open(currentTrader); // Cập nhật lại UI hiển thị giá/quan hệ mới
+            }
         } else {
             FXGL.getNotificationService().pushNotification("Không có " + itemType.getDisplayName() + " để bán!");
+            if (currentTrader != null) {
+                currentTrader.updateRelationship(false, false);
+                open(currentTrader);
+            }
         }
     }
 
@@ -205,9 +277,9 @@ public class TradingView extends VBox {
         visible = !visible;
         setVisible(visible);
         if (visible) {
-            // Cập nhật vị trí để nó luôn ở giữa màn hình
-            setTranslateX((FXGL.getAppWidth() - getPrefWidth()) / 2);
-            setTranslateY((FXGL.getAppHeight() - getPrefHeight()) / 2);
+            open(null); // Mặc định không truyền TraderComponent, mở với giá gốc
+        } else {
+            currentTrader = null;
         }
     }
 

@@ -2,6 +2,10 @@ package Project1Game.quest;
 
 import Project1Game.model.Inventory;
 import Project1Game.core.ItemType;
+import Project1Game.core.EntityType;
+import Project1Game.component.player.PlayerComponent;
+import com.almasb.fxgl.dsl.FXGL;
+import com.almasb.fxgl.entity.Entity;
 
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -34,8 +38,19 @@ public class QuestReward {
         for (Map.Entry<ItemType, Integer> entry : items.entrySet()) {
             inventory.addItem(entry.getKey(), entry.getValue());
         }
-        // Gold hiện tại game chưa có system — để sẵn hook ở đây.
-        // Khi thêm GoldManager: GoldManager.getInstance().add(gold);
+        
+        // Thêm tiền vàng (gold) vào tài khoản người chơi nếu có
+        if (gold > 0) {
+            try {
+                Entity player = FXGL.getGameWorld().getSingleton(EntityType.PLAYER);
+                PlayerComponent playerComponent = player.getComponent(PlayerComponent.class);
+                if (playerComponent != null) {
+                    playerComponent.addMoney(gold);
+                }
+            } catch (Exception e) {
+                System.err.println("Lỗi khi trao phần thưởng tiền vàng: " + e.getMessage());
+            }
+        }
     }
 
     public int getGold()                       { return gold; }

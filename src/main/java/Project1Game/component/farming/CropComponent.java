@@ -22,6 +22,9 @@ public class CropComponent extends Component {
 
     private final CropData data;
 
+    private javafx.event.EventHandler<DayNightEvent> nightHandler;
+    private javafx.event.EventHandler<DayNightEvent> dayHandler;
+
     public CropComponent(CropData data) {
         this.data = data;
     }
@@ -35,20 +38,30 @@ public class CropComponent extends Component {
         // Đảm bảo ban đầu kiểm tra đúng trạng thái ngày đêm
         canGrow = Main.isDayTime();
 
-        // Lắng nghe sự kiện từ EventBus
-        FXGL.getEventBus().addEventHandler(DayNightEvent.SET_NIGHT, e -> {
+        // Định nghĩa handler
+        nightHandler = e -> {
             canGrow = false;
             System.out.println(data.type + " ngừng lớn vì trời tối.");
-        });
+        };
 
-        FXGL.getEventBus().addEventHandler(DayNightEvent.SET_DAY, e -> {
+        dayHandler = e -> {
             canGrow = true;
             System.out.println(data.type + " bắt đầu lớn lại vì có nắng.");
-        });
+        };
+
+        // Lắng nghe sự kiện từ EventBus
+        FXGL.getEventBus().addEventHandler(DayNightEvent.SET_NIGHT, nightHandler);
+        FXGL.getEventBus().addEventHandler(DayNightEvent.SET_DAY, dayHandler);
     }
     @Override
     public void onRemoved() {
         if (growTimer != null) growTimer.expire();
+        if (nightHandler != null) {
+            FXGL.getEventBus().removeEventHandler(DayNightEvent.SET_NIGHT, nightHandler);
+        }
+        if (dayHandler != null) {
+            FXGL.getEventBus().removeEventHandler(DayNightEvent.SET_DAY, dayHandler);
+        }
     }
 
     private void updateView() {

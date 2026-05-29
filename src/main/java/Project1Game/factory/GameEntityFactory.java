@@ -214,11 +214,15 @@ public class GameEntityFactory implements EntityFactory {
 
     @Spawns("Guider")
     public Entity spawnGuider(SpawnData data) {
+        PhysicsComponent physics = new PhysicsComponent();
+        physics.setBodyType(BodyType.KINEMATIC);
+        
         return FXGL.entityBuilder(data).type(EntityType.GUIDER)
                 .bbox(new HitBox(BoundingShape.box(32, 64)))
-                .with(new PhysicsComponent())
+                .with(physics)
                 .with(new NPCAnimationComponent())
                 .with(new NPCBehaviorComponent())
+                .with("name", "Bác Nông Dân")
                 .collidable()
                 .build();
     }
@@ -237,12 +241,17 @@ public class GameEntityFactory implements EntityFactory {
 
     @Spawns("Trader")
     public Entity spawnTrader(SpawnData data) {
+        PhysicsComponent physics = new PhysicsComponent();
+        physics.setBodyType(BodyType.KINEMATIC);
+
         return FXGL.entityBuilder(data)
                 .type(EntityType.TRADER)
-                .bbox(new HitBox(BoundingShape.box(32, 48)))
-                .with(new PhysicsComponent())
+                .bbox(new HitBox(BoundingShape.box(32, 64)))
+                .with(physics)
+                .with(new NPCAnimationComponent("NPC/Trader/Trader.png")) // Gắn animation component cho Trader
                 .with(new NPCBehaviorComponent()) // Thêm component điều khiển hành vi
                 .with(new TraderComponent()) // Gắn TraderComponent vào Trader entity
+                .with("name", "Trader")
                 .collidable()
                 .build();
     }

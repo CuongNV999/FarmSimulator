@@ -11,14 +11,18 @@ public class NPCAnimationComponent extends Component {
     private AnimationChannel animDown, animRight, animLeft, animUp;
 
     public NPCAnimationComponent() {
+        this("NPC/Guider/Guider.png");
+    }
+
+    public NPCAnimationComponent(String textureName) {
         // Giả sử sprite sheet có 4 khung hình mỗi hàng. 
 
         int framesPerRow = 4;
         
-        animDown  = new AnimationChannel(FXGL.image("Guider.png"), framesPerRow, 32, 64, Duration.seconds(0.8), 0, 3);
-        animRight = new AnimationChannel(FXGL.image("Guider.png"), framesPerRow, 32, 64, Duration.seconds(0.8), 4, 7);
-        animLeft  = new AnimationChannel(FXGL.image("Guider.png"), framesPerRow, 32, 64, Duration.seconds(0.8), 8, 11);
-        animUp    = new AnimationChannel(FXGL.image("Guider.png"), framesPerRow, 32, 64, Duration.seconds(0.8), 12, 15);
+        animDown  = new AnimationChannel(FXGL.image(textureName), framesPerRow, 32, 64, Duration.seconds(0.8), 0, 3);
+        animRight = new AnimationChannel(FXGL.image(textureName), framesPerRow, 32, 64, Duration.seconds(0.8), 4, 7);
+        animLeft  = new AnimationChannel(FXGL.image(textureName), framesPerRow, 32, 64, Duration.seconds(0.8), 8, 11);
+        animUp    = new AnimationChannel(FXGL.image(textureName), framesPerRow, 32, 64, Duration.seconds(0.8), 12, 15);
 
         texture = new AnimatedTexture(animDown);
     }
