@@ -14,6 +14,12 @@ public class SaveData implements Serializable {
     public double health;
     public double hunger;
     public int playerMoney; // Thêm trường để lưu tiền của người chơi
+    
+    // Lưu bản đồ và vị trí người chơi
+    public String currentMap;
+    public double playerX;
+    public double playerY;
+    public String weather;
 
     // Lưu Inventory: Tên vật phẩm -> Số lượng
     public Map<String, Integer> inventoryItems = new HashMap<>();

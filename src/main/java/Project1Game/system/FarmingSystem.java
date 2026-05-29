@@ -108,12 +108,11 @@ public class FarmingSystem {
 
                         ItemType res = ItemType.valueOf(t.name());
                         CropData cropData = c.getComponent(CropComponent.class).getData(); // Lấy CropData từ CropComponent
-                        int cropPrice = cropData.price; // Lấy giá của cây trồng
 
                         c.removeFromWorld();
-                        inventory.addItem(res, 1);
-                        System.out.println("Thu hoạch " + res.getDisplayName() + " với giá " + cropPrice + "!"); // In ra giá
-                        // TODO: Thêm logic cộng tiền vào đây
+                        int yield = cropData.yield;
+                        inventory.addItem(res, yield);
+                        System.out.println("Thu hoạch " + res.getDisplayName() + " với số lượng " + yield + "!"); // In ra sản lượng
                         QuestManager.getInstance().broadcast(new QuestContext(QuestContext.EventType.HARVEST, res));
                     });
         }

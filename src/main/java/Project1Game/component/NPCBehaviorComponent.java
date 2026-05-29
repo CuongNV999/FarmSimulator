@@ -34,10 +34,28 @@ public class NPCBehaviorComponent extends Component {
         }
         spawnPosition = entity.getPosition();
         roamCooldown = 2.0 + random.nextDouble() * 3.0; // Initial delay before roaming
+        
+        // Ensure name properties are set correctly after map loader initialization
+        if (entity.isType(Project1Game.core.EntityType.GUIDER)) {
+            entity.setProperty("name", "Bác Nông Dân");
+        } else if (entity.isType(Project1Game.core.EntityType.TRADER)) {
+            entity.setProperty("name", "Trader");
+        }
     }
+
+    private boolean firstFrame = true;
 
     @Override
     public void onUpdate(double tpf) {
+        if (firstFrame) {
+            firstFrame = false;
+            if (entity.isType(Project1Game.core.EntityType.GUIDER)) {
+                entity.setProperty("name", "Bác Nông Dân");
+            } else if (entity.isType(Project1Game.core.EntityType.TRADER)) {
+                entity.setProperty("name", "Trader");
+            }
+        }
+
         if (isHidden) {
             return;
         }

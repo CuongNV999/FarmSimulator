@@ -12,6 +12,7 @@ import com.almasb.fxgl.dsl.FXGL;
 import com.almasb.fxgl.entity.Entity;
 
 import java.util.Arrays; // Import Arrays
+import Project1Game.Main;
 
 public class SaveLoadSystem {
     private final Inventory inventory;
@@ -38,6 +39,17 @@ public class SaveLoadSystem {
             Entity player = FXGL.getGameWorld().getSingleton(EntityType.PLAYER);
             PlayerComponent playerComponent = player.getComponent(PlayerComponent.class);
             data.playerMoney = playerComponent.getMoney(); // Lưu tiền của người chơi
+
+            // Lưu bản đồ và vị trí người chơi
+            data.currentMap = ((Main) FXGL.getApp()).getCurrentMap();
+            data.playerX = player.getX();
+            data.playerY = player.getY();
+
+            // Lưu thời tiết
+            data.weather = WeatherSystem.getCurrentWeather().name();
+
+            System.out.println(String.format("LƯU GAME: Bản đồ: %s, Vị trí: (%.1f, %.1f), Tiền: %d G, Thời gian: %.1f, Thời tiết: %s", 
+                data.currentMap, data.playerX, data.playerY, data.playerMoney, data.gameTime, data.weather));
 
             // Lưu Inventory
             data.inventoryItems.clear(); // Xóa dữ liệu cũ trước khi lưu mới
@@ -97,6 +109,14 @@ public class SaveLoadSystem {
             for (java.util.Map.Entry<String, Integer> entry : data.inventoryItems.entrySet()) {
                 inventory.addItem(ItemType.valueOf(entry.getKey()), entry.getValue());
             }
+
+            // Tải thời tiết
+            if (data.weather != null) {
+                WeatherSystem.getInstance().changeWeather(WeatherSystem.Weather.valueOf(data.weather));
+            }
+
+            System.out.println(String.format("NẠP GAME: Bản đồ: %s, Vị trí: (%.1f, %.1f), Tiền: %d G, Thời gian: %.1f, Thời tiết: %s", 
+                data.currentMap, data.playerX, data.playerY, data.playerMoney, data.gameTime, data.weather));
         }
 
         // Xóa tất cả thực thể động cũ (đất và cây)
@@ -135,6 +155,10 @@ public class SaveLoadSystem {
 
     public void loadGameFromFile() {
         FXGL.getFileSystemService().<SaveData>readDataTask("save_game.dat").onSuccess(data -> {
+            Main app = FXGL.getAppCast();
+            if (data.currentMap != null) {
+                app.updateLevelFromSave(data.currentMap, data.playerX, data.playerY);
+            }
             load(data); // Tải dữ liệu từ file vào game
             System.out.println("Đã tải game từ file thành công!");
         }).run();

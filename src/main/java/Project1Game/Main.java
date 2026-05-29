@@ -70,6 +70,7 @@ public class Main extends GameApplication {
     private Entity nearbySleep = null; // Thêm biến để lưu giường gần đó
     private String currentMap = "Main_level.tmx"; // Bản đồ hiện tại
     private Map<String, SaveData> mapStates = new HashMap<>(); // Lưu trạng thái các bản đồ
+    private boolean shouldLoadSaveOnStart = false; // Flag to load save game on startup
 
     @Override
     protected void initSettings(GameSettings gameSettings) {
@@ -78,6 +79,8 @@ public class Main extends GameApplication {
         gameSettings.setTitle("Java Farming Professional");
         gameSettings.setVersion("2.5");
         gameSettings.setDeveloperMenuEnabled(true);
+        gameSettings.setMainMenuEnabled(true);
+        gameSettings.setSceneFactory(new FarmSceneFactory());
     }
 
     @Override
@@ -180,21 +183,23 @@ public class Main extends GameApplication {
         timeSystem = new TimeSystem(nightOverlay, clockText);
         saveLoadSystem = new SaveLoadSystem(inventory, statusBarsView, timeSystem);
 
+        // Khởi tạo WeatherSystem
+        WeatherSystem.getInstance().init();
+
         // Gọi updateLevel lần đầu sau khi tất cả UI và System đã sẵn sàng
         updateLevel("Main_level.tmx", 1792, 1024);
         currentMap = "Main_level.tmx"; // Đảm bảo currentMap được đặt đúng
 
-        // Liên kết moneyText với moneyProperty của PlayerComponent
-        // PlayerComponent chỉ có sẵn sau khi player được spawn trong updateLevel
-        player.getComponent(PlayerComponent.class).moneyProperty().addListener((obs, old, newV) -> {
-            moneyText.setText("Tiền: " + newV + " G");
-        });
-        // Cập nhật giá trị ban đầu
-        moneyText.setText("Tiền: " + player.getComponent(PlayerComponent.class).getMoney() + " G");
+        bindPlayerUI();
 
         // Khởi tạo TradingView
         tradingView = new TradingView(inventory, player.getComponent(PlayerComponent.class));
         FXGL.getGameScene().addUINode(tradingView);
+
+        if (shouldLoadSaveOnStart) {
+            saveLoadSystem.loadGameFromFile();
+            shouldLoadSaveOnStart = false;
+        }
     }
 
     /**
@@ -216,7 +221,12 @@ public class Main extends GameApplication {
 
         // 3. TÁI TẠO PLAYER VÀ SELECTOR
         player = FXGL.getGameWorld().getSingleton(EntityType.PLAYER);
-        player.setPosition(new Point2D(x, y));
+        if (player.hasComponent(PhysicsComponent.class)) {
+            player.getComponent(PhysicsComponent.class).overwritePosition(new Point2D(x, y));
+        } else {
+            player.setPosition(new Point2D(x, y));
+        }
+        bindPlayerUI();
         if (selector == null) selector = FXGL.spawn("Selector"); // Đảm bảo selector được spawn nếu chưa có
 
         // 4. CẤU HÌNH CAMERA & KÍCH THƯỚC BẢN ĐỒ
@@ -268,6 +278,7 @@ public class Main extends GameApplication {
     protected void onUpdate(double tpf) {
         // 1. Cập nhật các hệ thống độc lập
         if (timeSystem != null) timeSystem.onUpdate(tpf);
+        WeatherSystem.getInstance().onUpdate(tpf);
         if (minimap != null) minimap.update();
 
         // AI: Đi vào nhà lúc 9:00 PM và xuất hiện lại lúc 6:00 AM
@@ -372,11 +383,22 @@ public class Main extends GameApplication {
                         tradingView.open(targetNPC.getComponent(TraderComponent.class));
                     } else {
                         // Logic tương tác NPC thông thường (Guider, v.v.)
-                        NPC npc = QuestManager.getInstance().getNPC(targetNPC.getString("name")); // Giả sử NPC có thuộc tính "name"
+                        String npcName = targetNPC.getProperties().keys().contains("name") ? targetNPC.getString("name") : "";
+                        NPC npc = QuestManager.getInstance().getNPC(npcName);
                         if (npc != null) {
-                            npc.acceptNextAvailableQuest();
-                            npc.claimFirstCompleted(inventory);
+                            System.out.println("Tương tác với NPC: " + npcName);
                             String text = npc.interact();
+                            
+                            // Chỉ nhận quest mới nếu không có quest nào đang thực hiện hoặc chờ nhận thưởng
+                            boolean hasActiveOrCompleted = npc.getQuests().stream()
+                                    .anyMatch(q -> q.getStatus() == QuestStatus.IN_PROGRESS || q.getStatus() == QuestStatus.COMPLETED);
+                            
+                            if (!hasActiveOrCompleted) {
+                                npc.acceptNextAvailableQuest();
+                            }
+                            
+                            npc.claimFirstCompleted(inventory);
+                            
                             dialogView.setDialog(targetNPC.getString("name"), text.split("\n"));
                             dialogView.show();
                             toolbarView.updateSelection();
@@ -519,6 +541,76 @@ public class Main extends GameApplication {
     }
 
     /** Kiểm tra trạng thái ban ngày (Bridge method) */
+    public String getCurrentMap() {
+        return currentMap;
+    }
+
+    public void setShouldLoadSaveOnStart(boolean value) {
+        this.shouldLoadSaveOnStart = value;
+    }
+
+    public boolean getShouldLoadSaveOnStart() {
+        return shouldLoadSaveOnStart;
+    }
+
+    public void saveGame() {
+        if (saveLoadSystem != null) {
+            saveLoadSystem.saveGameToFile();
+        }
+    }
+
+    public void loadGame() {
+        if (saveLoadSystem != null) {
+            saveLoadSystem.loadGameFromFile();
+        }
+    }
+
+    public boolean hasSaveGame() {
+        return new java.io.File("save_game.dat").exists();
+    }
+
+    private void bindPlayerUI() {
+        if (player == null || moneyText == null) return;
+        PlayerComponent playerComponent = player.getComponent(PlayerComponent.class);
+        playerComponent.moneyProperty().addListener((obs, old, newV) -> {
+            moneyText.setText("Tiền: " + newV + " G");
+        });
+        moneyText.setText("Tiền: " + playerComponent.getMoney() + " G");
+    }
+
+    public void updateLevelFromSave(String newMapName, double x, double y) {
+        currentMap = newMapName;
+        FXGL.setLevelFromMap(newMapName);
+        player = FXGL.getGameWorld().getSingleton(EntityType.PLAYER);
+        if (player.hasComponent(PhysicsComponent.class)) {
+            player.getComponent(PhysicsComponent.class).overwritePosition(new Point2D(x, y));
+        } else {
+            player.setPosition(new Point2D(x, y));
+        }
+        bindPlayerUI();
+        if (selector == null) selector = FXGL.spawn("Selector");
+
+        double mapW = 3520;
+        double mapH = 2048;
+        if (newMapName.equals("Main_house.tmx")) {
+            mapW = 1024;
+            mapH = 1024;
+        } else {
+            double maxW = FXGL.getGameWorld().getEntitiesByType(EntityType.FIELD, EntityType.WALL, EntityType.COLLISION).stream()
+                    .mapToDouble(e -> e.getRightX()).max().orElse(3520);
+            double maxH = FXGL.getGameWorld().getEntitiesByType(EntityType.FIELD, EntityType.WALL, EntityType.COLLISION).stream()
+                    .mapToDouble(e -> e.getBottomY()).max().orElse(2048);
+            mapW = Math.max(mapW, maxW);
+            mapH = Math.max(mapH, maxH);
+        }
+
+        FXGL.getGameScene().getViewport().setBounds(0, 0, (int)mapW, (int)mapH);
+        FXGL.getGameScene().getViewport().bindToEntity(player, FXGL.getAppWidth() / 2.0, FXGL.getAppHeight() / 2.0);
+        FXGL.getGameScene().getViewport().setLazy(true);
+
+        spawnBoundaries((int)mapW, (int)mapH);
+    }
+
     public static boolean isDayTime() {
         Main app = (Main) FXGL.getApp();
         return app.timeSystem != null && app.timeSystem.isDayTime();

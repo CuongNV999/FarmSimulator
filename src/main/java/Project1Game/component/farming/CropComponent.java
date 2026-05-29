@@ -81,16 +81,26 @@ public class CropComponent extends Component {
             return;
         }
 
+        // Drought slows down growth by 50%
+        if (Project1Game.system.WeatherSystem.getCurrentWeather() == Project1Game.system.WeatherSystem.Weather.DROUGHT) {
+            if (Math.random() < 0.5) {
+                return;
+            }
+        }
+
         if (stage < MAX_STAGE) {
             FXGL.getGameWorld().getEntitiesByType(EntityType.SOIL).stream()
                     .filter(s -> s.getPosition().distance(entity.getPosition()) < 5)
                     .findFirst()
                     .ifPresent(soil -> {
                         SoilComponent sc = soil.getComponent(SoilComponent.class);
+                        boolean isRaining = (Project1Game.system.WeatherSystem.getCurrentWeather() == Project1Game.system.WeatherSystem.Weather.RAINY);
                         if (sc.isWet()) {
                             stage++;
                             updateView();
-                            sc.setWet(false);
+                            if (!isRaining) {
+                                sc.setWet(false);
+                            }
                         }
                     });
         }

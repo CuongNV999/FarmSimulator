@@ -40,6 +40,8 @@ public class TimeSystem {
             gameTime = 0;
         }
 
+        WeatherSystem.getInstance().updateTime(gameTime);
+
         int oldHour = hour;
         hour = (int) (gameTime / 60);
         minute = (int) (gameTime % 60);
