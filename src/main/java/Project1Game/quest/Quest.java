@@ -6,17 +6,9 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Lớp cơ sở trừu tượng cho mọi Quest trong game.
- *
- * <p>Mỗi quest con phải định nghĩa:
- * <ul>
- *   <li>{@link #buildObjectives()} – danh sách điều kiện cần hoàn thành</li>
- *   <li>{@link #buildReward()} – phần thưởng khi nộp quest</li>
- * </ul>
- *
- * Vòng đời: NOT_STARTED → IN_PROGRESS → COMPLETED → REWARDED
+ * Đại diện cho một Quest trong game.
  */
-public abstract class Quest {
+public class Quest {
 
     private final String id;
     private final String title;
@@ -24,37 +16,24 @@ public abstract class Quest {
     private final String completionText; // lời NPC khi người chơi nộp
 
     private QuestStatus status = QuestStatus.NOT_STARTED;
-    private List<QuestObjective> objectives;
-    private QuestReward reward;
+    private final List<QuestObjective> objectives;
+    private final QuestReward reward;
 
-    protected Quest(String id, String title, String description, String completionText) {
+    public Quest(String id, String title, String description, String completionText, 
+                 List<QuestObjective> objectives, QuestReward reward) {
         this.id             = id;
         this.title          = title;
         this.description    = description;
         this.completionText = completionText;
+        this.objectives     = objectives;
+        this.reward         = reward;
     }
-
-    // ------------------------------------------------------------------ //
-    //  Abstract factory methods (Template Method)                         //
-    // ------------------------------------------------------------------ //
-
-    /** Trả về danh sách các điều kiện của quest này. */
-    protected abstract List<QuestObjective> buildObjectives();
-
-    /** Trả về phần thưởng của quest này. */
-    protected abstract QuestReward buildReward();
-
-    // ------------------------------------------------------------------ //
-    //  Lifecycle                                                           //
-    // ------------------------------------------------------------------ //
 
     /** Người chơi chấp nhận quest từ NPC. */
     public void start() {
         if (status != QuestStatus.NOT_STARTED)
             throw new IllegalStateException("Quest đã được bắt đầu hoặc hoàn thành.");
-        objectives = buildObjectives();
-        reward     = buildReward();
-        status     = QuestStatus.IN_PROGRESS;
+        status = QuestStatus.IN_PROGRESS;
         System.out.println("[Quest] Bắt đầu: " + title);
     }
 
@@ -86,20 +65,15 @@ public abstract class Quest {
         return reward;
     }
 
-    // ------------------------------------------------------------------ //
-    //  Getters                                                             //
-    // ------------------------------------------------------------------ //
-
     public String getId()               { return id; }
     public String getTitle()            { return title; }
     public String getDescription()      { return description; }
     public String getCompletionText()   { return completionText; }
     public QuestStatus getStatus()      { return status; }
-    public QuestReward getReward()      { return reward != null ? reward : buildReward(); }
+    public QuestReward getReward()      { return reward; }
 
-    /** Trả về danh sách objectives (chỉ sau khi start()). */
     public List<QuestObjective> getObjectives() {
-        return objectives != null ? Collections.unmodifiableList(objectives) : Collections.emptyList();
+        return Collections.unmodifiableList(objectives);
     }
 
     /** Tóm tắt tiến độ tất cả objectives. */

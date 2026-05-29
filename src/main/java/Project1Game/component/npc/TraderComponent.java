@@ -1,6 +1,5 @@
-package Project1Game.component;
+package Project1Game.component.npc;
 
-import Project1Game.model.npc.RelationshipLevel;
 import com.almasb.fxgl.dsl.FXGL;
 import com.almasb.fxgl.entity.component.Component;
 import javafx.beans.property.ObjectProperty;

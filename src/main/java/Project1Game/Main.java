@@ -12,8 +12,8 @@ import Project1Game.model.SaveData; // Import SaveData
 import Project1Game.system.*;
 import Project1Game.ui.*;
 import Project1Game.quest.*;
-import Project1Game.component.NPCBehaviorComponent;
-import Project1Game.component.TraderComponent;
+import Project1Game.component.npc.NPCBehaviorComponent;
+import Project1Game.component.npc.TraderComponent;
 import Project1Game.factory.GameEntityFactory;
 
 // --- IMPORT THƯ VIỆN FXGL ---

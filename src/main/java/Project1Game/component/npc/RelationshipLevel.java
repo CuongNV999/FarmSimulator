@@ -1,4 +1,4 @@
-package Project1Game.model.npc;
+package Project1Game.component.npc;
 
 public enum RelationshipLevel {
     BAD,        // Giá cao, giá bán thấp, có thể từ chối

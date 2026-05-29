@@ -3,9 +3,9 @@ package Project1Game.factory;
 import Project1Game.component.farming.CropComponent;
 import Project1Game.component.farming.SoilComponent;
 import Project1Game.component.player.PlayerComponent;
-import Project1Game.component.NPCAnimationComponent;
-import Project1Game.component.NPCBehaviorComponent;
-import Project1Game.component.TraderComponent; // Import TraderComponent
+import Project1Game.component.npc.NPCAnimationComponent;
+import Project1Game.component.npc.NPCBehaviorComponent;
+import Project1Game.component.npc.TraderComponent; // Import TraderComponent
 import Project1Game.core.EntityType;
 import Project1Game.config.CropData;
 import com.almasb.fxgl.dsl.FXGL;

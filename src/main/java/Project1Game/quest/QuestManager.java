@@ -6,21 +6,6 @@ import java.util.List;
 
 /**
  * Singleton quản lý toàn bộ hệ thống Quest và NPC.
- *
- * <p>Cách sử dụng trong {@code Main.java}:</p>
- * <pre>
- * // 1. Khởi tạo một lần khi game bắt đầu
- * QuestManager qm = QuestManager.getInstance();
- * qm.init();
- *
- * // 2. Khi người chơi thu hoạch (ví dụ trong Main.java):
- * qm.broadcast(new QuestContext(QuestContext.EventType.HARVEST, ItemType.WHEAT));
- *
- * // 3. Khi người chơi nói chuyện với NPC:
- * NPC npc = qm.getNPC("Bác Nông Dân");
- * System.out.println(npc.interact());
- * npc.acceptNextAvailableQuest();
- * </pre>
  */
 public class QuestManager {
 
@@ -47,11 +32,11 @@ public class QuestManager {
             "Bác Nông Dân",
             "Mùa màng bội thu là nhờ công cháu đấy! Cảm ơn cháu nhiều lắm."
         );
-        bacNongDan.registerQuest(new FarmQuests.FirstMorningQuest());
-        bacNongDan.registerQuest(new FarmQuests.FirstHarvestQuest());
-        bacNongDan.registerQuest(new FarmQuests.SummerFeastQuest());
-        bacNongDan.registerQuest(new FarmQuests.DiligentFarmerQuest());
-        bacNongDan.registerQuest(new FarmQuests.WinterPreparationQuest());
+        bacNongDan.registerQuest(FarmQuests.createFirstMorningQuest());
+        bacNongDan.registerQuest(FarmQuests.createFirstHarvestQuest());
+        bacNongDan.registerQuest(FarmQuests.createSummerFeastQuest());
+        bacNongDan.registerQuest(FarmQuests.createDiligentFarmerQuest());
+        bacNongDan.registerQuest(FarmQuests.createWinterPreparationQuest());
 
         npcs.add(bacNongDan);
 

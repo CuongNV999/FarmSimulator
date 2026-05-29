@@ -1,6 +1,6 @@
 package Project1Game.model;
 
-import Project1Game.model.npc.RelationshipLevel; // Import RelationshipLevel
+import Project1Game.component.npc.RelationshipLevel; // Import RelationshipLevel
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;

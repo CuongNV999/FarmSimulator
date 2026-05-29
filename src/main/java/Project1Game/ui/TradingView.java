@@ -1,7 +1,7 @@
 package Project1Game.ui;
 
 import Project1Game.component.player.PlayerComponent;
-import Project1Game.component.TraderComponent;
+import Project1Game.component.npc.TraderComponent;
 import Project1Game.core.ItemType;
 import Project1Game.model.Inventory;
 import com.almasb.fxgl.dsl.FXGL;
