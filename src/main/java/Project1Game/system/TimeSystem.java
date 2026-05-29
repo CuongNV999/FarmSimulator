@@ -2,17 +2,17 @@ package Project1Game.system;
 
 import com.almasb.fxgl.dsl.FXGL;
 import javafx.scene.paint.Color;
-import javafx.scene.shape.Rectangle;
+import javafx.scene.Node;
 import javafx.scene.text.Text;
 
 public class TimeSystem {
-    private double gameTime = 360; // Mặc định khởi đầu là 6:00 AM (360 phút)
+    private double gameTime = 960; // Mặc định khởi đầu là 6:00 AM (360 phút)
     private int hour = 6;
     private int minute = 0;
 
     public double getGameTime() { return gameTime; }
 
-    private final Rectangle nightOverlay;
+    private final Node nightOverlay;
     private final Text clockText;
 
     // Định nghĩa các hằng số mốc thời gian để dễ quản lý, bảo trì
@@ -21,14 +21,14 @@ public class TimeSystem {
     private static final int START_DAWN = 5;  // 5:00 AM bắt đầu sáng dần
     private static final int FULL_LIGHT = 6;  // 6:00 AM sáng hẳn
 
-    private static final double MAX_OPACITY = 0.7; // Độ tối tối đa của đêm
+    private static final double MAX_OPACITY = 1.0; // Độ tối tối đa của đêm (pitch black)
 
     public void setGameTime(double time) {
         this.gameTime = time;
         // Cập nhật ngay lập tức UI khi load
         onUpdate(0);
     }
-    public TimeSystem(Rectangle nightOverlay, Text clockText) {
+    public TimeSystem(Node nightOverlay, Text clockText) {
         this.nightOverlay = nightOverlay;
         this.clockText = clockText;
     }
