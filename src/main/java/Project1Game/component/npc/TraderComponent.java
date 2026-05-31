@@ -2,10 +2,12 @@ package Project1Game.component.npc;
 
 import com.almasb.fxgl.dsl.FXGL;
 import com.almasb.fxgl.entity.component.Component;
+import Project1Game.interaction.Interactable;
+import com.almasb.fxgl.entity.Entity;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 
-public class TraderComponent extends Component {
+public class TraderComponent extends Component implements Interactable {
 
     // SỬA LỖI: Bổ sung khởi tạo giá trị NEUTRAL mặc định cho Property và đóng ngoặc
     private final ObjectProperty<RelationshipLevel> relationship = new SimpleObjectProperty<>(
@@ -217,5 +219,10 @@ public class TraderComponent extends Component {
 
     public boolean hasNegotiatedThisSession() {
         return hasNegotiatedThisSession;
+    }
+
+    @Override
+    public void interact(Entity player, Entity target) {
+        Project1Game.Main.getInstance().getTradingView().open(this);
     }
 }

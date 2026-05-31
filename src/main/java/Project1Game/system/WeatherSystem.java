@@ -1,6 +1,7 @@
 package Project1Game.system;
 
 import com.almasb.fxgl.dsl.FXGL;
+import Project1Game.Main;
 import Project1Game.component.farming.SoilComponent;
 import Project1Game.core.EntityType;
 import javafx.geometry.Pos;
@@ -101,7 +102,13 @@ public class WeatherSystem {
     public void init() {
         // Clean up old UI nodes to prevent duplicates upon game restart / main menu reload
         if (weatherText != null) {
-            try { FXGL.getGameScene().removeUINode(weatherText); } catch (Exception e) {}
+            try {
+                if (weatherText.getParent() instanceof javafx.scene.layout.VBox) {
+                    ((javafx.scene.layout.VBox) weatherText.getParent()).getChildren().remove(weatherText);
+                } else {
+                    FXGL.getGameScene().removeUINode(weatherText);
+                }
+            } catch (Exception e) {}
         }
         if (weatherOverlay != null) {
             try { FXGL.getGameScene().removeUINode(weatherOverlay); } catch (Exception e) {}
@@ -113,11 +120,14 @@ public class WeatherSystem {
         // Initialize UI Nodes
         weatherText = new Text("Thời tiết: Nắng");
         weatherText.setFont(Font.font("Arial", FontWeight.BOLD, 18));
-        weatherText.setTranslateX(FXGL.getAppWidth() - 180);
-        weatherText.setTranslateY(70);
         weatherText.setStroke(Color.BLACK);
         weatherText.setStrokeWidth(0.3);
         weatherText.setFill(Color.GOLD);
+
+        // Register to Main HUD Container
+        if (Main.getInstance() != null) {
+            Main.getInstance().registerWeatherText(weatherText);
+        }
 
         // Screen color overlay
         weatherOverlay = new Rectangle(FXGL.getAppWidth(), FXGL.getAppHeight(), Color.TRANSPARENT);
@@ -139,8 +149,8 @@ public class WeatherSystem {
             rainPane.getChildren().add(line);
         }
 
-        // Add to game scene graph
-        FXGL.getGameScene().addUINodes(weatherOverlay, rainPane, weatherText);
+        // Add to game scene graph (only overlay and rainPane)
+        FXGL.getGameScene().addUINodes(weatherOverlay, rainPane);
 
         // Set initial weather visuals
         changeWeather(currentWeather);

@@ -28,6 +28,9 @@ import com.almasb.fxgl.physics.PhysicsComponent;
 
 // --- IMPORT JAVA FX ---
 import javafx.geometry.Point2D;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.layout.VBox;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.ScrollEvent;
@@ -47,6 +50,95 @@ public class Main extends GameApplication {
     }
     public TimeSystem getTimeSystem() {
         return timeSystem;
+    }
+    public Inventory getInventory() { return inventory; }
+    public ToolbarView getToolbarView() { return toolbarView; }
+    public DialogView getDialogView() { return dialogView; }
+    public TradingView getTradingView() { return tradingView; }
+    public StatusBarsView getStatusBarsView() { return statusBarsView; }
+    
+    public void registerWeatherText(Text weatherText) {
+        if (hudContainer != null && weatherText != null) {
+            if (!hudContainer.getChildren().contains(weatherText)) {
+                int moneyIndex = hudContainer.getChildren().indexOf(moneyText);
+                if (moneyIndex >= 0) {
+                    hudContainer.getChildren().add(moneyIndex, weatherText);
+                } else {
+                    hudContainer.getChildren().add(weatherText);
+                }
+            }
+        }
+    }
+
+    public void drainHungerForWork(double amount) {
+        if (statusBarsView != null) {
+            statusBarsView.setHunger(Math.max(0, statusBarsView.getHunger() - amount));
+        }
+    }
+
+    public void handlePlayerFaint() {
+        System.out.println("--- Player Fainted! ---");
+        if (timeSystem != null) {
+            timeSystem.advanceToNextDay();
+        }
+
+        if (player != null) {
+            PlayerComponent pc = player.getComponent(PlayerComponent.class);
+            if (pc != null) {
+                int newMoney = Math.max(0, pc.getMoney() - 100);
+                pc.setMoney(newMoney);
+            }
+        }
+
+        if (statusBarsView != null) {
+            statusBarsView.setHealth(statusBarsView.getMaxHealth() * 0.5);
+            statusBarsView.setHunger(statusBarsView.getMaxHunger() * 0.5);
+        }
+
+        lastHungerDrainTime = -1;
+        lastStarveHPTime = -1;
+
+        if (dialogView.isOpen()) dialogView.hide();
+        updateLevel("Main_house.tmx", 550, 350);
+
+        dialogView.setDialog("Thông báo", "Bạn đã bị kiệt sức và ngất xỉu!", "Bác nông dân đã đưa bạn về nhà.", "Phạt viện phí: 100 G. Sức khỏe phục hồi 50%.");
+        dialogView.show();
+    }
+
+    public void handleDoorInteraction(Entity targetDoor) {
+        String mapFile = targetDoor.getString("targetMap");
+        double tx = targetDoor.getDouble("teleportX");
+        double ty = targetDoor.getDouble("teleportY");
+
+        if (currentMap.equals("Main_level.tmx") && mapFile.equals("Main_house.tmx")) {
+            lastOutdoorPosition = player.getPosition();
+            System.out.println("Cached player outdoor position: " + lastOutdoorPosition);
+        }
+
+        if (currentMap.equals("Main_house.tmx") && mapFile.equals("Main_level.tmx") && lastOutdoorPosition != null) {
+            tx = lastOutdoorPosition.getX();
+            ty = lastOutdoorPosition.getY() + 32.0;
+            System.out.println("Using cached outdoor position: " + tx + ", " + ty);
+        }
+
+        if (dialogView.isOpen()) dialogView.hide();
+
+        nearbyDoor = null;
+        updateLevel(mapFile, tx, ty);
+        System.out.println("Dịch chuyển đến: " + mapFile + " tại " + tx + ", " + ty);
+    }
+
+    public void handleSleepInteraction() {
+        System.out.println("--- Main: Bắt đầu đi ngủ ---");
+        if (timeSystem != null) {
+            timeSystem.advanceToNextDay();
+            statusBarsView.setHealth(statusBarsView.getMaxHealth());
+            statusBarsView.setHunger(statusBarsView.getMaxHunger());
+            dialogView.setDialog("Thông báo", "Bạn đã ngủ một giấc thật ngon.", "Sức khỏe đã được hồi phục!");
+            dialogView.show();
+            System.out.println("Nhân vật đã đi ngủ.");
+        }
+        System.out.println("--- Main: Kết thúc đi ngủ ---");
     }
 
     // --- Các thực thể chính ---
@@ -80,6 +172,10 @@ public class Main extends GameApplication {
     private String currentMap = "Main_level.tmx"; // Bản đồ hiện tại
     private Map<String, SaveData> mapStates = new HashMap<>(); // Lưu trạng thái các bản đồ
     private boolean shouldLoadSaveOnStart = false; // Flag to load save game on startup
+    private Point2D lastOutdoorPosition = null;
+    private VBox hudContainer;
+    private double lastHungerDrainTime = -1;
+    private double lastStarveHPTime = -1;
 
     @Override
     protected void initSettings(GameSettings gameSettings) {
@@ -166,27 +262,36 @@ public class Main extends GameApplication {
         statusBarsView.setLayoutX(20); statusBarsView.setLayoutY(20);
 
         minimap = new MinimapView();
-        minimap.setLayoutX(FXGL.getAppWidth() - 170); minimap.setLayoutY(60);
+        double minimapHeight = 150;
+        minimap.setLayoutX(10);
+        minimap.setLayoutY(FXGL.getAppHeight() - minimapHeight - 10);
 
         // Khởi tạo UI đặc thù cho Thời gian
         nightOverlay = new NightLightingOverlay(FXGL.getAppWidth(), FXGL.getAppHeight());
 
         clockText = new Text();
-        clockText.setFont(Font.font("Arial", FontWeight.BOLD, 22));
-        clockText.setTranslateX(FXGL.getAppWidth() - 150); clockText.setTranslateY(40);
+        clockText.setFont(Font.font("Arial", FontWeight.BOLD, 20));
         clockText.setStroke(Color.BLACK); clockText.setStrokeWidth(0.5);
 
         // Khởi tạo Text hiển thị tiền
         moneyText = new Text();
-        moneyText.setFont(Font.font("Arial", FontWeight.BOLD, 22));
-        moneyText.setTranslateX(20); // Vị trí X
-        moneyText.setTranslateY(FXGL.getAppHeight() - 20); // Vị trí Y (góc dưới bên trái)
+        moneyText.setFont(Font.font("Arial", FontWeight.BOLD, 18));
         moneyText.setFill(Color.GOLD); // Màu chữ
         moneyText.setStroke(Color.BLACK);
-        moneyText.setStrokeWidth(0.5);
+        moneyText.setStrokeWidth(0.3);
+
+        double hudContainerWidth = 220;
+        hudContainer = new VBox(6);
+        hudContainer.setPadding(new Insets(10, 15, 10, 15));
+        hudContainer.setPrefWidth(hudContainerWidth);
+        hudContainer.setStyle("-fx-background-color: rgba(0, 0, 0, 0.45); -fx-background-radius: 8; -fx-border-color: rgba(255, 255, 255, 0.15); -fx-border-width: 1; -fx-border-radius: 8;");
+        hudContainer.setAlignment(Pos.TOP_RIGHT);
+        hudContainer.setLayoutX(FXGL.getAppWidth() - hudContainerWidth - 15);
+        hudContainer.setLayoutY(15);
+        hudContainer.getChildren().addAll(clockText, moneyText);
 
         // Đưa tất cả UI vào màn hình
-        FXGL.getGameScene().addUINodes(toolbarView, inventoryView, dialogView, statusBarsView, minimap, nightOverlay, clockText, moneyText);
+        FXGL.getGameScene().addUINodes(toolbarView, inventoryView, dialogView, statusBarsView, minimap, nightOverlay, hudContainer);
 
         // Khởi tạo các System phụ thuộc UI
         timeSystem = new TimeSystem(nightOverlay, clockText);
@@ -212,6 +317,8 @@ public class Main extends GameApplication {
         if (shouldLoadSaveOnStart) {
             saveLoadSystem.loadGameFromFile();
             shouldLoadSaveOnStart = false;
+        } else if (Project1Game.system.TutorialSystem.getInstance().isFirstTime()) {
+            Project1Game.system.TutorialSystem.getInstance().startTutorial();
         }
     }
 
@@ -315,6 +422,44 @@ public class Main extends GameApplication {
             nightOverlay.update(player.getCenter(), pc.getDirection());
         }
 
+        // --- Cập nhật chỉ số đói và máu của người chơi ---
+        if (timeSystem != null && statusBarsView != null) {
+            double currentMins = timeSystem.getGameTime();
+
+            if (lastHungerDrainTime == -1) {
+                lastHungerDrainTime = currentMins;
+            }
+
+            double hungerDiff = currentMins - lastHungerDrainTime;
+            if (hungerDiff < 0) hungerDiff += 1440;
+            if (hungerDiff >= 10) {
+                int intervals = (int)(hungerDiff / 10);
+                double newHunger = Math.max(0, statusBarsView.getHunger() - intervals);
+                statusBarsView.setHunger(newHunger);
+                lastHungerDrainTime = (lastHungerDrainTime + intervals * 10) % 1440;
+            }
+
+            if (statusBarsView.getHunger() <= 0) {
+                if (lastStarveHPTime == -1) {
+                    lastStarveHPTime = currentMins;
+                }
+                double starveDiff = currentMins - lastStarveHPTime;
+                if (starveDiff < 0) starveDiff += 1440;
+                if (starveDiff >= 5) {
+                    int intervals = (int)(starveDiff / 5);
+                    double newHP = Math.max(0, statusBarsView.getHealth() - (intervals * 1.0));
+                    statusBarsView.setHealth(newHP);
+                    lastStarveHPTime = (lastStarveHPTime + intervals * 5) % 1440;
+                }
+            } else {
+                lastStarveHPTime = -1;
+            }
+
+            if (statusBarsView.getHealth() <= 0) {
+                handlePlayerFaint();
+            }
+        }
+
         // AI: Đi vào nhà lúc 8:00 PM và xuất hiện lại lúc 6:00 AM
         if (currentMap.equals("Main_level.tmx") && timeSystem != null) {
             // 8:00 PM: đi vào nhà
@@ -398,117 +543,17 @@ public class Main extends GameApplication {
         input.addAction(new UserAction("Interact Action Key") {
             @Override
             protected void onActionBegin() {
-                // Sử dụng khoảng cách làm fallback nếu cảm biến vật lý chưa kích hoạt (do va chạm vật lý đặc)
-                Entity targetNPC = nearbyNPC;
-                if (targetNPC != null && targetNPC.getComponent(NPCBehaviorComponent.class).isHidden()) {
-                    targetNPC = null;
-                }
-                if (targetNPC == null && player != null) {
-                    targetNPC = FXGL.getGameWorld().getEntitiesByType(EntityType.GUIDER, EntityType.TRADER).stream()
-                            .filter(e -> e.distance(player) < 70 && !e.getComponent(NPCBehaviorComponent.class).isHidden())
+                Entity target = null;
+                if (player != null) {
+                    target = FXGL.getGameWorld().getEntities().stream()
+                            .filter(e -> e.hasComponent(Project1Game.interaction.InteractableComponent.class) && e.distance(player) < 70)
                             .findFirst()
                             .orElse(null);
                 }
 
-                Entity targetDoor = nearbyDoor;
-                if (targetDoor == null && player != null) {
-                    targetDoor = FXGL.getGameWorld().getEntitiesByType(EntityType.DOOR).stream()
-                            .filter(e -> e.distance(player) < 70)
-                            .findFirst()
-                            .orElse(null);
-                }
-
-                Entity targetSleep = nearbySleep;
-                if (targetSleep == null && player != null) {
-                    targetSleep = FXGL.getGameWorld().getEntitiesByType(EntityType.SLEEP).stream()
-                            .filter(e -> e.distance(player) < 70)
-                            .findFirst()
-                            .orElse(null);
-                }
-
-                if (targetNPC != null) { // Kiểm tra nếu có NPC gần đó
-                    if (targetNPC.getType() == EntityType.TRADER) { // Kiểm tra nếu là Trader
-                        tradingView.open(targetNPC.getComponent(TraderComponent.class));
-                    } else {
-                        // Logic tương tác NPC thông thường (Guider, v.v.)
-                        String npcName = targetNPC.getProperties().keys().contains("name") ? targetNPC.getString("name") : "";
-                        NPC npc = QuestManager.getInstance().getNPC(npcName);
-                        if (npc != null) {
-                            System.out.println("Tương tác với NPC: " + npcName);
-                            String text = npc.interact();
-                            
-                            // Chỉ nhận quest mới nếu không có quest nào đang thực hiện hoặc chờ nhận thưởng
-                            boolean hasActiveOrCompleted = npc.getQuests().stream()
-                                    .anyMatch(q -> q.getStatus() == QuestStatus.IN_PROGRESS || q.getStatus() == QuestStatus.COMPLETED);
-                            
-                            if (!hasActiveOrCompleted) {
-                                npc.acceptNextAvailableQuest();
-                            }
-                            
-                            npc.claimFirstCompleted(inventory);
-                            
-                            dialogView.setDialog(targetNPC.getString("name"), text.split("\n"));
-                            dialogView.show();
-                            toolbarView.updateSelection();
-                        }
-                    }
-                } else if (targetDoor != null) { // Xử lý tương tác với cửa
-                    // 1. Lưu dữ liệu từ cửa cũ trước khi chuyển map (vì map cũ sẽ bị xóa)
-                    String mapFile = targetDoor.getString("targetMap");
-
-                    // Đọc từ teleportX/teleportY thay vì targetX/targetY cũ
-                    double tx = targetDoor.getDouble("teleportX");
-                    double ty = targetDoor.getDouble("teleportY");
-
-                    // 2. Ẩn dialog nếu đang mở để tránh UI bị lỗi khi đổi map
-                    if (dialogView.isOpen()) dialogView.hide();
-
-                    nearbyDoor = null;
-                    updateLevel(mapFile, tx, ty);
-
-                    System.out.println("Dịch chuyển đến: " + mapFile + " tại " + tx + ", " + ty);
-                } else if (targetSleep != null) {
-                    System.out.println("--- Main: Bắt đầu đi ngủ ---");
-
-                    // Debug: In trạng thái kho đồ trước khi ngủ
-                    System.out.println("Kho đồ trước khi ngủ:");
-                    for (InventorySlot slot : inventory.getSlots()) {
-                        if (!slot.isEmpty()) {
-                            System.out.println("  - " + slot.getItemType().getDisplayName() + ": " + slot.getCount());
-                        }
-                    }
-                    // Debug: In trạng thái một số cây trồng (ví dụ: lúa mì)
-                    FXGL.getGameWorld().getEntitiesByType(EntityType.WHEAT).forEach(wheat -> {
-                        CropComponent cc = wheat.getComponent(CropComponent.class);
-                        System.out.println("  - Lúa mì tại (" + wheat.getX() + ", " + wheat.getY() + ") - Stage: " + cc.getStage());
-                    });
-
-
-                    // Logic đi ngủ
-                    if (timeSystem != null) {
-                        timeSystem.advanceToNextDay(); // Bỏ nhận xét dòng này
-                        statusBarsView.setHealth(100); // Reset máu
-                        statusBarsView.setHunger(100); // Reset đói
-                        dialogView.setDialog("Thông báo", "Bạn đã ngủ một giấc thật ngon.", "Sức khỏe đã được hồi phục!");
-                        dialogView.show();
-                        System.out.println("Nhân vật đã đi ngủ.");
-                    }
-
-                    // Debug: In trạng thái kho đồ sau khi ngủ
-                    System.out.println("Kho đồ sau khi ngủ:");
-                    for (InventorySlot slot : inventory.getSlots()) {
-                        if (!slot.isEmpty()) {
-                            System.out.println("  - " + slot.getItemType().getDisplayName() + ": " + slot.getCount());
-                        }
-                    }
-                    // Debug: In trạng thái một số cây trồng sau khi ngủ
-                    FXGL.getGameWorld().getEntitiesByType(EntityType.WHEAT).forEach(wheat -> {
-                        CropComponent cc = wheat.getComponent(CropComponent.class);
-                        System.out.println("  - Lúa mì tại (" + wheat.getX() + ", " + wheat.getY() + ") - Stage: " + cc.getStage());
-                    });
-                    System.out.println("--- Main: Kết thúc đi ngủ ---");
-                }
-                else {
+                if (target != null) {
+                    target.getComponent(Project1Game.interaction.InteractableComponent.class).interact(player);
+                } else {
                     farmingSystem.handleHarvest(selector);
                 }
             }
@@ -562,6 +607,19 @@ public class Main extends GameApplication {
             @Override protected void onActionBegin() { saveLoadSystem.loadGameFromFile(); } // Gọi phương thức tải từ file
         }, KeyCode.F9);
 
+        // Admin Console Time Speed Controls
+        input.addAction(new UserAction("Set Time Speed 1x") {
+            @Override protected void onActionBegin() {
+                if (timeSystem != null) timeSystem.setTimeSpeedMultiplier(1.0);
+            }
+        }, KeyCode.NUMPAD7);
+
+        input.addAction(new UserAction("Set Time Speed 50x") {
+            @Override protected void onActionBegin() {
+                if (timeSystem != null) timeSystem.setTimeSpeedMultiplier(50.0);
+            }
+        }, KeyCode.NUMPAD8);
+
         // 6. CHỌN SLOT 1-9
         KeyCode[] digitCodes = {KeyCode.DIGIT1, KeyCode.DIGIT2, KeyCode.DIGIT3, KeyCode.DIGIT4,
                 KeyCode.DIGIT5, KeyCode.DIGIT6, KeyCode.DIGIT7, KeyCode.DIGIT8, KeyCode.DIGIT9};
@@ -586,14 +644,8 @@ public class Main extends GameApplication {
     /** Điều phối sử dụng vật phẩm dựa trên loại đang chọn */
     private void handleUseItem() {
         ItemType selected = inventory.getSelectedItem();
-        if (selected == null) return;
-
-        switch (selected) {
-            case HOE: farmingSystem.useHoe(selector); break;
-            case WATERING_CAN: System.out.println("Đang sử dụng bình tưới...");
-                farmingSystem.useWateringCan(selector);
-                break;
-            default: if (selected.isSeed()) farmingSystem.plantCrop(selector, selected); break;
+        if (selected != null) {
+            selected.use(player, selector);
         }
     }
 
