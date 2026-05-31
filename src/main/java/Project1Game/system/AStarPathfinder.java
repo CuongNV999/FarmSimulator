@@ -4,107 +4,177 @@ import com.almasb.fxgl.dsl.FXGL;
 import com.almasb.fxgl.entity.Entity;
 import Project1Game.core.EntityType;
 import javafx.geometry.Point2D;
+
 import java.util.*;
 
 public class AStarPathfinder {
+    private static final double CELL_SIZE = 32.0;
 
-    private static final int TILE_SIZE = 32;
+    public static class Node implements Comparable<Node> {
+        public int col, row;
+        public double g; // path cost
+        public double h; // heuristic cost
+        public Node parent;
 
-    public static List<Point2D> findPath(Point2D start, Point2D target, double mapW, double mapH) {
-        int cols = (int) Math.ceil(mapW / TILE_SIZE);
-        int rows = (int) Math.ceil(mapH / TILE_SIZE);
-
-        int startX = (int) (start.getX() / TILE_SIZE);
-        int startY = (int) (start.getY() / TILE_SIZE);
-        int targetX = (int) (target.getX() / TILE_SIZE);
-        int targetY = (int) (target.getY() / TILE_SIZE);
-
-        // Clamp boundaries
-        startX = Math.max(0, Math.min(cols - 1, startX));
-        startY = Math.max(0, Math.min(rows - 1, startY));
-        targetX = Math.max(0, Math.min(cols - 1, targetX));
-        targetY = Math.max(0, Math.min(rows - 1, targetY));
-
-        if (startX == targetX && startY == targetY) {
-            return Collections.emptyList();
+        public Node(int col, int row) {
+            this.col = col;
+            this.row = row;
         }
 
-        // Identify obstacles
-        boolean[][] obstacles = new boolean[cols][rows];
-        List<Entity> collisionEntities = FXGL.getGameWorld().getEntitiesByType(
-            EntityType.WALL, EntityType.COLLISION
-        );
+        public double getF() {
+            return g + h;
+        }
 
-        for (Entity obstacle : collisionEntities) {
+        @Override
+        public int compareTo(Node other) {
+            return Double.compare(this.getF(), other.getF());
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            Node node = (Node) o;
+            return col == node.col && row == node.row;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(col, row);
+        }
+    }
+
+    public static List<Point2D> findPath(Point2D start, Point2D target, double mapWidth, double mapHeight) {
+        int cols = (int) Math.ceil(mapWidth / CELL_SIZE);
+        int rows = (int) Math.ceil(mapHeight / CELL_SIZE);
+
+        boolean[][] blocked = new boolean[cols][rows];
+        double[][] costGrid = new double[cols][rows];
+        for (int c = 0; c < cols; c++) {
+            Arrays.fill(costGrid[c], 1.0);
+        }
+
+        // Get all obstacle entities
+        List<Entity> obstacles = FXGL.getGameWorld().getEntitiesByType(EntityType.WALL, EntityType.COLLISION);
+        for (Entity obstacle : obstacles) {
             double minX = obstacle.getX();
             double minY = obstacle.getY();
             double maxX = obstacle.getRightX();
             double maxY = obstacle.getBottomY();
 
-            int startCol = (int) (minX / TILE_SIZE);
-            int endCol = (int) Math.ceil(maxX / TILE_SIZE) - 1;
-            int startRow = (int) (minY / TILE_SIZE);
-            int endRow = (int) Math.ceil(maxY / TILE_SIZE) - 1;
+            int startCol = Math.max(0, (int) (minX / CELL_SIZE));
+            int endCol = Math.min(cols - 1, (int) Math.ceil(maxX / CELL_SIZE) - 1);
+            int startRow = Math.max(0, (int) (minY / CELL_SIZE));
+            int endRow = Math.min(rows - 1, (int) Math.ceil(maxY / CELL_SIZE) - 1);
 
             for (int c = startCol; c <= endCol; c++) {
                 for (int r = startRow; r <= endRow; r++) {
-                    if (c >= 0 && c < cols && r >= 0 && r < rows) {
-                        obstacles[c][r] = true;
+                    blocked[c][r] = true;
+                }
+            }
+        }
+
+        // Apply obstacle inflation for cost: cells 1 tile away from a blocked tile have cost 15, cells 2 tiles away have cost 5.
+        // This keeps the NPC in the middle of roads and away from walls/obstacles.
+        for (int c = 0; c < cols; c++) {
+            for (int r = 0; r < rows; r++) {
+                if (blocked[c][r]) {
+                    // Distance 1 neighbors
+                    for (int dc = -1; dc <= 1; dc++) {
+                        for (int dr = -1; dr <= 1; dr++) {
+                            if (dc == 0 && dr == 0) continue;
+                            int nc = c + dc;
+                            int nr = r + dr;
+                            if (nc >= 0 && nc < cols && nr >= 0 && nr < rows) {
+                                if (!blocked[nc][nr]) {
+                                    costGrid[nc][nr] = Math.max(costGrid[nc][nr], 15.0);
+                                }
+                            }
+                        }
+                    }
+                    // Distance 2 neighbors
+                    for (int dc = -2; dc <= 2; dc++) {
+                        for (int dr = -2; dr <= 2; dr++) {
+                            if (Math.abs(dc) <= 1 && Math.abs(dr) <= 1) continue; // already handled
+                            int nc = c + dc;
+                            int nr = r + dr;
+                            if (nc >= 0 && nc < cols && nr >= 0 && nr < rows) {
+                                if (!blocked[nc][nr]) {
+                                    costGrid[nc][nr] = Math.max(costGrid[nc][nr], 5.0);
+                                }
+                            }
+                        }
                     }
                 }
             }
         }
 
-        // Let start and target remain clear
-        obstacles[startX][startY] = false;
-        obstacles[targetX][targetY] = false;
+        int startCol = Math.max(0, Math.min(cols - 1, (int) Math.round(start.getX() / CELL_SIZE)));
+        int startRow = Math.max(0, Math.min(rows - 1, (int) Math.round(start.getY() / CELL_SIZE)));
+        int targetCol = Math.max(0, Math.min(cols - 1, (int) Math.round(target.getX() / CELL_SIZE)));
+        int targetRow = Math.max(0, Math.min(rows - 1, (int) Math.round(target.getY() / CELL_SIZE)));
 
-        PriorityQueue<Node> openSet = new PriorityQueue<>(Comparator.comparingDouble(n -> n.f));
-        Map<String, Node> allNodes = new HashMap<>();
+        // Guarantee start and target are passable
+        blocked[startCol][startRow] = false;
+        blocked[targetCol][targetRow] = false;
 
-        Node startNode = new Node(startX, startY);
+        // Since the NPC is 32x64, it occupies two vertical cells. Let's make sure the cell below the start and target is also passable
+        if (startRow + 1 < rows) blocked[startCol][startRow + 1] = false;
+        if (targetRow + 1 < rows) blocked[targetCol][targetRow + 1] = false;
+
+        PriorityQueue<Node> openSet = new PriorityQueue<>();
+        Set<String> closedSet = new HashSet<>();
+
+        Node startNode = new Node(startCol, startRow);
         startNode.g = 0;
-        startNode.h = heuristic(startX, startY, targetX, targetY);
-        startNode.f = startNode.g + startNode.h;
+        startNode.h = Math.abs(startCol - targetCol) + Math.abs(startRow - targetRow); // Manhattan distance
         openSet.add(startNode);
-        allNodes.put(startNode.key(), startNode);
+
+        Map<String, Node> allNodes = new HashMap<>();
+        allNodes.put(startCol + "," + startRow, startNode);
 
         Node targetNode = null;
 
-        int[] dx = {0, 0, 1, -1};
-        int[] dy = {1, -1, 0, 0};
+        int[] dCol = {1, -1, 0, 0};
+        int[] dRow = {0, 0, 1, -1};
 
         while (!openSet.isEmpty()) {
             Node current = openSet.poll();
 
-            if (current.closed) continue;
-            current.closed = true;
-
-            if (current.x == targetX && current.y == targetY) {
+            if (current.col == targetCol && current.row == targetRow) {
                 targetNode = current;
                 break;
             }
 
+            closedSet.add(current.col + "," + current.row);
+
             for (int i = 0; i < 4; i++) {
-                int nx = current.x + dx[i];
-                int ny = current.y + dy[i];
+                int nCol = current.col + dCol[i];
+                int nRow = current.row + dRow[i];
 
-                if (nx >= 0 && nx < cols && ny >= 0 && ny < rows && !obstacles[nx][ny]) {
-                    String nKey = nx + "," + ny;
-                    Node neighbor = allNodes.get(nKey);
-                    if (neighbor == null) {
-                        neighbor = new Node(nx, ny);
-                        allNodes.put(nKey, neighbor);
-                    }
+                if (nCol < 0 || nCol >= cols || nRow < 0 || nRow >= rows) continue;
+                if (blocked[nCol][nRow]) continue;
+                if (closedSet.contains(nCol + "," + nRow)) continue;
 
-                    if (neighbor.closed) continue;
+                // Since NPC is 32x64, check if the cell below is also blocked
+                if (nRow + 1 < rows && blocked[nCol][nRow + 1]) continue;
 
-                    double tentativeG = current.g + 1;
-                    if (tentativeG < neighbor.g) {
-                        neighbor.parent = current;
-                        neighbor.g = tentativeG;
-                        neighbor.h = heuristic(nx, ny, targetX, targetY);
-                        neighbor.f = neighbor.g + neighbor.h;
+                double movementCost = costGrid[nCol][nRow];
+                double tentativeG = current.g + movementCost;
+
+                String key = nCol + "," + nRow;
+                Node neighbor = allNodes.get(key);
+                if (neighbor == null) {
+                    neighbor = new Node(nCol, nRow);
+                    neighbor.g = Double.MAX_VALUE;
+                    allNodes.put(key, neighbor);
+                }
+
+                if (tentativeG < neighbor.g) {
+                    neighbor.parent = current;
+                    neighbor.g = tentativeG;
+                    neighbor.h = Math.abs(nCol - targetCol) + Math.abs(nRow - targetRow);
+                    if (!openSet.contains(neighbor)) {
                         openSet.add(neighbor);
                     }
                 }
@@ -112,39 +182,23 @@ public class AStarPathfinder {
         }
 
         if (targetNode == null) {
+            // No path found
             return Collections.emptyList();
         }
 
+        // Reconstruct path
         List<Point2D> path = new ArrayList<>();
         Node curr = targetNode;
         while (curr != null) {
-            path.add(new Point2D(curr.x * TILE_SIZE, curr.y * TILE_SIZE));
+            path.add(0, new Point2D(curr.col * CELL_SIZE, curr.row * CELL_SIZE));
             curr = curr.parent;
         }
 
-        Collections.reverse(path);
+        // Replace the last waypoint with the exact target position
+        if (!path.isEmpty()) {
+            path.set(path.size() - 1, target);
+        }
+
         return path;
-    }
-
-    private static double heuristic(int x1, int y1, int x2, int y2) {
-        return Math.abs(x1 - x2) + Math.abs(y1 - y2);
-    }
-
-    private static class Node {
-        final int x, y;
-        double g = Double.POSITIVE_INFINITY;
-        double h = 0;
-        double f = Double.POSITIVE_INFINITY;
-        boolean closed = false;
-        Node parent = null;
-
-        Node(int x, int y) {
-            this.x = x;
-            this.y = y;
-        }
-
-        String key() {
-            return x + "," + y;
-        }
     }
 }

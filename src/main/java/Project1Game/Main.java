@@ -87,7 +87,7 @@ public class Main extends GameApplication {
         gameSettings.setHeight(720);
         gameSettings.setTitle("Java Farming Professional");
         gameSettings.setVersion("2.5");
-        gameSettings.setDeveloperMenuEnabled(true);
+        gameSettings.setDeveloperMenuEnabled(true);     
         gameSettings.setMainMenuEnabled(true);
         gameSettings.setSceneFactory(new FarmSceneFactory());
     }
@@ -542,6 +542,10 @@ public class Main extends GameApplication {
         }, KeyCode.R); // Sử dụng R để đóng UI
 
         input.addAction(new UserAction("Toggle Inventory Window") {
+            @Override protected void onActionBegin() { inventoryView.toggle(); }
+        }, KeyCode.I);
+
+        input.addAction(new UserAction("Toggle Inventory Window TAB") {
             @Override protected void onActionBegin() { inventoryView.toggle(); }
         }, KeyCode.TAB);
 

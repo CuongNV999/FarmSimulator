@@ -20,6 +20,7 @@ public class SaveData implements Serializable {
     public double playerX;
     public double playerY;
     public String weather;
+    public String playerSkin = "Player";
 
     // Lưu Inventory: Tên vật phẩm -> Số lượng
     public Map<String, Integer> inventoryItems = new HashMap<>();
