@@ -157,7 +157,30 @@ public class AdminView extends VBox {
 
         HBox quickGoldRow = new HBox(10, add1k, add10k);
 
-        statsCol.getChildren().addAll(statsTitle, goldRow, quickGoldRow);
+        // Skin Selection Panel
+        Text skinTitle = new Text("Choose Player Skin:");
+        skinTitle.setFill(Color.WHITE);
+        skinTitle.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+
+        javafx.scene.layout.GridPane skinGrid = new javafx.scene.layout.GridPane();
+        skinGrid.setHgap(8);
+        skinGrid.setVgap(8);
+
+        String[] skinNames = {"Default", "HUST", "Farmer", "Cowboy", "Knight", "Witch"};
+        String[] skinPaths = {"Player", "Player_HUST", "Player_Farmer", "Player_Cowboy", "Player_Knight", "Player_Witch"};
+
+        for (int i = 0; i < skinNames.length; i++) {
+            final String path = skinPaths[i];
+            Button btnSkin = new Button(skinNames[i]);
+            btnSkin.setPrefWidth(80);
+            btnSkin.setStyle("-fx-background-color: #3e3e4a; -fx-text-fill: white; -fx-cursor: hand; -fx-font-weight: bold; -fx-font-size: 11px;");
+            btnSkin.setOnAction(e -> {
+                playerComponent.changeSkin(path);
+            });
+            skinGrid.add(btnSkin, i % 3, i / 3);
+        }
+
+        statsCol.getChildren().addAll(statsTitle, goldRow, quickGoldRow, skinTitle, skinGrid);
 
         // --- SECTION 2: Crop & inventory Adjusters scrollpane ---
         VBox itemsCol = new VBox(10);

@@ -39,6 +39,7 @@ public class SaveLoadSystem {
             Entity player = FXGL.getGameWorld().getSingleton(EntityType.PLAYER);
             PlayerComponent playerComponent = player.getComponent(PlayerComponent.class);
             data.playerMoney = playerComponent.getMoney(); // Lưu tiền của người chơi
+            data.playerSkin = playerComponent.getCurrentSkin();
 
             // Lưu bản đồ và vị trí người chơi
             data.currentMap = ((Main) FXGL.getApp()).getCurrentMap();
@@ -103,6 +104,9 @@ public class SaveLoadSystem {
             Entity player = FXGL.getGameWorld().getSingleton(EntityType.PLAYER);
             PlayerComponent playerComponent = player.getComponent(PlayerComponent.class);
             playerComponent.setMoney(data.playerMoney); // Tải tiền của người chơi
+            if (data.playerSkin != null) {
+                playerComponent.changeSkin(data.playerSkin);
+            }
 
             // Tải Inventory (cần xóa inventory hiện tại và thêm lại)
             inventory.clear();
