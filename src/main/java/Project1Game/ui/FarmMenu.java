@@ -111,8 +111,7 @@ public class FarmMenu extends FXGLMenu {
         titleContainer.getChildren().addAll(titleText, subtitleText);
 
         MenuButton btnNewGame = new MenuButton("New Game", () -> {
-            app.setShouldLoadSaveOnStart(false);
-            fireNewGame();
+            showSkinSelectionScreen(menuBox, titleContainer, app, true);
         });
 
         // Load last game button
@@ -123,21 +122,17 @@ public class FarmMenu extends FXGLMenu {
 
         // Check if save game exists
         boolean hasSave = app.hasSaveGame();
-        if (!hasSave) {
-            btnLoadGame.setDisable(true);
-            btnLoadGame.setOpacity(0.35);
-        }
-
-        MenuButton btnChooseSkin = new MenuButton("Choose Skin", () -> {
-            showSkinSelectionScreen(menuBox, titleContainer, app);
-        });
 
         MenuButton btnExit = new MenuButton("Exit Game", this::fireExit);
 
-        menuBox.getChildren().addAll(btnNewGame, btnLoadGame, btnChooseSkin, btnExit);
+        if (hasSave) {
+            menuBox.getChildren().addAll(btnNewGame, btnLoadGame, btnExit);
+        } else {
+            menuBox.getChildren().addAll(btnNewGame, btnExit);
+        }
     }
 
-    private void showSkinSelectionScreen(VBox menuBox, VBox titleContainer, Main app) {
+    private void showSkinSelectionScreen(VBox menuBox, VBox titleContainer, Main app, boolean isNewGame) {
         menuBox.getChildren().clear();
         titleContainer.getChildren().clear();
 
@@ -200,7 +195,7 @@ public class FarmMenu extends FXGLMenu {
             selectBtn.setOnAction(e -> {
                 Project1Game.component.player.PlayerComponent.SELECTED_SKIN = path;
                 // Re-draw screen to update selections
-                showSkinSelectionScreen(menuBox, titleContainer, app);
+                showSkinSelectionScreen(menuBox, titleContainer, app, isNewGame);
             });
 
             // Hover effects for the boxes
@@ -224,12 +219,28 @@ public class FarmMenu extends FXGLMenu {
         // Adjust position slightly to fit HBox
         menuBox.setTranslateY(210);
 
-        MenuButton btnBack = new MenuButton("Back to Menu", () -> {
-            menuBox.setTranslateY(260); // Restore original position
-            showMainMenuScreen(menuBox, titleContainer, app);
-        });
+        javafx.scene.layout.HBox buttonsBox = new javafx.scene.layout.HBox(20);
+        buttonsBox.setAlignment(Pos.CENTER);
 
-        menuBox.getChildren().addAll(skinsRow, btnBack);
+        if (isNewGame) {
+            MenuButton btnStartGame = new MenuButton("Start Game", () -> {
+                app.setShouldLoadSaveOnStart(false);
+                fireNewGame();
+            });
+            MenuButton btnBack = new MenuButton("Back to Menu", () -> {
+                menuBox.setTranslateY(260); // Restore original position
+                showMainMenuScreen(menuBox, titleContainer, app);
+            });
+            buttonsBox.getChildren().addAll(btnStartGame, btnBack);
+        } else {
+            MenuButton btnBack = new MenuButton("Back to Menu", () -> {
+                menuBox.setTranslateY(260); // Restore original position
+                showMainMenuScreen(menuBox, titleContainer, app);
+            });
+            buttonsBox.getChildren().add(btnBack);
+        }
+
+        menuBox.getChildren().addAll(skinsRow, buttonsBox);
     }
 
     /**

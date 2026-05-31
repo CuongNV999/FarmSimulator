@@ -16,6 +16,8 @@ import com.almasb.fxgl.physics.box2d.dynamics.FixtureDef;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import com.almasb.fxgl.core.collection.UpdatableObjectProperty; // Import UpdatableObjectProperty
+import Project1Game.interaction.InteractableComponent;
+import Project1Game.Main;
 
 /**
  * Factory quản lý việc tạo tất cả thực thể trong game.
@@ -175,6 +177,9 @@ public class GameEntityFactory implements EntityFactory {
                 // ĐỔI TÊN Ở ĐÂY để tránh xung đột với Tiled
                 .with("teleportX", targetXValue)
                 .with("teleportY", targetYValue)
+                .with(new InteractableComponent((player, target) -> {
+                    Main.getInstance().handleDoorInteraction(target);
+                }))
                 .collidable()
                 .build();
     }
@@ -198,6 +203,9 @@ public class GameEntityFactory implements EntityFactory {
         return FXGL.entityBuilder(data)
                 .type(EntityType.SLEEP)
                 .bbox(new HitBox(BoundingShape.box(w, h)))
+                .with(new InteractableComponent((player, target) -> {
+                    Main.getInstance().handleSleepInteraction();
+                }))
                 .collidable()
                 .build();
     }
@@ -216,7 +224,7 @@ public class GameEntityFactory implements EntityFactory {
     public Entity spawnGuider(SpawnData data) {
         PhysicsComponent physics = new PhysicsComponent();
         physics.setFixtureDef(new FixtureDef().friction(0f).density(0.1f));
-        physics.setBodyType(BodyType.DYNAMIC);
+        physics.setBodyType(BodyType.KINEMATIC);
         physics.setOnPhysicsInitialized(() -> {
             if (physics.getBody() != null) {
                 physics.getBody().setLinearDamping(12.0f);
@@ -250,7 +258,7 @@ public class GameEntityFactory implements EntityFactory {
     public Entity spawnTrader(SpawnData data) {
         PhysicsComponent physics = new PhysicsComponent();
         physics.setFixtureDef(new FixtureDef().friction(0f).density(0.1f));
-        physics.setBodyType(BodyType.DYNAMIC);
+        physics.setBodyType(BodyType.KINEMATIC);
         physics.setOnPhysicsInitialized(() -> {
             if (physics.getBody() != null) {
                 physics.getBody().setLinearDamping(12.0f);

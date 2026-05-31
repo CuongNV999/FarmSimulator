@@ -162,7 +162,7 @@ public class AdminView extends VBox {
         skinTitle.setFill(Color.WHITE);
         skinTitle.setFont(Font.font("Arial", FontWeight.BOLD, 14));
 
-        javafx.scene.layout.GridPane skinGrid = new javafx.scene.layout.GridPane();
+        GridPane skinGrid = new GridPane();
         skinGrid.setHgap(8);
         skinGrid.setVgap(8);
 
@@ -180,7 +180,31 @@ public class AdminView extends VBox {
             skinGrid.add(btnSkin, i % 3, i / 3);
         }
 
-        statsCol.getChildren().addAll(statsTitle, goldRow, quickGoldRow, skinTitle, skinGrid);
+        // Time Speed Presets Panel
+        Text timeTitle = new Text("Time Speed Multiplier:");
+        timeTitle.setFill(Color.WHITE);
+        timeTitle.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+
+        HBox timeSpeedButtons = new HBox(6);
+        timeSpeedButtons.setAlignment(Pos.CENTER_LEFT);
+
+        double[] presets = {1.0, 10.0, 50.0, 100.0};
+        String[] presetLabels = {"1x", "10x", "50x", "100x"};
+
+        for (int i = 0; i < presets.length; i++) {
+            final double val = presets[i];
+            Button btnTime = new Button(presetLabels[i]);
+            btnTime.setPrefWidth(55);
+            btnTime.setStyle("-fx-background-color: #3e3e4a; -fx-text-fill: white; -fx-cursor: hand; -fx-font-weight: bold; -fx-font-size: 11px;");
+            btnTime.setOnAction(e -> {
+                if (Project1Game.Main.getInstance() != null && Project1Game.Main.getInstance().getTimeSystem() != null) {
+                    Project1Game.Main.getInstance().getTimeSystem().setTimeSpeedMultiplier(val);
+                }
+            });
+            timeSpeedButtons.getChildren().add(btnTime);
+        }
+
+        statsCol.getChildren().addAll(statsTitle, goldRow, quickGoldRow, skinTitle, skinGrid, timeTitle, timeSpeedButtons);
 
         // --- SECTION 2: Crop & inventory Adjusters scrollpane ---
         VBox itemsCol = new VBox(10);

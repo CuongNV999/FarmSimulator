@@ -5,17 +5,21 @@ import com.almasb.fxgl.entity.component.Component;
 import com.almasb.fxgl.physics.PhysicsComponent;
 import javafx.geometry.Point2D;
 import com.almasb.fxgl.entity.components.CollidableComponent;
+import Project1Game.interaction.Interactable;
+import Project1Game.interaction.InteractableComponent;
+import com.almasb.fxgl.entity.Entity;
 import java.util.Random;
 import java.util.List;
 import java.util.ArrayList;
 
-public class NPCBehaviorComponent extends Component {
+public class NPCBehaviorComponent extends Component implements Interactable {
     private PhysicsComponent physics;
     private NPCAnimationComponent animation;
 
     private Point2D spawnPosition;
     private Point2D target = null;
     private boolean isMovingToHouse = false;
+    private boolean isMovingToWork = false;
     private double speed = 15; // NPC moves slightly slower for natural look
 
     // Roaming variables
@@ -65,7 +69,9 @@ public class NPCBehaviorComponent extends Component {
         if (entity.hasComponent(NPCAnimationComponent.class)) {
             animation = entity.getComponent(NPCAnimationComponent.class);
         }
-        spawnPosition = entity.getPosition();
+        if (spawnPosition == null) {
+            spawnPosition = entity.getPosition();
+        }
         roamCooldown = 2.0 + random.nextDouble() * 3.0; // Initial delay before roaming
 
         // Ensure name properties are set correctly after map loader initialization
@@ -74,6 +80,7 @@ public class NPCBehaviorComponent extends Component {
         } else if (entity.isType(Project1Game.core.EntityType.TRADER)) {
             entity.setProperty("name", "Trader");
         }
+        entity.addComponent(new InteractableComponent(this));
     }
 
     private boolean firstFrame = true;
@@ -226,6 +233,102 @@ public class NPCBehaviorComponent extends Component {
                 // Đã đến cửa, cho NPC biến mất (đi vào nhà)
                 disappear();
             }
+        } else if (isMovingToWork && target != null) {
+            double distance = entity.getPosition().distance(target);
+
+            // Khi gần đến nơi làm việc (khoảng cách < 60 pixel), tắt va chạm vật lý để tránh kẹt
+            if (distance < 60) {
+                if (entity.hasComponent(CollidableComponent.class)) {
+                    entity.getComponent(CollidableComponent.class).setValue(false);
+                }
+            }
+
+            if (distance > 15) {
+                if (pathWaypoints == null || pathWaypoints.isEmpty()) {
+                    // Fallback to direct path movement
+                    double dx = target.getX() - entity.getX();
+                    double dy = target.getY() - entity.getY();
+                    double moveSpeed = speed * 15;
+                    Point2D velocity;
+                    if (Math.abs(dx) > 5) {
+                        physics.setVelocityX(Math.signum(dx) * moveSpeed);
+                        physics.setVelocityY(0);
+                        velocity = new Point2D(Math.signum(dx) * speed, 0);
+                    } else {
+                        physics.setVelocityX(0);
+                        physics.setVelocityY(Math.signum(dy) * moveSpeed);
+                        velocity = new Point2D(0, Math.signum(dy) * speed);
+                    }
+                    updateAnimation(velocity);
+                    return;
+                }
+
+                Point2D currentWaypoint = pathWaypoints.get(0);
+                double distToWaypoint = entity.getPosition().distance(currentWaypoint);
+
+                // If we are close to the waypoint, remove it and target the next
+                if (distToWaypoint < 12.0) {
+                    pathWaypoints.remove(0);
+                    if (pathWaypoints.isEmpty()) {
+                        physics.setVelocityX(0);
+                        physics.setVelocityY(0);
+                        return;
+                    }
+                    currentWaypoint = pathWaypoints.get(0);
+                }
+
+                // Move towards currentWaypoint
+                double dx = currentWaypoint.getX() - entity.getX();
+                double dy = currentWaypoint.getY() - entity.getY();
+                double moveSpeed = speed * 15;
+
+                double targetVelX = 0;
+                double targetVelY = 0;
+                Point2D animVelocity = Point2D.ZERO;
+
+                if (Math.abs(dx) > 5) {
+                    targetVelX = Math.signum(dx) * moveSpeed;
+                    animVelocity = new Point2D(Math.signum(dx) * speed, 0);
+                } else if (Math.abs(dy) > 5) {
+                    targetVelY = Math.signum(dy) * moveSpeed;
+                    animVelocity = new Point2D(0, Math.signum(dy) * speed);
+                } else {
+                    // If we are close on both axes, skip this waypoint
+                    if (!pathWaypoints.isEmpty()) {
+                        pathWaypoints.remove(0);
+                    }
+                }
+
+                physics.setVelocityX(targetVelX);
+                physics.setVelocityY(targetVelY);
+                updateAnimation(animVelocity);
+
+                // Stuck detection & recalculation
+                boolean isTryingToMove = (targetVelX != 0 || targetVelY != 0);
+                if (isTryingToMove) {
+                    boolean isStuck = (targetVelX != 0 && Math.abs(physics.getVelocityX()) < 5)
+                            || (targetVelY != 0 && Math.abs(physics.getVelocityY()) < 5);
+                    if (isStuck) {
+                        stuckTimer += tpf;
+                        if (stuckTimer > 1.0) {
+                            recalculatePath();
+                            stuckTimer = 0;
+                        }
+                    } else {
+                        stuckTimer = 0;
+                    }
+                } else {
+                    stuckTimer = 0;
+                }
+            } else {
+                // Đã đến nơi làm việc, dừng di chuyển và bật lại va chạm
+                stopMoving();
+                isMovingToWork = false;
+                if (entity.hasComponent(CollidableComponent.class)) {
+                    entity.getComponent(CollidableComponent.class).setValue(true);
+                }
+                System.out.println("NPC " + entity.getString("name") + " đã hoàn thành đi bộ về nơi làm việc.");
+            }
         } else {
             // Roaming during the day
             handleRoaming(tpf);
@@ -308,11 +411,27 @@ public class NPCBehaviorComponent extends Component {
 
     public void stopMoving() {
         isMovingToHouse = false;
+        isMovingToWork = false;
         isRoaming = false;
         roamTarget = null;
         physics.setVelocityX(0);
         physics.setVelocityY(0);
         pathWaypoints.clear();
+        if (entity != null && entity.hasComponent(CollidableComponent.class)) {
+            entity.getComponent(CollidableComponent.class).setValue(true);
+        }
+    }
+
+    public void walkToWork() {
+        this.target = spawnPosition;
+        this.isMovingToWork = true;
+        this.isMovingToHouse = false;
+        this.isRoaming = false;
+        this.roamTarget = null;
+        this.stuckTimer = 0.0;
+        recalculatePath();
+        physics.setLinearVelocity(Point2D.ZERO);
+        System.out.println("NPC " + entity.getString("name") + " bắt đầu đi bộ về nơi làm việc tại " + spawnPosition);
     }
 
     public boolean isGoingHome() {
@@ -335,17 +454,58 @@ public class NPCBehaviorComponent extends Component {
 
     public void reappear() {
         isHidden = false;
-        entity.setPosition(spawnPosition);
+        
+        Point2D spawnLoc = spawnPosition;
+        if (homeDoorEntity != null) {
+            spawnLoc = homeDoorEntity.getPosition();
+        }
+        
+        if (physics != null) {
+            physics.overwritePosition(spawnLoc);
+        } else {
+            entity.setPosition(spawnLoc);
+        }
+        
         entity.getViewComponent().setOpacity(1.0); // Make visible
-        entity.getComponent(CollidableComponent.class).setValue(true); // Re-enable collision
+        if (entity.hasComponent(CollidableComponent.class)) {
+            entity.getComponent(CollidableComponent.class).setValue(true); // Re-enable collision
+        }
 
-        // Reset movement states
+        // Reset movement states & trigger walk to work
         isMovingToHouse = false;
         isRoaming = false;
         roamTarget = null;
         roamTimer = 0;
         roamCooldown = 2.0 + random.nextDouble() * 3.0;
 
-        System.out.println("NPC " + entity.getString("name") + " đã xuất hiện trở lại tại điểm xuất phát.");
+        walkToWork();
+        System.out.println("NPC " + entity.getString("name") + " đã xuất hiện trở lại tại " + spawnLoc + " và đang đi bộ về nơi làm việc.");
+    }
+
+    @Override
+    public void interact(Entity player, Entity target) {
+        if (target.isType(Project1Game.core.EntityType.TRADER) && target.hasComponent(TraderComponent.class)) {
+            target.getComponent(TraderComponent.class).interact(player, target);
+        } else {
+            String npcName = target.getProperties().keys().contains("name") ? target.getString("name") : "";
+            Project1Game.quest.NPC npc = Project1Game.quest.QuestManager.getInstance().getNPC(npcName);
+            if (npc != null) {
+                System.out.println("Tương tác với NPC: " + npcName);
+                String text = npc.interact();
+                
+                boolean hasActiveOrCompleted = npc.getQuests().stream()
+                        .anyMatch(q -> q.getStatus() == Project1Game.quest.QuestStatus.IN_PROGRESS || q.getStatus() == Project1Game.quest.QuestStatus.COMPLETED);
+                
+                if (!hasActiveOrCompleted) {
+                    npc.acceptNextAvailableQuest();
+                }
+                
+                npc.claimFirstCompleted(Project1Game.Main.getInstance().getInventory());
+                
+                Project1Game.Main.getInstance().getDialogView().setDialog(target.getString("name"), text.split("\n"));
+                Project1Game.Main.getInstance().getDialogView().show();
+                Project1Game.Main.getInstance().getToolbarView().updateSelection();
+            }
+        }
     }
 }
