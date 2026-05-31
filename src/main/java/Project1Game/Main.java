@@ -291,7 +291,7 @@ public class Main extends GameApplication {
         hudContainer.getChildren().addAll(clockText, moneyText);
 
         // Đưa tất cả UI vào màn hình
-        FXGL.getGameScene().addUINodes(toolbarView, inventoryView, dialogView, statusBarsView, minimap, nightOverlay, hudContainer);
+        FXGL.getGameScene().addUINodes(nightOverlay, toolbarView, inventoryView, dialogView, statusBarsView, minimap, hudContainer);
 
         // Khởi tạo các System phụ thuộc UI
         timeSystem = new TimeSystem(nightOverlay, clockText);
@@ -326,6 +326,16 @@ public class Main extends GameApplication {
      * Phương thức hỗ trợ nạp map và cấu hình lại toàn bộ hệ thống (Player, Camera)
      */
     private void updateLevel(String newMapName, double x, double y) {
+        int tempMoney = 1000;
+        String tempSkin = "Player";
+        if (player != null) {
+            PlayerComponent pc = player.getComponent(PlayerComponent.class);
+            if (pc != null) {
+                tempMoney = pc.getMoney();
+                tempSkin = pc.getCurrentSkin();
+            }
+        }
+
         // 1. LƯU TRẠNG THÁI BẢN ĐỒ HIỆN TẠI (nếu có)
         // CHỈ LƯU NẾU PLAYER ĐÃ TỒN TẠI (không phải lần tải map đầu tiên)
         if (player != null && currentMap != null) {
@@ -362,6 +372,25 @@ public class Main extends GameApplication {
         } else {
             player.setPosition(new Point2D(x, y));
         }
+
+        PlayerComponent newPc = player.getComponent(PlayerComponent.class);
+        if (newPc != null) {
+            newPc.setMoney(tempMoney);
+            newPc.changeSkin(tempSkin);
+        }
+
+        if (tradingView != null) {
+            FXGL.getGameScene().removeUINode(tradingView);
+        }
+        if (adminView != null) {
+            FXGL.getGameScene().removeUINode(adminView);
+        }
+        tradingView = new TradingView(inventory, newPc);
+        FXGL.getGameScene().addUINode(tradingView);
+
+        adminView = new AdminView(inventory, newPc);
+        FXGL.getGameScene().addUINode(adminView);
+
         bindPlayerUI();
         if (selector == null) selector = FXGL.spawn("Selector"); // Đảm bảo selector được spawn nếu chưa có
 
@@ -696,6 +725,19 @@ public class Main extends GameApplication {
         } else {
             player.setPosition(new Point2D(x, y));
         }
+        PlayerComponent newPc = player.getComponent(PlayerComponent.class);
+        if (tradingView != null) {
+            FXGL.getGameScene().removeUINode(tradingView);
+        }
+        if (adminView != null) {
+            FXGL.getGameScene().removeUINode(adminView);
+        }
+        tradingView = new TradingView(inventory, newPc);
+        FXGL.getGameScene().addUINode(tradingView);
+
+        adminView = new AdminView(inventory, newPc);
+        FXGL.getGameScene().addUINode(adminView);
+
         bindPlayerUI();
         if (selector == null) selector = FXGL.spawn("Selector");
 
