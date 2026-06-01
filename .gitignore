@@ -53,3 +53,4 @@ tash list
 # Chặn các file ảnh nháp tự sinh của hệ thống
 Untitled*
 *.png
+!src/**/*.png
