@@ -88,6 +88,24 @@ public class SaveLoadSystem {
                 data.crops.add(cd);
             });
         }
+
+        // Lưu Động vật (Animals)
+        data.animals.clear();
+        FXGL.getGameWorld().getEntitiesByType(EntityType.ANIMAL).forEach(a -> {
+            Project1Game.component.farming.BaseAnimalComponent bac = a.getComponents().stream()
+                    .filter(c -> c instanceof Project1Game.component.farming.BaseAnimalComponent)
+                    .map(c -> (Project1Game.component.farming.BaseAnimalComponent) c)
+                    .findFirst()
+                    .orElse(null);
+            if (bac != null) {
+                SaveData.AnimalSaveData asd = new SaveData.AnimalSaveData();
+                asd.x = a.getX();
+                asd.y = a.getY();
+                asd.type = bac.getType().name();
+                asd.daysGrown = bac.getDaysGrown();
+                data.animals.add(asd);
+            }
+        });
     }
 
     public void load(SaveData data) {
@@ -123,9 +141,9 @@ public class SaveLoadSystem {
                 data.currentMap, data.playerX, data.playerY, data.playerMoney, data.gameTime, data.weather));
         }
 
-        // Xóa tất cả thực thể động cũ (đất và cây)
+        // Xóa tất cả thực thể động cũ (đất, cây, động vật)
         EntityType[] allDynamicEntities = {EntityType.SOIL, EntityType.WHEAT, EntityType.CORN,
-                EntityType.RADISH, EntityType.CABBAGE, EntityType.LETTUCE, EntityType.TOMATO};
+                EntityType.RADISH, EntityType.CABBAGE, EntityType.LETTUCE, EntityType.TOMATO, EntityType.ANIMAL};
         FXGL.getGameWorld().getEntitiesFiltered(e -> Arrays.asList(allDynamicEntities).contains(e.getType()))
                 .forEach(Entity::removeFromWorld);
 
@@ -146,6 +164,32 @@ public class SaveLoadSystem {
 
             Entity c = FXGL.getGameWorld().spawn(spawnName, cd.x, cd.y);
             c.getComponent(CropComponent.class).setStage(cd.stage);
+        }
+
+        // Tái tạo động vật
+        if (data.animals != null) {
+            for (SaveData.AnimalSaveData asd : data.animals) {
+                String typeName = asd.type;
+                String spawnName = "";
+                if (typeName.equals("CHICKEN")) spawnName = "Chick";
+                else if (typeName.equals("COW")) spawnName = "Calf";
+                else if (typeName.equals("SHEEP")) spawnName = "Lamb";
+                else if (typeName.equals("PIG")) spawnName = "Piglet";
+                else if (typeName.equals("TURKEY")) spawnName = "Turkey";
+
+                if (!spawnName.isEmpty()) {
+                    Entity a = FXGL.getGameWorld().spawn(spawnName, asd.x, asd.y);
+                    Project1Game.component.farming.BaseAnimalComponent bac = a.getComponents().stream()
+                            .filter(c -> c instanceof Project1Game.component.farming.BaseAnimalComponent)
+                            .map(c -> (Project1Game.component.farming.BaseAnimalComponent) c)
+                            .findFirst()
+                            .orElse(null);
+                    if (bac != null) {
+                        bac.setDaysGrown(asd.daysGrown);
+                        bac.initAnimation();
+                    }
+                }
+            }
         }
     }
 

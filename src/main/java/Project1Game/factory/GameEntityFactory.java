@@ -1,5 +1,6 @@
 package Project1Game.factory;
 
+import Project1Game.component.farming.BaseAnimalComponent;
 import Project1Game.component.farming.CropComponent;
 import Project1Game.component.farming.SoilComponent;
 import Project1Game.component.player.PlayerComponent;
@@ -286,5 +287,50 @@ public class GameEntityFactory implements EntityFactory {
     @Spawns("Guider_in")
     public Entity spawnGuiderIn(SpawnData data) {
         return FXGL.entityBuilder(data).type(EntityType.GUIDER_IN).build();
+    }
+
+    private Entity createAnimal(SpawnData data, String animalType, double w, double h) {
+        PhysicsComponent physics = new PhysicsComponent();
+        physics.setFixtureDef(new FixtureDef().friction(0f).density(0.1f));
+        physics.setBodyType(BodyType.KINEMATIC);
+        physics.setOnPhysicsInitialized(() -> {
+            if (physics.getBody() != null) {
+                physics.getBody().setFixedRotation(true);
+            }
+        });
+
+        return FXGL.entityBuilder(data)
+                .type(EntityType.ANIMAL)
+                .bbox(new HitBox(BoundingShape.box(w, h)))
+                .zIndex(7)
+                .with(physics)
+                .with(BaseAnimalComponent.create(animalType))
+                .collidable()
+                .build();
+    }
+
+    @Spawns("Chick")
+    public Entity spawnChick(SpawnData data) {
+        return createAnimal(data, "chick", 24, 24);
+    }
+
+    @Spawns("Calf")
+    public Entity spawnCalf(SpawnData data) {
+        return createAnimal(data, "calf", 48, 48);
+    }
+
+    @Spawns("Lamb")
+    public Entity spawnLamb(SpawnData data) {
+        return createAnimal(data, "lamb", 32, 32);
+    }
+
+    @Spawns("Piglet")
+    public Entity spawnPiglet(SpawnData data) {
+        return createAnimal(data, "piglet", 32, 32);
+    }
+
+    @Spawns("Turkey")
+    public Entity spawnTurkey(SpawnData data) {
+        return createAnimal(data, "turkey", 32, 32);
     }
 }

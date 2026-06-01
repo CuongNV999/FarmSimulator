@@ -4,6 +4,7 @@ import Project1Game.model.item.Usable;
 import Project1Game.model.item.HoeAction;
 import Project1Game.model.item.WateringCanAction;
 import Project1Game.model.item.PlantCropAction;
+import Project1Game.model.item.PlaceAnimalAction;
 import com.almasb.fxgl.entity.Entity;
 
 public enum ItemType implements Usable {
@@ -26,6 +27,19 @@ public enum ItemType implements Usable {
     LETTUCE("Xà lách", "Crops/rice_3.png", null, 0, 8, (player, target) -> {}),
     TOMATO("Cà chua", "Crops/rice_3.png", null, 0, 20, (player, target) -> {}),
     CORN("Ngô", "Crops/rice_3.png", null, 0, 15, (player, target) -> {}),
+
+    // Baby Animals (Buyable)
+    CHICK("Gà con", "Animal/Chick_animation_with_shadow.png", "Chick", 50, 0, new PlaceAnimalAction("Chick")),
+    CALF("Bê", "Animal/Calf_animation_with_shadow.png", "Calf", 300, 0, new PlaceAnimalAction("Calf")),
+    LAMB("Cừu non", "Animal/Lamb_animation_with_shadow.png", "Lamb", 150, 0, new PlaceAnimalAction("Lamb")),
+    PIGLET("Heo con", "Animal/Piglet_animation_with_shadow.png", "Piglet", 200, 0, new PlaceAnimalAction("Piglet")),
+    TURKEY("Gà tây", "Animal/Turkey_animation_with_shadow.png", "Turkey", 100, 220, new PlaceAnimalAction("Turkey")),
+
+    // Mature Animals (Harvested and Sellable)
+    ROOSTER("Gà trống", "Animal/Rooster_animation_with_shadow.png", null, 0, 120, (player, target) -> {}),
+    BULL("Bò đực", "Animal/Bull_animation_with_shadow.png", null, 0, 650, (player, target) -> {}),
+    SHEEP("Cừu trưởng thành", "Animal/Sheep_animation_with_shadow.png", null, 0, 350, (player, target) -> {}),
+    PIG("Heo trưởng thành", "Animal/Piglet_animation_with_shadow.png", null, 0, 480, (player, target) -> {}),
 
     // Các ô trống (có thể bỏ qua giá mua/bán)
     EMPTY_5("Ô trống", "", null, 0, 0, (player, target) -> {}),
@@ -56,7 +70,7 @@ public enum ItemType implements Usable {
     public int getBuyPrice() { return buyPrice; }
     public int getSellPrice() { return sellPrice; }
 
-    public boolean isSeed() { return spawnName != null; }
+    public boolean isSeed() { return spawnName != null && name().endsWith("_SEED"); }
 
     @Override
     public void use(Entity player, Entity target) {

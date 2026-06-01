@@ -93,9 +93,14 @@ public class InventoryView extends VBox {
         icon.imageProperty().bind(
                 Bindings.createObjectBinding(() -> {
                     ItemType itemType = inventorySlot.getItemType();
-                    return itemType != null && itemType.getIconName() != null && !itemType.getIconName().isEmpty()
-                            ? FXGL.image(itemType.getIconName())
-                            : FXGL.image("empty.png"); // Hình ảnh trống
+                    if (itemType != null && itemType.getIconName() != null && !itemType.getIconName().isEmpty()) {
+                        if (itemType.getIconName().startsWith("Animal/")) {
+                            return Project1Game.component.farming.BaseAnimalComponent.extractFaceDownIdleImage(itemType.getIconName());
+                        } else {
+                            return FXGL.image(itemType.getIconName());
+                        }
+                    }
+                    return FXGL.image("empty.png"); // Hình ảnh trống
                 }, inventorySlot.itemTypeProperty())
         );
 
