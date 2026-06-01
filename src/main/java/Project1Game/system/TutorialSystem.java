@@ -146,6 +146,9 @@ public class TutorialSystem {
     }
 
     private void updateStepUI() {
+        if (nextBtn != null) {
+            nextBtn.setText("Tiếp tục / Next");
+        }
         switch (currentStep) {
             case 1:
                 stepTitleText.setText("Bước 1: Di chuyển & Cơ bản (Movement)");
@@ -184,15 +187,17 @@ public class TutorialSystem {
                 );
                 break;
             case 5:
-                stepTitleText.setText("Bước 5: Vòng lặp Nông nghiệp (Farming)");
+                stepTitleText.setText("Bước 5: Vòng lặp Chăn nuôi & Giao dịch (Animal Husbandry)");
                 descText.setText(
-                    "Sử dụng các phím số 1-9 hoặc Cuộn chuột để chọn hạt giống/dụng cụ từ thanh Hotbar phía dưới:\n" +
-                    "- Chọn Cuốc (Hoe) để xới đất thành ruộng.\n" +
-                    "- Chọn hạt giống (Seeds) và gieo lên ruộng xới.\n" +
-                    "- Chọn Bình nước (Watering Can) để tưới nước cho ruộng ruộng xới.\n\n" +
-                    "Select items using keys 1-9 or Scroll. Use Hoe to till, select seeds to plant, and Watering Can to water crops."
+                    "Hãy làm quen với việc chăn nuôi động vật để tối đa hóa thu nhập:\n" +
+                    "- Trò chuyện với Thương nhân (Trader), chọn tab \"Animals\" và mua các con thú non bằng Vàng.\n" +
+                    "- Sử dụng các con thú non từ thanh công cụ để thả chúng xuống đồng cỏ ngoài trời.\n" +
+                    "- Nhấn phím 'E' để kiểm tra thời gian lớn, khi chúng lớn hẳn thì nhấn phím 'E' lần nữa để thu hoạch vào túi đồ và bán lại cho Thương nhân kiếm lời.\n\n" +
+                    "Talk to the Trader and navigate to the 'Animals' Tab to buy baby livestock. Use baby items from your toolbar to place them on the pasture. Press 'E' to check their growth, and harvest them when fully matured to sell back for massive profit."
                 );
-                nextBtn.setText("Hoàn thành / Finish");
+                if (nextBtn != null) {
+                    nextBtn.setText("Hoàn thành / Finish");
+                }
                 break;
         }
     }

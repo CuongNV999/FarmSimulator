@@ -176,6 +176,12 @@ public class Main extends GameApplication {
     private VBox hudContainer;
     private double lastHungerDrainTime = -1;
     private double lastStarveHPTime = -1;
+    private boolean isHPDepletionEnabled = true;
+
+    public void toggleHPDepletion() {
+        this.isHPDepletionEnabled = !this.isHPDepletionEnabled;
+        FXGL.getNotificationService().pushNotification("HP Depletion: " + (isHPDepletionEnabled ? "ON" : "OFF"));
+    }
 
     @Override
     protected void initSettings(GameSettings gameSettings) {
@@ -235,6 +241,30 @@ public class Main extends GameApplication {
 
         // 2. Khởi tạo Quest
         QuestManager.getInstance().init();
+
+        // Listen to DayNightEvent.SET_DAY to grow animals in inactive maps
+        FXGL.getEventBus().addEventHandler(DayNightEvent.SET_DAY, e -> {
+            for (SaveData state : mapStates.values()) {
+                if (state.animals != null) {
+                    for (SaveData.AnimalSaveData asd : state.animals) {
+                        int maxDays = 0;
+                        if (asd.type != null) {
+                            switch (asd.type.toUpperCase()) {
+                                case "CHICKEN": maxDays = 4; break;
+                                case "COW": maxDays = 7; break;
+                                case "SHEEP": maxDays = 5; break;
+                                case "PIG": maxDays = 6; break;
+                                case "TURKEY": maxDays = 3; break;
+                            }
+                            if (asd.daysGrown < maxDays) {
+                                asd.daysGrown++;
+                                System.out.println("[Main] Inactive animal " + asd.type + " grew to " + asd.daysGrown + "/" + maxDays);
+                            }
+                        }
+                    }
+                }
+            }
+        });
 
         // 3. Nạp Map và Factory
         FXGL.getGameWorld().addEntityFactory(new GameEntityFactory());
@@ -469,16 +499,20 @@ public class Main extends GameApplication {
             }
 
             if (statusBarsView.getHunger() <= 0) {
-                if (lastStarveHPTime == -1) {
-                    lastStarveHPTime = currentMins;
-                }
-                double starveDiff = currentMins - lastStarveHPTime;
-                if (starveDiff < 0) starveDiff += 1440;
-                if (starveDiff >= 5) {
-                    int intervals = (int)(starveDiff / 5);
-                    double newHP = Math.max(0, statusBarsView.getHealth() - (intervals * 1.0));
-                    statusBarsView.setHealth(newHP);
-                    lastStarveHPTime = (lastStarveHPTime + intervals * 5) % 1440;
+                if (isHPDepletionEnabled) {
+                    if (lastStarveHPTime == -1) {
+                        lastStarveHPTime = currentMins;
+                    }
+                    double starveDiff = currentMins - lastStarveHPTime;
+                    if (starveDiff < 0) starveDiff += 1440;
+                    if (starveDiff >= 5) {
+                        int intervals = (int)(starveDiff / 5);
+                        double newHP = Math.max(0, statusBarsView.getHealth() - (intervals * 1.0));
+                        statusBarsView.setHealth(newHP);
+                        lastStarveHPTime = (lastStarveHPTime + intervals * 5) % 1440;
+                    }
+                } else {
+                    lastStarveHPTime = -1;
                 }
             } else {
                 lastStarveHPTime = -1;
@@ -635,6 +669,10 @@ public class Main extends GameApplication {
         input.addAction(new UserAction("Quick Load") {
             @Override protected void onActionBegin() { saveLoadSystem.loadGameFromFile(); } // Gọi phương thức tải từ file
         }, KeyCode.F9);
+
+        input.addAction(new UserAction("Toggle HP Depletion") {
+            @Override protected void onActionBegin() { toggleHPDepletion(); }
+        }, KeyCode.F6);
 
         // Admin Console Time Speed Controls
         input.addAction(new UserAction("Set Time Speed 1x") {

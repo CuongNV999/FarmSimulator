@@ -127,22 +127,27 @@ public abstract class BaseAnimalComponent extends Component implements Interacta
             texture.loopAnimationChannel(animIdleDown);
         }
 
+        // Handle visual scaling to distinguish age
+        updateScale(isMature);
+
+        if (entity != null) {
+            entity.getTransformComponent().setScaleOrigin(new Point2D(frameW / 2.0, frameH / 2.0));
+            entity.getTransformComponent().setRotationOrigin(new Point2D(frameW / 2.0, frameH / 2.0));
+        }
+
         // Configure solid bounding box dynamically
         if (entity != null && entity.getBoundingBoxComponent() != null) {
             entity.getBoundingBoxComponent().clearHitBoxes();
             entity.getBoundingBoxComponent().addHitBox(new HitBox("ANIMAL_BODY", BoundingShape.box(frameW, frameH)));
         }
-
-        // Handle visual scaling to distinguish age
-        updateScale(isMature);
     }
 
     private void updateScale(boolean isMature) {
         if (type == AnimalType.TURKEY) {
-            entity.setScaleX(1.0);
-            entity.setScaleY(1.0);
+            entity.setScaleX(2.0);
+            entity.setScaleY(2.0);
         } else {
-            double scale = isMature ? 1.1 : 0.75;
+            double scale = isMature ? 2.2 : 1.5;
             entity.setScaleX(scale);
             entity.setScaleY(scale);
         }
