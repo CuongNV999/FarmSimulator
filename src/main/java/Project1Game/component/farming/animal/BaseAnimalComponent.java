@@ -1,7 +1,8 @@
-package Project1Game.component.farming;
+package Project1Game.component.farming.animal;
 
 import Project1Game.Main;
 import Project1Game.core.ItemType;
+import Project1Game.core.EntityType;
 import Project1Game.interaction.Interactable;
 import Project1Game.interaction.InteractableComponent;
 import Project1Game.system.DayNightEvent;
@@ -20,6 +21,7 @@ import com.almasb.fxgl.physics.PhysicsComponent;
 import com.almasb.fxgl.physics.BoundingShape;
 import com.almasb.fxgl.physics.HitBox;
 
+import java.util.List;
 import java.util.Random;
 
 public abstract class BaseAnimalComponent extends Component implements Interactable {
@@ -87,6 +89,10 @@ public abstract class BaseAnimalComponent extends Component implements Interacta
 
     public boolean isReadyToHarvest() {
         return daysGrown >= maxGrowthDays;
+    }
+
+    public int getMaxGrowthDays() {
+        return maxGrowthDays;
     }
 
     // Dynamic icon extraction utility method
@@ -184,6 +190,38 @@ public abstract class BaseAnimalComponent extends Component implements Interacta
         }
     }
 
+    private boolean isMovementBlocked(Point2D velocity) {
+        if (velocity.getX() == 0 && velocity.getY() == 0) {
+            return false;
+        }
+
+        double nextX = entity.getX() + velocity.getX() * FXGL.tpf();
+        double nextY = entity.getY() + velocity.getY() * FXGL.tpf();
+
+        double minX = 1200;
+        double maxX = 2400;
+        double minY = 800;
+        double maxY = 1600;
+
+        if (nextX < minX || nextX > maxX || nextY < minY || nextY > maxY) {
+            return true;
+        }
+
+        double w = entity.getWidth();
+        double h = entity.getHeight();
+        Point2D probePos = entity.getPosition().add(velocity.normalize().multiply(16.0));
+        javafx.geometry.Rectangle2D nextBox = new javafx.geometry.Rectangle2D(probePos.getX(), probePos.getY(), w, h);
+
+        List<Entity> obstacles = FXGL.getGameWorld().getEntitiesInRange(nextBox);
+        for (Entity obs : obstacles) {
+            if (obs.getType() == EntityType.WALL || obs.getType() == EntityType.COLLISION) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     @Override
     public void onUpdate(double tpf) {
         wanderTimer += tpf;
@@ -220,30 +258,24 @@ public abstract class BaseAnimalComponent extends Component implements Interacta
         }
 
         if (moveDir.getX() != 0 || moveDir.getY() != 0) {
-            double newX = entity.getX() + moveDir.getX() * tpf;
-            double newY = entity.getY() + moveDir.getY() * tpf;
-
-            // Constraint boundaries to keep animals inside the main play field
-            double minX = 1200;
-            double maxX = 2400;
-            double minY = 800;
-            double maxY = 1600;
-
-            if (newX < minX || newX > maxX || newY < minY || newY > maxY) {
+            if (isMovementBlocked(moveDir)) {
                 moveDir = Point2D.ZERO;
-                if (physics != null) {
+                if (physics != null && physics.getBody() != null) {
                     physics.setVelocityX(0);
                     physics.setVelocityY(0);
                 }
                 texture.loopAnimationChannel(animIdleDown);
+                wanderTimer = wanderDuration; // Force choice of new random direction next frame
             } else {
-                if (physics != null) {
+                if (physics != null && physics.getBody() != null) {
                     physics.setVelocityX(moveDir.getX());
                     physics.setVelocityY(moveDir.getY());
+                } else {
+                    entity.translate(moveDir.multiply(FXGL.tpf()));
                 }
             }
         } else {
-            if (physics != null) {
+            if (physics != null && physics.getBody() != null) {
                 physics.setVelocityX(0);
                 physics.setVelocityY(0);
             }

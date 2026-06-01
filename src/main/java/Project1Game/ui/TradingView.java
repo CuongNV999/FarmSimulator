@@ -452,7 +452,7 @@ public class TradingView extends VBox {
         if (itemType.getIconName() != null && !itemType.getIconName().isEmpty()) {
             Texture icon;
             if (itemType.getIconName().startsWith("Animal/")) {
-                icon = new Texture(Project1Game.component.farming.BaseAnimalComponent.extractFaceDownIdleImage(itemType.getIconName()));
+                icon = new Texture(Project1Game.component.farming.animal.BaseAnimalComponent.extractFaceDownIdleImage(itemType.getIconName()));
             } else {
                 icon = FXGL.texture(itemType.getIconName());
             }
@@ -641,7 +641,7 @@ public class TradingView extends VBox {
         // Icon
         Texture icon;
         if (cartItem.itemType.getIconName() != null && cartItem.itemType.getIconName().startsWith("Animal/")) {
-            icon = new Texture(Project1Game.component.farming.BaseAnimalComponent.extractFaceDownIdleImage(cartItem.itemType.getIconName()));
+            icon = new Texture(Project1Game.component.farming.animal.BaseAnimalComponent.extractFaceDownIdleImage(cartItem.itemType.getIconName()));
         } else if (cartItem.itemType.getIconName() != null && !cartItem.itemType.getIconName().isEmpty()) {
             icon = FXGL.texture(cartItem.itemType.getIconName());
         } else {

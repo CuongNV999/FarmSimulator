@@ -69,7 +69,7 @@ public class ToolbarView extends HBox {
                     ItemType itemType = inventorySlot.getItemType();
                     if (itemType != null && itemType.getIconName() != null && !itemType.getIconName().isEmpty()) {
                         if (itemType.getIconName().startsWith("Animal/")) {
-                            return Project1Game.component.farming.BaseAnimalComponent.extractFaceDownIdleImage(itemType.getIconName());
+                            return Project1Game.component.farming.animal.BaseAnimalComponent.extractFaceDownIdleImage(itemType.getIconName());
                         } else {
                             return FXGL.image(itemType.getIconName());
                         }

@@ -6,7 +6,7 @@ import javafx.scene.Node;
 import javafx.scene.text.Text;
 
 public class TimeSystem {
-    private double gameTime = 960; // Mặc định khởi đầu là 6:00 AM (360 phút)
+    private double gameTime = 360; // Mặc định khởi đầu là 6:00 AM (360 phút)
     private int hour = 6;
     private int minute = 0;
     private int dayCount = 1;

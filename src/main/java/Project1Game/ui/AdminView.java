@@ -204,7 +204,21 @@ public class AdminView extends VBox {
             timeSpeedButtons.getChildren().add(btnTime);
         }
 
-        statsCol.getChildren().addAll(statsTitle, goldRow, quickGoldRow, skinTitle, skinGrid, timeTitle, timeSpeedButtons);
+        // Cheat button
+        Text cheatsTitle = new Text("Cheats:");
+        cheatsTitle.setFill(Color.WHITE);
+        cheatsTitle.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+
+        Button btnMatureAll = new Button("Instant Mature All");
+        btnMatureAll.setPrefWidth(160);
+        btnMatureAll.setStyle("-fx-background-color: #eccb58; -fx-text-fill: #12121c; -fx-cursor: hand; -fx-font-weight: bold; -fx-font-size: 13px;");
+        btnMatureAll.setOnAction(e -> {
+            if (Project1Game.Main.getInstance() != null) {
+                Project1Game.Main.getInstance().matureAllCropsAndAnimals();
+            }
+        });
+
+        statsCol.getChildren().addAll(statsTitle, goldRow, quickGoldRow, skinTitle, skinGrid, timeTitle, timeSpeedButtons, cheatsTitle, btnMatureAll);
 
         // --- SECTION 2: Crop & inventory Adjusters scrollpane ---
         VBox itemsCol = new VBox(10);
@@ -266,7 +280,7 @@ public class AdminView extends VBox {
         // Icon
         Texture icon;
         if (type.getIconName() != null && type.getIconName().startsWith("Animal/")) {
-            icon = new Texture(Project1Game.component.farming.BaseAnimalComponent.extractFaceDownIdleImage(type.getIconName()));
+            icon = new Texture(Project1Game.component.farming.animal.BaseAnimalComponent.extractFaceDownIdleImage(type.getIconName()));
         } else if (type.getIconName() != null && !type.getIconName().isEmpty()) {
             icon = FXGL.texture(type.getIconName());
         } else {

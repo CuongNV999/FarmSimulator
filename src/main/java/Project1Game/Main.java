@@ -3,6 +3,8 @@ package Project1Game;
 // --- IMPORT CÁC THÀNH PHẦN NỘI BỘ DỰ ÁN ---
 import Project1Game.component.farming.CropComponent;
 import Project1Game.component.farming.SoilComponent;
+import Project1Game.component.farming.animal.BaseAnimalComponent;
+import Project1Game.component.farming.monster.BaseMonsterComponent;
 import Project1Game.component.player.PlayerComponent;
 import Project1Game.core.EntityType;
 import Project1Game.core.ItemType;
@@ -230,6 +232,36 @@ public class Main extends GameApplication {
                 nearbySleep = null;
             }
         });
+
+        // Collision handler between MONSTER and ANIMAL
+        FXGL.getPhysicsWorld().addCollisionHandler(new CollisionHandler(EntityType.MONSTER, EntityType.ANIMAL) {
+            @Override
+            protected void onCollisionBegin(Entity monster, Entity animal) {
+                BaseMonsterComponent bmc = monster.getComponentOptional(BaseMonsterComponent.class).orElse(null);
+                if (bmc != null && bmc.group == BaseMonsterComponent.MonsterGroup.CARNIVORE) {
+                    if (bmc.isValidPrey(animal)) {
+                        bmc.consume(animal);
+                    }
+                }
+            }
+        });
+
+        // Collision handlers between MONSTER and CROPS
+        EntityType[] cropTypes = {EntityType.WHEAT, EntityType.RADISH, EntityType.CABBAGE,
+                EntityType.LETTUCE, EntityType.TOMATO, EntityType.CORN};
+        for (EntityType cropType : cropTypes) {
+            FXGL.getPhysicsWorld().addCollisionHandler(new CollisionHandler(EntityType.MONSTER, cropType) {
+                @Override
+                protected void onCollisionBegin(Entity monster, Entity crop) {
+                    BaseMonsterComponent bmc = monster.getComponentOptional(BaseMonsterComponent.class).orElse(null);
+                    if (bmc != null && bmc.group == BaseMonsterComponent.MonsterGroup.HERBIVORE) {
+                        if (bmc.isValidPrey(crop)) {
+                            bmc.consume(crop);
+                        }
+                    }
+                }
+            });
+        }
     }
 
     @Override
@@ -458,6 +490,9 @@ public class Main extends GameApplication {
             FXGL.getGameWorld().getEntitiesByType(EntityType.SOIL)
                     .forEach(s -> s.getComponent(SoilComponent.class).updateTexture());
             System.out.println("Tải bản đồ mới lần đầu: " + newMapName);
+            if (newMapName.equals("Main_level.tmx")) {
+                spawnInitialMonsters();
+            }
         }
     }
 
@@ -608,8 +643,14 @@ public class Main extends GameApplication {
             protected void onActionBegin() {
                 Entity target = null;
                 if (player != null) {
-                    target = FXGL.getGameWorld().getEntities().stream()
-                            .filter(e -> e.hasComponent(Project1Game.interaction.InteractableComponent.class) && e.distance(player) < 70)
+                    double radius = 80.0;
+                    javafx.geometry.Point2D playerCenter = player.getCenter();
+                    javafx.geometry.Rectangle2D range = new javafx.geometry.Rectangle2D(
+                        playerCenter.getX() - radius, playerCenter.getY() - radius,
+                        radius * 2, radius * 2
+                    );
+                    target = FXGL.getGameWorld().getEntitiesInRange(range).stream()
+                            .filter(e -> e.hasComponent(Project1Game.interaction.InteractableComponent.class))
                             .findFirst()
                             .orElse(null);
                 }
@@ -673,6 +714,10 @@ public class Main extends GameApplication {
         input.addAction(new UserAction("Toggle HP Depletion") {
             @Override protected void onActionBegin() { toggleHPDepletion(); }
         }, KeyCode.F6);
+
+        input.addAction(new UserAction("Cheat Mature All") {
+            @Override protected void onActionBegin() { matureAllCropsAndAnimals(); }
+        }, KeyCode.F7);
 
         // Admin Console Time Speed Controls
         input.addAction(new UserAction("Set Time Speed 1x") {
@@ -798,6 +843,54 @@ public class Main extends GameApplication {
         FXGL.getGameScene().getViewport().setLazy(true);
 
         spawnBoundaries((int)mapW, (int)mapH);
+    }
+
+    public void spawnInitialMonsters() {
+        System.out.println("--- Spawning Initial Monsters ---");
+        String[] types = {"Boar", "Fox", "Deer", "Hare"};
+        int[] counts = {2, 2, 3, 3};
+        
+        java.util.Random rand = new java.util.Random();
+        javafx.geometry.Point2D[] corners = {
+            new javafx.geometry.Point2D(100, 100),    // Top-Left Boundary Corner
+            new javafx.geometry.Point2D(2900, 100),   // Top-Right Boundary Corner
+            new javafx.geometry.Point2D(100, 1900),   // Bottom-Left Boundary Corner
+            new javafx.geometry.Point2D(2900, 1900)   // Bottom-Right Boundary Corner
+        };
+
+        for (int i = 0; i < types.length; i++) {
+            String type = types[i];
+            int count = counts[i];
+            for (int j = 0; j < count; j++) {
+                javafx.geometry.Point2D corner = corners[rand.nextInt(corners.length)];
+                double offsetX = -30.0 + rand.nextDouble() * 60.0;
+                double offsetY = -30.0 + rand.nextDouble() * 60.0;
+                double rx = corner.getX() + offsetX;
+                double ry = corner.getY() + offsetY;
+                FXGL.spawn(type, rx, ry);
+            }
+        }
+    }
+
+    public void matureAllCropsAndAnimals() {
+        // Animals
+        FXGL.getGameWorld().getEntitiesByType(EntityType.ANIMAL).forEach(e -> {
+            BaseAnimalComponent bac = e.getComponentOptional(BaseAnimalComponent.class).orElse(null);
+            if (bac != null) {
+                bac.setDaysGrown(bac.getMaxGrowthDays());
+                bac.initAnimation();
+            }
+        });
+
+        // Crops
+        FXGL.getGameWorld().getEntitiesByComponent(CropComponent.class).forEach(e -> {
+            CropComponent cc = e.getComponentOptional(CropComponent.class).orElse(null);
+            if (cc != null) {
+                cc.setStage(3); // Max stage
+            }
+        });
+
+        FXGL.getNotificationService().pushNotification("Admin Cheat: All animals and crops are now fully mature!");
     }
 
     public static boolean isDayTime() {

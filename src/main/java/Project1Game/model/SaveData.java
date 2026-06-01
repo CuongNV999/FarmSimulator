@@ -55,4 +55,13 @@ public class SaveData implements Serializable {
         public String type; // CHICKEN, COW, etc.
         public int daysGrown;
     }
+
+    // Dynamic monster serialization data list
+    public List<MonsterSaveData> monsters = new ArrayList<>();
+
+    public static class MonsterSaveData implements Serializable {
+        private static final long serialVersionUID = 1L;
+        public double x, y;
+        public String type; // Boar, Fox, Deer, Hare
+    }
 }
