@@ -3,8 +3,7 @@ package Project1Game.factory;
 import Project1Game.component.farming.animal.BaseAnimalComponent;
 import Project1Game.component.farming.CropComponent;
 import Project1Game.component.farming.SoilComponent;
-import Project1Game.component.farming.monster.MonsterAnimationComponent;
-import Project1Game.component.farming.monster.BushMonsterComponent;
+import Project1Game.component.farming.monster.*;
 import Project1Game.component.player.PlayerComponent;
 import Project1Game.component.npc.NPCAnimationComponent;
 import Project1Game.component.npc.NPCBehaviorComponent;
@@ -84,11 +83,17 @@ public class GameEntityFactory implements EntityFactory {
     }
 
     @Spawns("Wheat") public Entity spawnWheat(SpawnData d) { return createCrop(d, CropData.WHEAT); }
-    @Spawns("Corn") public Entity spawnCorn(SpawnData d) { return createCrop(d, CropData.CORN); }
     @Spawns("Radish") public Entity spawnRadish(SpawnData d) { return createCrop(d, CropData.RADISH); }
     @Spawns("Cabbage") public Entity spawnCabbage(SpawnData d) { return createCrop(d, CropData.CABBAGE); }
-    @Spawns("Lettuce") public Entity spawnLettuce(SpawnData d) { return createCrop(d, CropData.LETTUCE); }
-    @Spawns("Tomato") public Entity spawnTomato(SpawnData d) { return createCrop(d, CropData.TOMATO); }
+    @Spawns("Grape") public Entity spawnGrape(SpawnData d) { return createCrop(d, CropData.GRAPE); }
+    @Spawns("Cucumber") public Entity spawnCucumber(SpawnData d) { return createCrop(d, CropData.CUCUMBER); }
+    @Spawns("Pepper") public Entity spawnPepper(SpawnData d) { return createCrop(d, CropData.PEPPER); }
+    @Spawns("Cauliflower") public Entity spawnCauliflower(SpawnData d) { return createCrop(d, CropData.CAULIFLOWER); }
+    @Spawns("Bean") public Entity spawnBean(SpawnData d) { return createCrop(d, CropData.BEAN); }
+    @Spawns("Pineapple") public Entity spawnPineapple(SpawnData d) { return createCrop(d, CropData.PINEAPPLE); }
+    @Spawns("Sunflower") public Entity spawnSunflower(SpawnData d) { return createCrop(d, CropData.SUNFLOWER); }
+    @Spawns("Coconut") public Entity spawnCoconut(SpawnData d) { return createCrop(d, CropData.COCONUT); }
+    @Spawns("Apple") public Entity spawnApple(SpawnData d) { return createCrop(d, CropData.APPLE); }
 
     // ================= MÔI TRƯỜNG & VẬT CẢN (SỬ DỤNG NUMBER CASTING) =================
 
@@ -353,13 +358,30 @@ public class GameEntityFactory implements EntityFactory {
             }
         });
 
+        BaseMonsterComponent bmc;
+        if ("Boar".equalsIgnoreCase(monsterType)) {
+            bmc = new BoarComponent();
+        } else if ("Fox".equalsIgnoreCase(monsterType)) {
+            bmc = new FoxComponent();
+        } else if ("Deer".equalsIgnoreCase(monsterType)) {
+            bmc = new DeerComponent();
+        } else if ("Hare".equalsIgnoreCase(monsterType)) {
+            bmc = new HareComponent();
+        } else {
+            bmc = new BoarComponent();
+        }
+
+        if (data.hasKey("tempBushMonster")) {
+            bmc.setTemporary(10.0);
+        }
+
         return FXGL.entityBuilder(data)
                 .type(EntityType.MONSTER)
                 .bbox(new HitBox(BoundingShape.box(32, 32)))
                 .zIndex(8)
                 .with(physics)
-                .with(new BushMonsterComponent())
-                .with(new MonsterAnimationComponent(runTexturePath, idleTexturePath))
+                .with(bmc)
+                .with(new MonsterAnimationComponent(monsterType, runTexturePath, idleTexturePath))
                 .with("monsterType", monsterType)
                 .collidable()
                 .build();
@@ -398,10 +420,12 @@ public class GameEntityFactory implements EntityFactory {
     @Spawns("BushMonster")
     public Entity spawnBushMonster(SpawnData data) {
         java.util.Random rand = new java.util.Random();
+        SpawnData copy = new SpawnData(data.getX(), data.getY());
+        copy.put("tempBushMonster", true);
         if (rand.nextBoolean()) {
-            return createMonster(data, "Boar", "monster/Boar/Boar_Run_with_shadow.png", "monster/Boar/Boar_Idle_with_shadow.png");
+            return createMonster(copy, "Boar", "monster/Boar/Boar_Run_with_shadow.png", "monster/Boar/Boar_Idle_with_shadow.png");
         } else {
-            return createMonster(data, "Fox", "monster/Fox/Fox_Run_with_shadow.png", "monster/Fox/Fox_Idle_with_shadow.png");
+            return createMonster(copy, "Fox", "monster/Fox/Fox_Run_with_shadow.png", "monster/Fox/Fox_Idle_with_shadow.png");
         }
     }
 }

@@ -42,7 +42,7 @@ public class SaveData implements Serializable {
 
     public static class CropDataSave implements Serializable {
         public double x, y;
-        public String type; // Wheat, Corn...
+        public String type; // Wheat, Radish...
         public int stage;
     }
 
@@ -64,4 +64,25 @@ public class SaveData implements Serializable {
         public double x, y;
         public String type; // Boar, Fox, Deer, Hare
     }
+
+    public static class QuestSave implements Serializable {
+        private static final long serialVersionUID = 1L;
+        public String questId;
+        public String status;
+        public List<Integer> objectiveProgress = new ArrayList<>();
+    }
+
+    public static class NPCSave implements Serializable {
+        private static final long serialVersionUID = 1L;
+        public String npcName;
+        public List<QuestSave> quests = new ArrayList<>();
+    }
+
+    public List<NPCSave> npcQuests = new ArrayList<>();
+
+    // Trader serialization fields
+    public Map<String, String> traderRelationship = new HashMap<>();
+    public Map<String, Integer> traderNegotiationCount = new HashMap<>();
+    public Map<String, Boolean> traderNegotiatedThisSession = new HashMap<>();
+    public Map<String, Integer> traderNegotiationBonusPercent = new HashMap<>();
 }
