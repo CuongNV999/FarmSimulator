@@ -24,7 +24,7 @@ import com.almasb.fxgl.physics.HitBox;
 import java.util.List;
 import java.util.Random;
 
-public abstract class BaseAnimalComponent extends Component implements Interactable {
+public class BaseAnimalComponent extends Component implements Interactable {
 
     public enum AnimalType {
         CHICKEN, COW, SHEEP, PIG, TURKEY
@@ -55,6 +55,14 @@ public abstract class BaseAnimalComponent extends Component implements Interacta
     private final Random random = new Random();
 
     private EventHandler<DayNightEvent> dayHandler;
+
+    // Fleeing variables
+    private boolean isFleeing = false;
+    private Point2D fleeTarget = null;
+    private List<Point2D> fleePathWaypoints = new java.util.ArrayList<>();
+    private double fleeCheckTimer = 0.0;
+    
+    private Point2D homePosition = null;
     
     protected PhysicsComponent physics;
 
@@ -209,6 +217,7 @@ public abstract class BaseAnimalComponent extends Component implements Interacta
     public void onAdded() {
         physics = entity.getComponent(PhysicsComponent.class);
         initAnimation();
+        homePosition = entity.getPosition();
 
         // Listen for day passage
         dayHandler = e -> growOneDay();
@@ -244,13 +253,20 @@ public abstract class BaseAnimalComponent extends Component implements Interacta
         double nextX = entity.getX() + velocity.getX() * FXGL.tpf();
         double nextY = entity.getY() + velocity.getY() * FXGL.tpf();
 
-        double minX = 1200;
-        double maxX = 2400;
-        double minY = 800;
-        double maxY = 1600;
+        double minX = 50;
+        double maxX = 3470;
+        double minY = 50;
+        double maxY = 1998;
 
         if (nextX < minX || nextX > maxX || nextY < minY || nextY > maxY) {
             return true;
+        }
+
+        if (homePosition != null) {
+            Point2D nextPos = new Point2D(nextX, nextY);
+            if (nextPos.distance(homePosition) > 300.0) {
+                return true;
+            }
         }
 
         double w = entity.getWidth();
@@ -270,6 +286,17 @@ public abstract class BaseAnimalComponent extends Component implements Interacta
 
     @Override
     public void onUpdate(double tpf) {
+        fleeCheckTimer += tpf;
+        if (fleeCheckTimer >= 0.3) {
+            fleeCheckTimer = 0.0;
+            checkForMonsters();
+        }
+
+        if (isFleeing) {
+            handleFleeing(tpf);
+            return;
+        }
+
         wanderTimer += tpf;
         if (wanderTimer >= wanderDuration) {
             wanderTimer = 0;
@@ -351,68 +378,155 @@ public abstract class BaseAnimalComponent extends Component implements Interacta
         }
     }
 
+    private void checkForMonsters() {
+        boolean monsterNearby = false;
+        Point2D monsterPos = null;
+
+        List<Entity> monsters = FXGL.getGameWorld().getEntitiesByType(EntityType.MONSTER);
+        for (Entity m : monsters) {
+            Project1Game.component.farming.monster.BushMonsterComponent bmc = 
+                    m.getComponentOptional(Project1Game.component.farming.monster.BushMonsterComponent.class).orElse(null);
+            if (bmc != null && !bmc.isReturning()) {
+                double dist = entity.distance(m);
+                if (dist < 250.0) {
+                    monsterNearby = true;
+                    monsterPos = m.getPosition();
+                    break;
+                }
+            }
+        }
+
+        if (monsterNearby) {
+            if (!isFleeing) {
+                isFleeing = true;
+                chooseFleeTarget(monsterPos);
+            }
+        } else {
+            if (isFleeing) {
+                isFleeing = false;
+                fleeTarget = null;
+                fleePathWaypoints.clear();
+                texture.loopAnimationChannel(animIdleDown);
+                homePosition = entity.getPosition(); // Reset home position to current position after fleeing
+            }
+        }
+    }
+
+    private void chooseFleeTarget(Point2D monsterPos) {
+        double mapW = 3520;
+        double mapH = 2048;
+        double maxW = FXGL.getGameWorld()
+                .getEntitiesByType(EntityType.FIELD, EntityType.WALL, EntityType.COLLISION)
+                .stream()
+                .mapToDouble(e -> e.getRightX()).max().orElse(3520);
+        double maxH = FXGL.getGameWorld()
+                .getEntitiesByType(EntityType.FIELD, EntityType.WALL, EntityType.COLLISION)
+                .stream()
+                .mapToDouble(e -> e.getBottomY()).max().orElse(2048);
+        mapW = Math.max(mapW, maxW);
+        mapH = Math.max(mapH, maxH);
+
+        Point2D candidate = null;
+        for (int i = 0; i < 10; i++) {
+            double rx = 100 + random.nextDouble() * (mapW - 200);
+            double ry = 100 + random.nextDouble() * (mapH - 200);
+            Point2D pt = new Point2D(rx, ry);
+            if (monsterPos == null || pt.distance(monsterPos) > 400.0) {
+                candidate = pt;
+                break;
+            }
+        }
+        if (candidate == null) {
+            candidate = new Point2D(100 + random.nextDouble() * (mapW - 200), 100 + random.nextDouble() * (mapH - 200));
+        }
+
+        fleeTarget = candidate;
+        fleePathWaypoints = Project1Game.system.AStarPathfinder.findPath(entity.getPosition(), fleeTarget, mapW, mapH);
+        if (fleePathWaypoints.isEmpty()) {
+            fleePathWaypoints = new java.util.ArrayList<>();
+            fleePathWaypoints.add(fleeTarget);
+        }
+    }
+
+    private void handleFleeing(double tpf) {
+        if (fleeTarget == null || fleePathWaypoints == null || fleePathWaypoints.isEmpty()) {
+            chooseFleeTarget(null);
+            return;
+        }
+
+        Point2D currentWaypoint = fleePathWaypoints.get(0);
+        double distToWaypoint = entity.getPosition().distance(currentWaypoint);
+
+        if (distToWaypoint < 12.0) {
+            fleePathWaypoints.remove(0);
+            if (fleePathWaypoints.isEmpty()) {
+                chooseFleeTarget(null);
+                return;
+            }
+            currentWaypoint = fleePathWaypoints.get(0);
+        }
+
+        Point2D dir = currentWaypoint.subtract(entity.getPosition()).normalize();
+        double fleeSpeed = 60.0;
+        Point2D velocity = dir.multiply(fleeSpeed);
+
+        updateFleeAnimation(dir);
+
+        if (physics != null && physics.getBody() != null) {
+            physics.setVelocityX(velocity.getX());
+            physics.setVelocityY(velocity.getY());
+        } else {
+            entity.translate(velocity.multiply(tpf));
+        }
+    }
+
+    private void updateFleeAnimation(Point2D dir) {
+        if (Math.abs(dir.getX()) > Math.abs(dir.getY())) {
+            if (dir.getX() > 0) {
+                texture.loopAnimationChannel(animWalkRight);
+            } else {
+                texture.loopAnimationChannel(animWalkLeft);
+            }
+        } else {
+            if (dir.getY() > 0) {
+                texture.loopAnimationChannel(animWalkDown);
+            } else {
+                texture.loopAnimationChannel(animWalkUp);
+            }
+        }
+    }
+
     // Factory method for creating components
     public static BaseAnimalComponent create(String typeName) {
         switch (typeName.toLowerCase()) {
             case "chick":
             case "chicken":
             case "rooster":
-                return new ChickenComponent();
+                return new BaseAnimalComponent(AnimalType.CHICKEN, "Gà", "Gà con", "Rooster", 4,
+                      "Animal/Chick_animation_with_shadow.png", "Animal/Rooster_animation_with_shadow.png",
+                      ItemType.ROOSTER, 16, 16, 32, 32);
             case "calf":
             case "cow":
             case "bull":
-                return new CowComponent();
+                return new BaseAnimalComponent(AnimalType.COW, "Bò", "Bê", "Bull", 7,
+                      "Animal/Calf_animation_with_shadow.png", "Animal/Bull_animation_with_shadow.png",
+                      ItemType.BULL, 64, 64, 64, 64);
             case "lamb":
             case "sheep":
-                return new SheepComponent();
+                return new BaseAnimalComponent(AnimalType.SHEEP, "Cừu", "Cừu non", "Sheep", 5,
+                      "Animal/Lamb_animation_with_shadow.png", "Animal/Sheep_animation_with_shadow.png",
+                      ItemType.SHEEP, 32, 32, 32, 32);
             case "piglet":
             case "pig":
-                return new PigComponent();
+                return new BaseAnimalComponent(AnimalType.PIG, "Heo", "Heo con", "Pig", 6,
+                      "Animal/Piglet_animation_with_shadow.png", "Animal/Piglet_animation_with_shadow.png",
+                      ItemType.PIG, 32, 32, 32, 32);
             case "turkey":
-                return new TurkeyComponent();
+                return new BaseAnimalComponent(AnimalType.TURKEY, "Gà tây", "Gà tây", "Turkey", 3,
+                      "Animal/Turkey_animation_with_shadow.png", "Animal/Turkey_animation_with_shadow.png",
+                      ItemType.TURKEY, 32, 32, 32, 32);
             default:
                 throw new IllegalArgumentException("Unknown animal type: " + typeName);
         }
-    }
-}
-
-// Subclasses defining unique configuration properties
-class ChickenComponent extends BaseAnimalComponent {
-    public ChickenComponent() {
-        super(AnimalType.CHICKEN, "Gà", "Gà con", "Rooster", 4,
-              "Animal/Chick_animation_with_shadow.png", "Animal/Rooster_animation_with_shadow.png",
-              ItemType.ROOSTER, 16, 16, 32, 32);
-    }
-}
-
-class CowComponent extends BaseAnimalComponent {
-    public CowComponent() {
-        super(AnimalType.COW, "Bò", "Bê", "Bull", 7,
-              "Animal/Calf_animation_with_shadow.png", "Animal/Bull_animation_with_shadow.png",
-              ItemType.BULL, 64, 64, 64, 64);
-    }
-}
-
-class SheepComponent extends BaseAnimalComponent {
-    public SheepComponent() {
-        super(AnimalType.SHEEP, "Cừu", "Cừu non", "Sheep", 5,
-              "Animal/Lamb_animation_with_shadow.png", "Animal/Sheep_animation_with_shadow.png",
-              ItemType.SHEEP, 32, 32, 32, 32);
-    }
-}
-
-class PigComponent extends BaseAnimalComponent {
-    public PigComponent() {
-        super(AnimalType.PIG, "Heo", "Heo con", "Pig", 6,
-              "Animal/Piglet_animation_with_shadow.png", "Animal/Piglet_animation_with_shadow.png",
-              ItemType.PIG, 32, 32, 32, 32);
-    }
-}
-
-class TurkeyComponent extends BaseAnimalComponent {
-    public TurkeyComponent() {
-        super(AnimalType.TURKEY, "Gà tây", "Gà tây", "Turkey", 3,
-              "Animal/Turkey_animation_with_shadow.png", "Animal/Turkey_animation_with_shadow.png",
-              ItemType.TURKEY, 32, 32, 32, 32);
     }
 }

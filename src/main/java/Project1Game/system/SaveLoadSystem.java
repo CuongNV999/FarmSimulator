@@ -110,13 +110,8 @@ public class SaveLoadSystem {
         // Lưu Quái vật (Monsters)
         data.monsters.clear();
         FXGL.getGameWorld().getEntitiesByType(EntityType.MONSTER).forEach(m -> {
-            String spawnName = "";
-            if (m.hasComponent(Project1Game.component.farming.monster.BoarComponent.class)) spawnName = "Boar";
-            else if (m.hasComponent(Project1Game.component.farming.monster.FoxComponent.class)) spawnName = "Fox";
-            else if (m.hasComponent(Project1Game.component.farming.monster.DeerComponent.class)) spawnName = "Deer";
-            else if (m.hasComponent(Project1Game.component.farming.monster.HareComponent.class)) spawnName = "Hare";
-
-            if (!spawnName.isEmpty()) {
+            String spawnName = m.getString("monsterType");
+            if (spawnName != null && !spawnName.isEmpty()) {
                 SaveData.MonsterSaveData msd = new SaveData.MonsterSaveData();
                 msd.x = m.getX();
                 msd.y = m.getY();

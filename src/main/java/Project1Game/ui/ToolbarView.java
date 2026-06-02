@@ -57,7 +57,7 @@ public class ToolbarView extends HBox {
         pane.getChildren().add(bg);
 
         // Icon vật phẩm
-        Texture icon = new Texture(FXGL.image("empty.png")); // Icon mặc định trống
+        Texture icon = new Texture(new javafx.scene.image.WritableImage(1, 1)); // Icon mặc định trống
         icon.setFitWidth(50);
         icon.setFitHeight(50);
         icon.setPreserveRatio(true);
@@ -76,7 +76,7 @@ public class ToolbarView extends HBox {
                             return FXGL.image(itemType.getIconName());
                         }
                     }
-                    return FXGL.image("empty.png"); // Hình ảnh trống
+                    return null; // Không có texture gì
                 }, inventorySlot.itemTypeProperty())
         );
 

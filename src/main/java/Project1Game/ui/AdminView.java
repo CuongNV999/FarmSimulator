@@ -218,7 +218,16 @@ public class AdminView extends VBox {
             }
         });
 
-        statsCol.getChildren().addAll(statsTitle, goldRow, quickGoldRow, skinTitle, skinGrid, timeTitle, timeSpeedButtons, cheatsTitle, btnMatureAll);
+        Button btnSpawnBushMonster = new Button("Spawn Bush Monster");
+        btnSpawnBushMonster.setPrefWidth(160);
+        btnSpawnBushMonster.setStyle("-fx-background-color: #d9383a; -fx-text-fill: white; -fx-cursor: hand; -fx-font-weight: bold; -fx-font-size: 13px;");
+        btnSpawnBushMonster.setOnAction(e -> {
+            if (Project1Game.Main.getInstance() != null) {
+                Project1Game.Main.getInstance().spawnBushMonsterAdmin();
+            }
+        });
+
+        statsCol.getChildren().addAll(statsTitle, goldRow, quickGoldRow, skinTitle, skinGrid, timeTitle, timeSpeedButtons, cheatsTitle, btnMatureAll, btnSpawnBushMonster);
 
         // --- SECTION 2: Crop & inventory Adjusters scrollpane ---
         VBox itemsCol = new VBox(10);

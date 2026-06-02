@@ -3,12 +3,8 @@ package Project1Game.factory;
 import Project1Game.component.farming.animal.BaseAnimalComponent;
 import Project1Game.component.farming.CropComponent;
 import Project1Game.component.farming.SoilComponent;
-import Project1Game.component.farming.monster.BaseMonsterComponent;
-import Project1Game.component.farming.monster.BoarComponent;
-import Project1Game.component.farming.monster.FoxComponent;
-import Project1Game.component.farming.monster.DeerComponent;
-import Project1Game.component.farming.monster.HareComponent;
 import Project1Game.component.farming.monster.MonsterAnimationComponent;
+import Project1Game.component.farming.monster.BushMonsterComponent;
 import Project1Game.component.player.PlayerComponent;
 import Project1Game.component.npc.NPCAnimationComponent;
 import Project1Game.component.npc.NPCBehaviorComponent;
@@ -346,7 +342,7 @@ public class GameEntityFactory implements EntityFactory {
         return createAnimal(data, "turkey", 32, 32);
     }
 
-    private Entity createMonster(SpawnData data, String monsterType, String runTexturePath, String idleTexturePath, BaseMonsterComponent component) {
+    private Entity createMonster(SpawnData data, String monsterType, String runTexturePath, String idleTexturePath) {
         PhysicsComponent physics = new PhysicsComponent();
         physics.setFixtureDef(new FixtureDef().friction(0f).density(0.1f));
         physics.setBodyType(BodyType.DYNAMIC);
@@ -362,29 +358,50 @@ public class GameEntityFactory implements EntityFactory {
                 .bbox(new HitBox(BoundingShape.box(32, 32)))
                 .zIndex(8)
                 .with(physics)
-                .with(component)
+                .with(new BushMonsterComponent())
                 .with(new MonsterAnimationComponent(runTexturePath, idleTexturePath))
+                .with("monsterType", monsterType)
                 .collidable()
                 .build();
     }
 
     @Spawns("Boar")
     public Entity spawnBoar(SpawnData data) {
-        return createMonster(data, "Boar", "monster/Boar/Boar_Run_with_shadow.png", "monster/Boar/Boar_Idle_with_shadow.png", new BoarComponent());
+        return createMonster(data, "Boar", "monster/Boar/Boar_Run_with_shadow.png", "monster/Boar/Boar_Idle_with_shadow.png");
     }
 
     @Spawns("Fox")
     public Entity spawnFox(SpawnData data) {
-        return createMonster(data, "Fox", "monster/Fox/Fox_Run_with_shadow.png", "monster/Fox/Fox_Idle_with_shadow.png", new FoxComponent());
+        return createMonster(data, "Fox", "monster/Fox/Fox_Run_with_shadow.png", "monster/Fox/Fox_Idle_with_shadow.png");
     }
 
     @Spawns("Deer")
     public Entity spawnDeer(SpawnData data) {
-        return createMonster(data, "Deer", "monster/Deer/Deer_Run_with_shadow.png", "monster/Deer/Deer_Idle_with_shadow.png", new DeerComponent());
+        return createMonster(data, "Deer", "monster/Deer/Deer_Run_with_shadow.png", "monster/Deer/Deer_Idle_with_shadow.png");
     }
 
     @Spawns("Hare")
     public Entity spawnHare(SpawnData data) {
-        return createMonster(data, "Hare", "monster/Hare/Hare_Run_with_shadow.png", "monster/Hare/Hare_Idle_with_shadow.png", new HareComponent());
+        return createMonster(data, "Hare", "monster/Hare/Hare_Run_with_shadow.png", "monster/Hare/Hare_Idle_with_shadow.png");
+    }
+
+    @Spawns("Bush")
+    public Entity spawnBush(SpawnData data) {
+        double w = data.hasKey("width") ? ((Number) data.get("width")).doubleValue() : 32.0;
+        double h = data.hasKey("height") ? ((Number) data.get("height")).doubleValue() : 32.0;
+        return FXGL.entityBuilder(data)
+                .type(EntityType.BUSH)
+                .bbox(new HitBox(BoundingShape.box(w, h)))
+                .build();
+    }
+
+    @Spawns("BushMonster")
+    public Entity spawnBushMonster(SpawnData data) {
+        java.util.Random rand = new java.util.Random();
+        if (rand.nextBoolean()) {
+            return createMonster(data, "Boar", "monster/Boar/Boar_Run_with_shadow.png", "monster/Boar/Boar_Idle_with_shadow.png");
+        } else {
+            return createMonster(data, "Fox", "monster/Fox/Fox_Run_with_shadow.png", "monster/Fox/Fox_Idle_with_shadow.png");
+        }
     }
 }

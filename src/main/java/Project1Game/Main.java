@@ -4,7 +4,6 @@ package Project1Game;
 import Project1Game.component.farming.CropComponent;
 import Project1Game.component.farming.SoilComponent;
 import Project1Game.component.farming.animal.BaseAnimalComponent;
-import Project1Game.component.farming.monster.BaseMonsterComponent;
 import Project1Game.component.player.PlayerComponent;
 import Project1Game.core.EntityType;
 import Project1Game.core.ItemType;
@@ -198,6 +197,7 @@ public class Main extends GameApplication {
     private double lastHungerDrainTime = -1;
     private double lastStarveHPTime = -1;
     private boolean isHPDepletionEnabled = true;
+    private double bushMonsterSpawnTimer = 0.0;
 
     public void toggleHPDepletion() {
         this.isHPDepletionEnabled = !this.isHPDepletionEnabled;
@@ -212,6 +212,7 @@ public class Main extends GameApplication {
         gameSettings.setVersion("2.5");
         gameSettings.setDeveloperMenuEnabled(true);
         gameSettings.setMainMenuEnabled(true);
+        gameSettings.setFullScreenAllowed(true);
         gameSettings.setSceneFactory(new FarmSceneFactory());
     }
 
@@ -257,35 +258,6 @@ public class Main extends GameApplication {
             }
         });
 
-        // Collision handler between MONSTER and ANIMAL
-        FXGL.getPhysicsWorld().addCollisionHandler(new CollisionHandler(EntityType.MONSTER, EntityType.ANIMAL) {
-            @Override
-            protected void onCollisionBegin(Entity monster, Entity animal) {
-                BaseMonsterComponent bmc = monster.getComponentOptional(BaseMonsterComponent.class).orElse(null);
-                if (bmc != null && bmc.group == BaseMonsterComponent.MonsterGroup.CARNIVORE) {
-                    if (bmc.isValidPrey(animal)) {
-                        bmc.consume(animal);
-                    }
-                }
-            }
-        });
-
-        // Collision handlers between MONSTER and CROPS
-        EntityType[] cropTypes = { EntityType.WHEAT, EntityType.RADISH, EntityType.CABBAGE,
-                EntityType.LETTUCE, EntityType.TOMATO, EntityType.CORN };
-        for (EntityType cropType : cropTypes) {
-            FXGL.getPhysicsWorld().addCollisionHandler(new CollisionHandler(EntityType.MONSTER, cropType) {
-                @Override
-                protected void onCollisionBegin(Entity monster, Entity crop) {
-                    BaseMonsterComponent bmc = monster.getComponentOptional(BaseMonsterComponent.class).orElse(null);
-                    if (bmc != null && bmc.group == BaseMonsterComponent.MonsterGroup.HERBIVORE) {
-                        if (bmc.isValidPrey(crop)) {
-                            bmc.consume(crop);
-                        }
-                    }
-                }
-            });
-        }
     }
 
     @Override
@@ -642,6 +614,22 @@ public class Main extends GameApplication {
                     }
                 }
                 Project1Game.component.npc.NPCBehaviorComponent.clearHiddenNPCs();
+            }
+
+            // Spawning Bush Monsters periodically
+            bushMonsterSpawnTimer += tpf;
+            if (bushMonsterSpawnTimer >= 15.0) {
+                bushMonsterSpawnTimer = 0.0;
+                java.util.List<Entity> bushes = FXGL.getGameWorld().getEntitiesByType(EntityType.BUSH);
+                if (!bushes.isEmpty()) {
+                    java.util.Random rand = new java.util.Random();
+                    if (rand.nextDouble() < 0.15) {
+                        Entity targetBush = bushes.get(rand.nextInt(bushes.size()));
+                        FXGL.spawn("BushMonster", targetBush.getX() + targetBush.getWidth()/2 - 16, targetBush.getY() + targetBush.getHeight()/2 - 16);
+                        FXGL.getNotificationService().pushNotification("Cảnh báo: Có quái vật xuất hiện từ bụi cây!");
+                        System.out.println("Spawned BushMonster at " + targetBush.getPosition());
+                    }
+                }
             }
         }
 
@@ -1014,6 +1002,25 @@ public class Main extends GameApplication {
         });
 
         FXGL.getNotificationService().pushNotification("Admin Cheat: All animals and crops are now fully mature!");
+    }
+
+    public void spawnBushMonsterAdmin() {
+        if (!currentMap.equals("Main_level.tmx")) {
+            FXGL.getNotificationService().pushNotification("Chỉ có thể spawn quái vật ở bản đồ ngoài trời!");
+            return;
+        }
+
+        java.util.List<Entity> bushes = FXGL.getGameWorld().getEntitiesByType(EntityType.BUSH);
+        if (bushes.isEmpty()) {
+            FXGL.getNotificationService().pushNotification("Không tìm thấy bụi cây nào trên map để spawn!");
+            return;
+        }
+
+        java.util.Random rand = new java.util.Random();
+        Entity targetBush = bushes.get(rand.nextInt(bushes.size()));
+        FXGL.spawn("BushMonster", targetBush.getX() + targetBush.getWidth()/2 - 16, targetBush.getY() + targetBush.getHeight()/2 - 16);
+        FXGL.getNotificationService().pushNotification("Admin: Đã spawn một quái vật từ bụi cây!");
+        System.out.println("Admin spawned BushMonster at " + targetBush.getPosition());
     }
 
     public static boolean isDayTime() {
