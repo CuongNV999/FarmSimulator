@@ -1,7 +1,14 @@
 package Project1Game.factory;
 
+import Project1Game.component.farming.animal.BaseAnimalComponent;
 import Project1Game.component.farming.CropComponent;
 import Project1Game.component.farming.SoilComponent;
+import Project1Game.component.farming.monster.BaseMonsterComponent;
+import Project1Game.component.farming.monster.BoarComponent;
+import Project1Game.component.farming.monster.FoxComponent;
+import Project1Game.component.farming.monster.DeerComponent;
+import Project1Game.component.farming.monster.HareComponent;
+import Project1Game.component.farming.monster.MonsterAnimationComponent;
 import Project1Game.component.player.PlayerComponent;
 import Project1Game.component.npc.NPCAnimationComponent;
 import Project1Game.component.npc.NPCBehaviorComponent;
@@ -16,6 +23,8 @@ import com.almasb.fxgl.physics.box2d.dynamics.FixtureDef;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import com.almasb.fxgl.core.collection.UpdatableObjectProperty; // Import UpdatableObjectProperty
+import Project1Game.interaction.InteractableComponent;
+import Project1Game.Main;
 
 /**
  * Factory quản lý việc tạo tất cả thực thể trong game.
@@ -175,6 +184,9 @@ public class GameEntityFactory implements EntityFactory {
                 // ĐỔI TÊN Ở ĐÂY để tránh xung đột với Tiled
                 .with("teleportX", targetXValue)
                 .with("teleportY", targetYValue)
+                .with(new InteractableComponent((player, target) -> {
+                    Main.getInstance().handleDoorInteraction(target);
+                }))
                 .collidable()
                 .build();
     }
@@ -187,7 +199,12 @@ public class GameEntityFactory implements EntityFactory {
 
     @Spawns("House_out")
     public Entity spawnHouseOut(SpawnData data) {
-        return spawnDoor(data);
+        Entity door = spawnDoor(data);
+        if (door.getBoundingBoxComponent() != null) {
+            door.getBoundingBoxComponent().clearHitBoxes();
+            door.getBoundingBoxComponent().addHitBox(new HitBox(com.almasb.fxgl.physics.BoundingShape.box(64, 48)));
+        }
+        return door;
     }
 
     @Spawns("Sleep")
@@ -198,6 +215,9 @@ public class GameEntityFactory implements EntityFactory {
         return FXGL.entityBuilder(data)
                 .type(EntityType.SLEEP)
                 .bbox(new HitBox(BoundingShape.box(w, h)))
+                .with(new InteractableComponent((player, target) -> {
+                    Main.getInstance().handleSleepInteraction();
+                }))
                 .collidable()
                 .build();
     }
@@ -216,7 +236,7 @@ public class GameEntityFactory implements EntityFactory {
     public Entity spawnGuider(SpawnData data) {
         PhysicsComponent physics = new PhysicsComponent();
         physics.setFixtureDef(new FixtureDef().friction(0f).density(0.1f));
-        physics.setBodyType(BodyType.DYNAMIC);
+        physics.setBodyType(BodyType.KINEMATIC);
         physics.setOnPhysicsInitialized(() -> {
             if (physics.getBody() != null) {
                 physics.getBody().setLinearDamping(12.0f);
@@ -250,7 +270,7 @@ public class GameEntityFactory implements EntityFactory {
     public Entity spawnTrader(SpawnData data) {
         PhysicsComponent physics = new PhysicsComponent();
         physics.setFixtureDef(new FixtureDef().friction(0f).density(0.1f));
-        physics.setBodyType(BodyType.DYNAMIC);
+        physics.setBodyType(BodyType.KINEMATIC);
         physics.setOnPhysicsInitialized(() -> {
             if (physics.getBody() != null) {
                 physics.getBody().setLinearDamping(12.0f);
@@ -278,5 +298,93 @@ public class GameEntityFactory implements EntityFactory {
     @Spawns("Guider_in")
     public Entity spawnGuiderIn(SpawnData data) {
         return FXGL.entityBuilder(data).type(EntityType.GUIDER_IN).build();
+    }
+
+    private Entity createAnimal(SpawnData data, String animalType, double w, double h) {
+        PhysicsComponent physics = new PhysicsComponent();
+        physics.setFixtureDef(new FixtureDef().friction(0f).density(0.1f));
+        physics.setBodyType(BodyType.DYNAMIC);
+        physics.setOnPhysicsInitialized(() -> {
+            if (physics.getBody() != null) {
+                physics.getBody().setGravityScale(0f);
+                physics.getBody().setFixedRotation(true);
+            }
+        });
+
+        return FXGL.entityBuilder(data)
+                .type(EntityType.ANIMAL)
+                .bbox(new HitBox(BoundingShape.box(w, h)))
+                .zIndex(7)
+                .with(physics)
+                .with(BaseAnimalComponent.create(animalType))
+                .collidable()
+                .build();
+    }
+
+    @Spawns("Chick")
+    public Entity spawnChick(SpawnData data) {
+        return createAnimal(data, "chick", 24, 24);
+    }
+
+    @Spawns("Calf")
+    public Entity spawnCalf(SpawnData data) {
+        return createAnimal(data, "calf", 48, 48);
+    }
+
+    @Spawns("Lamb")
+    public Entity spawnLamb(SpawnData data) {
+        return createAnimal(data, "lamb", 32, 32);
+    }
+
+    @Spawns("Piglet")
+    public Entity spawnPiglet(SpawnData data) {
+        return createAnimal(data, "piglet", 32, 32);
+    }
+
+    @Spawns("Turkey")
+    public Entity spawnTurkey(SpawnData data) {
+        return createAnimal(data, "turkey", 32, 32);
+    }
+
+    private Entity createMonster(SpawnData data, String monsterType, String runTexturePath, String idleTexturePath, BaseMonsterComponent component) {
+        PhysicsComponent physics = new PhysicsComponent();
+        physics.setFixtureDef(new FixtureDef().friction(0f).density(0.1f));
+        physics.setBodyType(BodyType.DYNAMIC);
+        physics.setOnPhysicsInitialized(() -> {
+            if (physics.getBody() != null) {
+                physics.getBody().setGravityScale(0f);
+                physics.getBody().setFixedRotation(true);
+            }
+        });
+
+        return FXGL.entityBuilder(data)
+                .type(EntityType.MONSTER)
+                .bbox(new HitBox(BoundingShape.box(32, 32)))
+                .zIndex(8)
+                .with(physics)
+                .with(component)
+                .with(new MonsterAnimationComponent(runTexturePath, idleTexturePath))
+                .collidable()
+                .build();
+    }
+
+    @Spawns("Boar")
+    public Entity spawnBoar(SpawnData data) {
+        return createMonster(data, "Boar", "monster/Boar/Boar_Run_with_shadow.png", "monster/Boar/Boar_Idle_with_shadow.png", new BoarComponent());
+    }
+
+    @Spawns("Fox")
+    public Entity spawnFox(SpawnData data) {
+        return createMonster(data, "Fox", "monster/Fox/Fox_Run_with_shadow.png", "monster/Fox/Fox_Idle_with_shadow.png", new FoxComponent());
+    }
+
+    @Spawns("Deer")
+    public Entity spawnDeer(SpawnData data) {
+        return createMonster(data, "Deer", "monster/Deer/Deer_Run_with_shadow.png", "monster/Deer/Deer_Idle_with_shadow.png", new DeerComponent());
+    }
+
+    @Spawns("Hare")
+    public Entity spawnHare(SpawnData data) {
+        return createMonster(data, "Hare", "monster/Hare/Hare_Run_with_shadow.png", "monster/Hare/Hare_Idle_with_shadow.png", new HareComponent());
     }
 }

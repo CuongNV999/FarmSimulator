@@ -39,6 +39,7 @@ public class SaveLoadSystem {
             Entity player = FXGL.getGameWorld().getSingleton(EntityType.PLAYER);
             PlayerComponent playerComponent = player.getComponent(PlayerComponent.class);
             data.playerMoney = playerComponent.getMoney(); // Lưu tiền của người chơi
+            data.playerSkin = playerComponent.getCurrentSkin();
 
             // Lưu bản đồ và vị trí người chơi
             data.currentMap = ((Main) FXGL.getApp()).getCurrentMap();
@@ -87,6 +88,42 @@ public class SaveLoadSystem {
                 data.crops.add(cd);
             });
         }
+
+        // Lưu Động vật (Animals)
+        data.animals.clear();
+        FXGL.getGameWorld().getEntitiesByType(EntityType.ANIMAL).forEach(a -> {
+            Project1Game.component.farming.animal.BaseAnimalComponent bac = a.getComponents().stream()
+                    .filter(c -> c instanceof Project1Game.component.farming.animal.BaseAnimalComponent)
+                    .map(c -> (Project1Game.component.farming.animal.BaseAnimalComponent) c)
+                    .findFirst()
+                    .orElse(null);
+            if (bac != null) {
+                SaveData.AnimalSaveData asd = new SaveData.AnimalSaveData();
+                asd.x = a.getX();
+                asd.y = a.getY();
+                asd.type = bac.getType().name();
+                asd.daysGrown = bac.getDaysGrown();
+                data.animals.add(asd);
+            }
+        });
+
+        // Lưu Quái vật (Monsters)
+        data.monsters.clear();
+        FXGL.getGameWorld().getEntitiesByType(EntityType.MONSTER).forEach(m -> {
+            String spawnName = "";
+            if (m.hasComponent(Project1Game.component.farming.monster.BoarComponent.class)) spawnName = "Boar";
+            else if (m.hasComponent(Project1Game.component.farming.monster.FoxComponent.class)) spawnName = "Fox";
+            else if (m.hasComponent(Project1Game.component.farming.monster.DeerComponent.class)) spawnName = "Deer";
+            else if (m.hasComponent(Project1Game.component.farming.monster.HareComponent.class)) spawnName = "Hare";
+
+            if (!spawnName.isEmpty()) {
+                SaveData.MonsterSaveData msd = new SaveData.MonsterSaveData();
+                msd.x = m.getX();
+                msd.y = m.getY();
+                msd.type = spawnName;
+                data.monsters.add(msd);
+            }
+        });
     }
 
     public void load(SaveData data) {
@@ -103,6 +140,9 @@ public class SaveLoadSystem {
             Entity player = FXGL.getGameWorld().getSingleton(EntityType.PLAYER);
             PlayerComponent playerComponent = player.getComponent(PlayerComponent.class);
             playerComponent.setMoney(data.playerMoney); // Tải tiền của người chơi
+            if (data.playerSkin != null) {
+                playerComponent.changeSkin(data.playerSkin);
+            }
 
             // Tải Inventory (cần xóa inventory hiện tại và thêm lại)
             inventory.clear();
@@ -119,9 +159,9 @@ public class SaveLoadSystem {
                 data.currentMap, data.playerX, data.playerY, data.playerMoney, data.gameTime, data.weather));
         }
 
-        // Xóa tất cả thực thể động cũ (đất và cây)
+        // Xóa tất cả thực thể động cũ (đất, cây, động vật, quái vật)
         EntityType[] allDynamicEntities = {EntityType.SOIL, EntityType.WHEAT, EntityType.CORN,
-                EntityType.RADISH, EntityType.CABBAGE, EntityType.LETTUCE, EntityType.TOMATO};
+                EntityType.RADISH, EntityType.CABBAGE, EntityType.LETTUCE, EntityType.TOMATO, EntityType.ANIMAL, EntityType.MONSTER};
         FXGL.getGameWorld().getEntitiesFiltered(e -> Arrays.asList(allDynamicEntities).contains(e.getType()))
                 .forEach(Entity::removeFromWorld);
 
@@ -142,6 +182,39 @@ public class SaveLoadSystem {
 
             Entity c = FXGL.getGameWorld().spawn(spawnName, cd.x, cd.y);
             c.getComponent(CropComponent.class).setStage(cd.stage);
+        }
+
+        // Tái tạo động vật
+        if (data.animals != null) {
+            for (SaveData.AnimalSaveData asd : data.animals) {
+                String typeName = asd.type;
+                String spawnName = "";
+                if (typeName.equals("CHICKEN")) spawnName = "Chick";
+                else if (typeName.equals("COW")) spawnName = "Calf";
+                else if (typeName.equals("SHEEP")) spawnName = "Lamb";
+                else if (typeName.equals("PIG")) spawnName = "Piglet";
+                else if (typeName.equals("TURKEY")) spawnName = "Turkey";
+
+                if (!spawnName.isEmpty()) {
+                    Entity a = FXGL.getGameWorld().spawn(spawnName, asd.x, asd.y);
+                    Project1Game.component.farming.animal.BaseAnimalComponent bac = a.getComponents().stream()
+                            .filter(c -> c instanceof Project1Game.component.farming.animal.BaseAnimalComponent)
+                            .map(c -> (Project1Game.component.farming.animal.BaseAnimalComponent) c)
+                            .findFirst()
+                            .orElse(null);
+                    if (bac != null) {
+                        bac.setDaysGrown(asd.daysGrown);
+                        bac.initAnimation();
+                    }
+                }
+            }
+        }
+
+        // Tái tạo quái vật
+        if (data.monsters != null) {
+            for (SaveData.MonsterSaveData msd : data.monsters) {
+                FXGL.getGameWorld().spawn(msd.type, msd.x, msd.y);
+            }
         }
     }
 

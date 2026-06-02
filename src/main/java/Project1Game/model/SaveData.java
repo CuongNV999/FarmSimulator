@@ -20,6 +20,7 @@ public class SaveData implements Serializable {
     public double playerX;
     public double playerY;
     public String weather;
+    public String playerSkin = "Player";
 
     // Lưu Inventory: Tên vật phẩm -> Số lượng
     public Map<String, Integer> inventoryItems = new HashMap<>();
@@ -43,5 +44,24 @@ public class SaveData implements Serializable {
         public double x, y;
         public String type; // Wheat, Corn...
         public int stage;
+    }
+
+    // Dynamic animal serialization data list
+    public List<AnimalSaveData> animals = new ArrayList<>();
+
+    public static class AnimalSaveData implements Serializable {
+        private static final long serialVersionUID = 1L;
+        public double x, y;
+        public String type; // CHICKEN, COW, etc.
+        public int daysGrown;
+    }
+
+    // Dynamic monster serialization data list
+    public List<MonsterSaveData> monsters = new ArrayList<>();
+
+    public static class MonsterSaveData implements Serializable {
+        private static final long serialVersionUID = 1L;
+        public double x, y;
+        public String type; // Boar, Fox, Deer, Hare
     }
 }

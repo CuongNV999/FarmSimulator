@@ -66,6 +66,24 @@ public class TradingView extends VBox {
             ItemType.CABBAGE, ItemType.LETTUCE, ItemType.TOMATO
     );
 
+    // Category Tabs definition
+    public enum ShopTab {
+        CROPS_AND_SEEDS,
+        ANIMALS
+    }
+
+    private ShopTab currentTab = ShopTab.CROPS_AND_SEEDS;
+    private StackPane cropsTabBtn;
+    private StackPane animalsTabBtn;
+
+    private final List<ItemType> buyableAnimals = Arrays.asList(
+            ItemType.CHICK, ItemType.CALF, ItemType.LAMB, ItemType.PIGLET, ItemType.TURKEY
+    );
+
+    private final List<ItemType> sellableAnimals = Arrays.asList(
+            ItemType.ROOSTER, ItemType.BULL, ItemType.SHEEP, ItemType.PIG, ItemType.TURKEY
+    );
+
     // Inner class representing items in cart
     public static class CartItem {
         public final ItemType itemType;
@@ -115,10 +133,18 @@ public class TradingView extends VBox {
         cartSectionContainer.setStyle("-fx-background-color: rgba(20, 15, 10, 0.8); -fx-background-radius: 10; -fx-border-color: #5C2E0B; -fx-border-width: 2; -fx-border-radius: 10;");
         cartSectionContainer.setSpacing(10);
 
+        // Khởi tạo Tab bar
+        cropsTabBtn = createTabButton("HẠT GIỐNG & NÔNG SẢN", ShopTab.CROPS_AND_SEEDS);
+        animalsTabBtn = createTabButton("ĐỘNG VẬT / THÚ NUÔI", ShopTab.ANIMALS);
+        HBox tabBar = new HBox(20, cropsTabBtn, animalsTabBtn);
+        tabBar.setAlignment(Pos.CENTER);
+        tabBar.setPadding(new Insets(5, 0, 5, 0));
+        updateTabButtonVisuals();
+
         HBox mainContent = new HBox(30, buySectionContainer, sellSectionContainer, cartSectionContainer);
         mainContent.setAlignment(Pos.CENTER);
 
-        getChildren().addAll(title, moneyDisplay, relationshipText, negotiationPanel, mainContent);
+        getChildren().addAll(title, moneyDisplay, relationshipText, negotiationPanel, tabBar, mainContent);
         setVisible(false); // Mặc định ẩn
     }
 
@@ -263,6 +289,16 @@ public class TradingView extends VBox {
     }
 
     public void open(TraderComponent tc) {
+        open(tc, true);
+    }
+
+    public void open(TraderComponent tc, boolean resetTab) {
+        if (resetTab) {
+            // Mở với tab Hạt Giống làm mặc định
+            this.currentTab = ShopTab.CROPS_AND_SEEDS;
+        }
+        updateTabButtonVisuals();
+
         // Nếu thay đổi trader, xóa giỏ hàng cũ
         if (this.currentTrader != tc) {
             this.cartItems.clear();
@@ -346,7 +382,8 @@ public class TradingView extends VBox {
     }
 
     private VBox createBuySection() {
-        Text buyTitle = new Text("Mua Hạt giống");
+        String titleText = (currentTab == ShopTab.CROPS_AND_SEEDS) ? "Mua Hạt giống" : "Mua Thú nuôi (Con non)";
+        Text buyTitle = new Text(titleText);
         buyTitle.setFont(Font.font("Arial", FontWeight.BOLD, 22));
         buyTitle.setFill(Color.LIGHTBLUE);
 
@@ -355,9 +392,11 @@ public class TradingView extends VBox {
         buyGrid.setVgap(ITEM_SLOT_GAP);
         buyGrid.setPadding(new Insets(10));
 
+        List<ItemType> items = (currentTab == ShopTab.CROPS_AND_SEEDS) ? buyableItems : buyableAnimals;
+
         int col = 0;
         int row = 0;
-        for (ItemType item : buyableItems) {
+        for (ItemType item : items) {
             buyGrid.add(createTradingItemSlot(item, true), col, row);
             col++;
             if (col >= 3) { // 3 cột
@@ -369,7 +408,8 @@ public class TradingView extends VBox {
     }
 
     private VBox createSellSection() {
-        Text sellTitle = new Text("Bán Nông sản");
+        String titleText = (currentTab == ShopTab.CROPS_AND_SEEDS) ? "Bán Nông sản" : "Bán Động vật (Trưởng thành)";
+        Text sellTitle = new Text(titleText);
         sellTitle.setFont(Font.font("Arial", FontWeight.BOLD, 22));
         sellTitle.setFill(Color.ORANGE);
 
@@ -378,9 +418,11 @@ public class TradingView extends VBox {
         sellGrid.setVgap(ITEM_SLOT_GAP);
         sellGrid.setPadding(new Insets(10));
 
+        List<ItemType> items = (currentTab == ShopTab.CROPS_AND_SEEDS) ? sellableItems : sellableAnimals;
+
         int col = 0;
         int row = 0;
-        for (ItemType item : sellableItems) {
+        for (ItemType item : items) {
             sellGrid.add(createTradingItemSlot(item, false), col, row);
             col++;
             if (col >= 3) { // 3 cột
@@ -408,7 +450,12 @@ public class TradingView extends VBox {
 
         // Icon vật phẩm
         if (itemType.getIconName() != null && !itemType.getIconName().isEmpty()) {
-            Texture icon = FXGL.texture(itemType.getIconName());
+            Texture icon;
+            if (itemType.getIconName().startsWith("Animal/")) {
+                icon = new Texture(Project1Game.component.farming.animal.BaseAnimalComponent.extractFaceDownIdleImage(itemType.getIconName()));
+            } else {
+                icon = FXGL.texture(itemType.getIconName());
+            }
             icon.setFitWidth(ITEM_SLOT_SIZE);
             icon.setFitHeight(ITEM_SLOT_SIZE);
             icon.setPreserveRatio(true);
@@ -592,7 +639,14 @@ public class TradingView extends VBox {
         row.setPrefWidth(310);
 
         // Icon
-        Texture icon = FXGL.texture(cartItem.itemType.getIconName());
+        Texture icon;
+        if (cartItem.itemType.getIconName() != null && cartItem.itemType.getIconName().startsWith("Animal/")) {
+            icon = new Texture(Project1Game.component.farming.animal.BaseAnimalComponent.extractFaceDownIdleImage(cartItem.itemType.getIconName()));
+        } else if (cartItem.itemType.getIconName() != null && !cartItem.itemType.getIconName().isEmpty()) {
+            icon = FXGL.texture(cartItem.itemType.getIconName());
+        } else {
+            icon = new Texture(FXGL.image("empty.png"));
+        }
         icon.setFitWidth(24);
         icon.setFitHeight(24);
         icon.setPreserveRatio(true);
@@ -776,7 +830,10 @@ public class TradingView extends VBox {
                 FXGL.getNotificationService().pushNotification("Bạn không đủ tiền để thực hiện giao dịch!");
                 if (currentTrader != null) {
                     currentTrader.updateRelationship(false, true);
-                    open(currentTrader);
+                    relationshipText.setText("Mức quan hệ với Trader: " + currentTrader.getRelationship().name());
+                    updateNegotiationPanelState();
+                    refreshTabs();
+                    updateCartUI();
                 }
                 return;
             }
@@ -811,7 +868,12 @@ public class TradingView extends VBox {
         }
 
         cartItems.clear();
-        open(currentTrader); // Làm mới lại hiển thị
+        if (currentTrader != null) {
+            relationshipText.setText("Mức quan hệ với Trader: " + currentTrader.getRelationship().name());
+        }
+        updateNegotiationPanelState();
+        refreshTabs();
+        updateCartUI();
     }
 
     public void toggle() {
@@ -827,5 +889,62 @@ public class TradingView extends VBox {
 
     public boolean isOpen() {
         return visible;
+    }
+
+    // Helper methods for category tab UI
+    private StackPane createTabButton(String label, ShopTab tab) {
+        StackPane btn = new StackPane();
+        btn.setPadding(new Insets(6, 12, 6, 12));
+        
+        Rectangle bg = new Rectangle(200, 32);
+        bg.setArcWidth(6);
+        bg.setArcHeight(6);
+        
+        Text text = new Text(label);
+        text.setFont(Font.font("Arial", FontWeight.BOLD, 12));
+        
+        btn.getChildren().addAll(bg, text);
+        btn.setStyle("-fx-cursor: hand;");
+        
+        btn.setOnMouseClicked(e -> {
+            if (currentTab != tab) {
+                currentTab = tab;
+                refreshTabs();
+            }
+        });
+        
+        return btn;
+    }
+
+    private void refreshTabs() {
+        updateTabButtonVisuals();
+        
+        buySectionContainer.getChildren().clear();
+        buySectionContainer.getChildren().add(createBuySection());
+        
+        sellSectionContainer.getChildren().clear();
+        sellSectionContainer.getChildren().add(createSellSection());
+    }
+
+    private void updateTabButtonVisuals() {
+        setTabBtnState(cropsTabBtn, currentTab == ShopTab.CROPS_AND_SEEDS);
+        setTabBtnState(animalsTabBtn, currentTab == ShopTab.ANIMALS);
+    }
+
+    private void setTabBtnState(StackPane btn, boolean isActive) {
+        if (btn == null) return;
+        Rectangle bg = (Rectangle) btn.getChildren().get(0);
+        Text text = (Text) btn.getChildren().get(1);
+        if (isActive) {
+            bg.setFill(Color.rgb(139, 90, 43, 0.9));
+            bg.setStroke(Color.GOLD);
+            bg.setStrokeWidth(2.5);
+            text.setFill(Color.GOLD);
+        } else {
+            bg.setFill(Color.rgb(60, 40, 20, 0.6));
+            bg.setStroke(Color.rgb(100, 70, 40));
+            bg.setStrokeWidth(1.5);
+            text.setFill(Color.LIGHTGRAY);
+        }
     }
 }

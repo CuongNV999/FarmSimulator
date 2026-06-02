@@ -11,6 +11,8 @@ import javafx.geometry.Point2D;
 import javafx.util.Duration;
 
 public class PlayerComponent extends Component {
+    public static String SELECTED_SKIN = "Player";
+    private String currentSkin = "Player";
     private AnimatedTexture texture;
 
     // Các trạng thái animation
@@ -27,25 +29,51 @@ public class PlayerComponent extends Component {
     private final IntegerProperty money = new SimpleIntegerProperty(0);
 
     public PlayerComponent() {
+        this(SELECTED_SKIN);
+    }
+
+    public PlayerComponent(String skinFolder) {
+        this.currentSkin = skinFolder;
         double frameDuration = 0.1;
 
-        // Tải các tài nguyên hoạt ảnh (Giữ nguyên đường dẫn cũ của bạn)
-        idleDown = new AnimationChannel(FXGL.image("Player/Carry_Idle/Carry_Idle_Down-Sheet.png"), 4, 64, 64, Duration.seconds(frameDuration * 4), 0, 3);
-        idleUp   = new AnimationChannel(FXGL.image("Player/Carry_Idle/Carry_Idle_Up-Sheet.png"),   4, 64, 64, Duration.seconds(frameDuration * 4), 0, 3);
-        idleSide = new AnimationChannel(FXGL.image("Player/Carry_Idle/Carry_Idle_Side-Sheet.png"), 4, 64, 64, Duration.seconds(frameDuration * 4), 0, 3);
-
-        walkDown = new AnimationChannel(FXGL.image("Player/Carry_Walk/Carry_Walk_Down-Sheet.png"), 6, 64, 64, Duration.seconds(frameDuration * 6), 0, 5);
-        walkUp   = new AnimationChannel(FXGL.image("Player/Carry_Walk/Carry_Walk_Up-Sheet.png"),   6, 64, 64, Duration.seconds(frameDuration * 6), 0, 5);
-        walkSide = new AnimationChannel(FXGL.image("Player/Carry_Walk/Carry_Walk_Side-Sheet.png"), 6, 64, 64, Duration.seconds(frameDuration * 6), 0, 5);
-
-        runDown  = new AnimationChannel(FXGL.image("Player/Carry_Run/Carry_Run_Down-Sheet.png"),  6, 64, 64, Duration.seconds(frameDuration * 6), 0, 5);
-        runUp    = new AnimationChannel(FXGL.image("Player/Carry_Run/Carry_Run_Up-Sheet.png"),    6, 64, 64, Duration.seconds(frameDuration * 6), 0, 5);
-        runSide  = new AnimationChannel(FXGL.image("Player/Carry_Run/Carry_Run_Side-Sheet.png"),  6, 64, 64, Duration.seconds(frameDuration * 6), 0, 5);
+        loadSkin(skinFolder, frameDuration);
 
         texture = new AnimatedTexture(idleDown);
 
         // Khởi tạo tiền ban đầu (ví dụ: 1000)
         money.set(1000);
+    }
+
+    private void loadSkin(String skinFolder, double frameDuration) {
+        boolean isDefaultOrHUST = skinFolder.equals("Player") || skinFolder.equals("Player_HUST");
+        int walkRunFrames = isDefaultOrHUST ? 6 : 4;
+        int walkRunEndFrame = isDefaultOrHUST ? 5 : 3;
+        double walkRunSec = frameDuration * walkRunFrames;
+
+        idleDown = new AnimationChannel(FXGL.image(skinFolder + "/Carry_Idle/Carry_Idle_Down-Sheet.png"), 4, 64, 64, Duration.seconds(frameDuration * 4), 0, 3);
+        idleUp   = new AnimationChannel(FXGL.image(skinFolder + "/Carry_Idle/Carry_Idle_Up-Sheet.png"),   4, 64, 64, Duration.seconds(frameDuration * 4), 0, 3);
+        idleSide = new AnimationChannel(FXGL.image(skinFolder + "/Carry_Idle/Carry_Idle_Side-Sheet.png"), 4, 64, 64, Duration.seconds(frameDuration * 4), 0, 3);
+
+        walkDown = new AnimationChannel(FXGL.image(skinFolder + "/Carry_Walk/Carry_Walk_Down-Sheet.png"), walkRunFrames, 64, 64, Duration.seconds(walkRunSec), 0, walkRunEndFrame);
+        walkUp   = new AnimationChannel(FXGL.image(skinFolder + "/Carry_Walk/Carry_Walk_Up-Sheet.png"),   walkRunFrames, 64, 64, Duration.seconds(walkRunSec), 0, walkRunEndFrame);
+        walkSide = new AnimationChannel(FXGL.image(skinFolder + "/Carry_Walk/Carry_Walk_Side-Sheet.png"), walkRunFrames, 64, 64, Duration.seconds(walkRunSec), 0, walkRunEndFrame);
+
+        runDown  = new AnimationChannel(FXGL.image(skinFolder + "/Carry_Run/Carry_Run_Down-Sheet.png"),  walkRunFrames, 64, 64, Duration.seconds(walkRunSec), 0, walkRunEndFrame);
+        runUp    = new AnimationChannel(FXGL.image(skinFolder + "/Carry_Run/Carry_Run_Up-Sheet.png"),    walkRunFrames, 64, 64, Duration.seconds(walkRunSec), 0, walkRunEndFrame);
+        runSide  = new AnimationChannel(FXGL.image(skinFolder + "/Carry_Run/Carry_Run_Side-Sheet.png"),  walkRunFrames, 64, 64, Duration.seconds(walkRunSec), 0, walkRunEndFrame);
+    }
+
+    public void changeSkin(String skinFolder) {
+        this.currentSkin = skinFolder;
+        double frameDuration = 0.1;
+        loadSkin(skinFolder, frameDuration);
+        
+        // Cưỡng ép cập nhật hoạt ảnh hiện tại về Idle Down của skin mới ngay lập tức
+        texture.loopAnimationChannel(idleDown);
+    }
+
+    public String getCurrentSkin() {
+        return currentSkin;
     }
 
     @Override

@@ -157,7 +157,68 @@ public class AdminView extends VBox {
 
         HBox quickGoldRow = new HBox(10, add1k, add10k);
 
-        statsCol.getChildren().addAll(statsTitle, goldRow, quickGoldRow);
+        // Skin Selection Panel
+        Text skinTitle = new Text("Choose Player Skin:");
+        skinTitle.setFill(Color.WHITE);
+        skinTitle.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+
+        GridPane skinGrid = new GridPane();
+        skinGrid.setHgap(8);
+        skinGrid.setVgap(8);
+
+        String[] skinNames = {"Default", "HUST", "Farmer", "Cowboy", "Knight", "Witch"};
+        String[] skinPaths = {"Player", "Player_HUST", "Player_Farmer", "Player_Cowboy", "Player_Knight", "Player_Witch"};
+
+        for (int i = 0; i < skinNames.length; i++) {
+            final String path = skinPaths[i];
+            Button btnSkin = new Button(skinNames[i]);
+            btnSkin.setPrefWidth(80);
+            btnSkin.setStyle("-fx-background-color: #3e3e4a; -fx-text-fill: white; -fx-cursor: hand; -fx-font-weight: bold; -fx-font-size: 11px;");
+            btnSkin.setOnAction(e -> {
+                playerComponent.changeSkin(path);
+            });
+            skinGrid.add(btnSkin, i % 3, i / 3);
+        }
+
+        // Time Speed Presets Panel
+        Text timeTitle = new Text("Time Speed Multiplier:");
+        timeTitle.setFill(Color.WHITE);
+        timeTitle.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+
+        HBox timeSpeedButtons = new HBox(6);
+        timeSpeedButtons.setAlignment(Pos.CENTER_LEFT);
+
+        double[] presets = {1.0, 10.0, 50.0, 100.0};
+        String[] presetLabels = {"1x", "10x", "50x", "100x"};
+
+        for (int i = 0; i < presets.length; i++) {
+            final double val = presets[i];
+            Button btnTime = new Button(presetLabels[i]);
+            btnTime.setPrefWidth(55);
+            btnTime.setStyle("-fx-background-color: #3e3e4a; -fx-text-fill: white; -fx-cursor: hand; -fx-font-weight: bold; -fx-font-size: 11px;");
+            btnTime.setOnAction(e -> {
+                if (Project1Game.Main.getInstance() != null && Project1Game.Main.getInstance().getTimeSystem() != null) {
+                    Project1Game.Main.getInstance().getTimeSystem().setTimeSpeedMultiplier(val);
+                }
+            });
+            timeSpeedButtons.getChildren().add(btnTime);
+        }
+
+        // Cheat button
+        Text cheatsTitle = new Text("Cheats:");
+        cheatsTitle.setFill(Color.WHITE);
+        cheatsTitle.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+
+        Button btnMatureAll = new Button("Instant Mature All");
+        btnMatureAll.setPrefWidth(160);
+        btnMatureAll.setStyle("-fx-background-color: #eccb58; -fx-text-fill: #12121c; -fx-cursor: hand; -fx-font-weight: bold; -fx-font-size: 13px;");
+        btnMatureAll.setOnAction(e -> {
+            if (Project1Game.Main.getInstance() != null) {
+                Project1Game.Main.getInstance().matureAllCropsAndAnimals();
+            }
+        });
+
+        statsCol.getChildren().addAll(statsTitle, goldRow, quickGoldRow, skinTitle, skinGrid, timeTitle, timeSpeedButtons, cheatsTitle, btnMatureAll);
 
         // --- SECTION 2: Crop & inventory Adjusters scrollpane ---
         VBox itemsCol = new VBox(10);
@@ -184,7 +245,9 @@ public class AdminView extends VBox {
                 ItemType.WHEAT_SEED, ItemType.CORN_SEED, ItemType.RADISH_SEED,
                 ItemType.CABBAGE_SEED, ItemType.LETTUCE_SEED, ItemType.TOMATO_SEED,
                 ItemType.WHEAT, ItemType.CORN, ItemType.RADISH,
-                ItemType.CABBAGE, ItemType.LETTUCE, ItemType.TOMATO
+                ItemType.CABBAGE, ItemType.LETTUCE, ItemType.TOMATO,
+                ItemType.CHICK, ItemType.CALF, ItemType.LAMB, ItemType.PIGLET, ItemType.TURKEY,
+                ItemType.ROOSTER, ItemType.BULL, ItemType.SHEEP, ItemType.PIG
         );
 
         int row = 0;
@@ -215,7 +278,14 @@ public class AdminView extends VBox {
         row.setPrefWidth(420);
 
         // Icon
-        Texture icon = FXGL.texture(type.getIconName());
+        Texture icon;
+        if (type.getIconName() != null && type.getIconName().startsWith("Animal/")) {
+            icon = new Texture(Project1Game.component.farming.animal.BaseAnimalComponent.extractFaceDownIdleImage(type.getIconName()));
+        } else if (type.getIconName() != null && !type.getIconName().isEmpty()) {
+            icon = FXGL.texture(type.getIconName());
+        } else {
+            icon = new Texture(FXGL.image("empty.png"));
+        }
         icon.setFitWidth(32);
         icon.setFitHeight(32);
 

@@ -37,3 +37,20 @@ build/
 
 ### Mac OS ###
 .DS_Store
+
+# Hoặc chặn nguyên cả thư mục chứa log (nếu bạn gom log vào 1 chỗ)
+logs/
+
+# Chặn hoàn toàn thư mục cấu hình của IntelliJ (thay vì chặn lẻ tẻ vài file như trên)
+.idea/
+
+# Chặn file save game cục bộ (để tránh ghi đè khi đổi máy)
+save_game.dat
+
+# Chặn file danh sách việc cần làm cá nhân của bạn
+tash list
+
+# Chặn các file ảnh nháp tự sinh của hệ thống
+Untitled*
+*.png
+!src/**/*.png

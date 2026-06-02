@@ -6,9 +6,11 @@ import javafx.scene.Node;
 import javafx.scene.text.Text;
 
 public class TimeSystem {
-    private double gameTime = 960; // Mặc định khởi đầu là 6:00 AM (360 phút)
+    private double gameTime = 360; // Mặc định khởi đầu là 6:00 AM (360 phút)
     private int hour = 6;
     private int minute = 0;
+    private int dayCount = 1;
+    private double timeSpeedMultiplier = 1.0;
 
     public double getGameTime() { return gameTime; }
 
@@ -28,16 +30,36 @@ public class TimeSystem {
         // Cập nhật ngay lập tức UI khi load
         onUpdate(0);
     }
+
+    public void setTimeSpeedMultiplier(double multiplier) {
+        this.timeSpeedMultiplier = multiplier;
+        System.out.println("Tốc độ thời gian được đặt thành: " + multiplier);
+    }
+
+    public double getTimeSpeedMultiplier() {
+        return timeSpeedMultiplier;
+    }
+
+    public int getDayCount() {
+        return dayCount;
+    }
+
+    public void setDayCount(int dayCount) {
+        this.dayCount = dayCount;
+        updateUI();
+    }
+
     public TimeSystem(Node nightOverlay, Text clockText) {
         this.nightOverlay = nightOverlay;
         this.clockText = clockText;
     }
 
     public void onUpdate(double tpf) {
-        // Tốc độ dòng chảy thời gian (tpf * 10)
-        gameTime += tpf * 10;
+        // Tốc độ dòng chảy thời gian (tpf * 10 * timeSpeedMultiplier)
+        gameTime += tpf * 10 * timeSpeedMultiplier;
         if (gameTime >= 1440) {
             gameTime = 0;
+            dayCount++; // Bước sang ngày mới
         }
 
         WeatherSystem.getInstance().updateTime(gameTime);
@@ -68,7 +90,7 @@ public class TimeSystem {
             int displayHour = hour > 12 ? hour - 12 : (hour == 0 ? 12 : hour);
             String amPm = hour >= 12 ? "PM" : "AM";
 
-            clockText.setText(String.format("%02d:%02d %s", displayHour, minute, amPm));
+            clockText.setText(String.format("Day %d - %02d:%02d %s", dayCount, displayHour, minute, amPm));
 
             // Đổi màu chữ đồng hồ: Vàng ấm áp cho ban ngày, Xanh neon cho ban đêm
             clockText.setFill(isDayTime() ? Color.GOLD : Color.CYAN);
@@ -118,12 +140,21 @@ public class TimeSystem {
      * Tiến thời gian đến sáng hôm sau (ví dụ: 6:00 AM).
      */
     public void advanceToNextDay() {
-        gameTime = FULL_LIGHT * 60; // Đặt lại về 6:00 AM
+        // Case A (Early Morning Sleep): If went to bed after midnight but before morning (00:00 - 05:59), keep same calendar day.
+        // Case B (Standard Night Sleep): If between 6:00 AM and 11:59 PM, advance calendar day count by +1.
+        if (hour >= 0 && hour < 6) {
+            System.out.println("[TimeSystem] Early morning sleep: keeping same calendar day " + dayCount);
+        } else {
+            dayCount++;
+            System.out.println("[TimeSystem] Standard night sleep: advancing calendar day to " + dayCount);
+        }
+
+        gameTime = FULL_LIGHT * 60; // Reset strictly to 6:00 AM
         hour = FULL_LIGHT;
         minute = 0;
         updateUI(); // Cập nhật UI ngay lập tức
         updateVisuals(); // Cập nhật hiệu ứng hình ảnh
         FXGL.getEventBus().fireEvent(new DayNightEvent(DayNightEvent.SET_DAY)); // Kích hoạt sự kiện ngày mới
-        System.out.println("Thời gian đã được đặt lại về 6:00 AM.");
+        System.out.println("Thời gian đã được đặt lại về 6:00 AM. Ngày thứ: " + dayCount);
     }
 }
