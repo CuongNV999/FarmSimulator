@@ -34,6 +34,7 @@ import javafx.geometry.Pos;
 import javafx.scene.layout.VBox;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.MouseButton;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.input.ScrollEvent;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.paint.Color;
@@ -98,6 +99,11 @@ public class Main extends GameApplication {
         System.out.println("--- Player Fainted! ---");
         if (timeSystem != null) {
             timeSystem.advanceToNextDay();
+            // Cache the guider and trader reappearance at 6:00 AM morning
+            pendingNPCSpawns.clear();
+            pendingNPCSpawns.add(new NPCSpawnConfig("Guider", 1792, 1024, false));
+            pendingNPCSpawns.add(new NPCSpawnConfig("Trader", 1600, 1024, false));
+            System.out.println("[NPC Cache] Cached morning transitions via faint: NPCs are visible");
         }
 
         if (player != null) {
@@ -154,6 +160,15 @@ public class Main extends GameApplication {
         if (timeSystem != null) {
             timeSystem.advanceToNextDay();
             statusBarsView.setHealth(statusBarsView.getMaxHealth());
+            
+            // Cache the guider and trader reappearance at 6:00 AM morning
+            if (currentMap.equals("Main_house.tmx")) {
+                pendingNPCSpawns.clear();
+                pendingNPCSpawns.add(new NPCSpawnConfig("Guider", 1792, 1024, false));
+                pendingNPCSpawns.add(new NPCSpawnConfig("Trader", 1600, 1024, false));
+                System.out.println("[NPC Cache] Cached morning transitions via sleep: NPCs are visible");
+            }
+            
             dialogView.setDialog("Thông báo", "Bạn đã ngủ một giấc thật ngon.", "Sức khỏe đã được hồi phục!");
             dialogView.show();
             System.out.println("Nhân vật đã đi ngủ.");
@@ -193,6 +208,28 @@ public class Main extends GameApplication {
     private Map<String, SaveData> mapStates = new HashMap<>(); // Lưu trạng thái các bản đồ
     private boolean shouldLoadSaveOnStart = false; // Flag to load save game on startup
     private Point2D lastOutdoorPosition = null;
+
+    // --- Camera Roaming ---
+    private double lastMouseX;
+    private double lastMouseY;
+    private boolean isDraggingCamera = false;
+    private double currentMapWidth = 3520;
+    private double currentMapHeight = 2048;
+
+    // --- NPC Cache ---
+    public static class NPCSpawnConfig {
+        public String type;
+        public double x;
+        public double y;
+        public boolean isHidden;
+        public NPCSpawnConfig(String type, double x, double y, boolean isHidden) {
+            this.type = type;
+            this.x = x;
+            this.y = y;
+            this.isHidden = isHidden;
+        }
+    }
+    private final java.util.List<NPCSpawnConfig> pendingNPCSpawns = new java.util.ArrayList<>();
     private VBox hudContainer;
     private double lastHungerDrainTime = -1;
     private double lastStarveHPTime = -1;
@@ -487,6 +524,9 @@ public class Main extends GameApplication {
             mapH = Math.max(mapH, maxH);
         }
 
+        currentMapWidth = mapW;
+        currentMapHeight = mapH;
+
         FXGL.getGameScene().getViewport().setBounds(0, 0, (int) mapW, (int) mapH);
         FXGL.getGameScene().getViewport().bindToEntity(player, FXGL.getAppWidth() / 2.0, FXGL.getAppHeight() / 2.0);
         FXGL.getGameScene().getViewport().setLazy(true);
@@ -509,6 +549,25 @@ public class Main extends GameApplication {
             if (newMapName.equals("Main_level.tmx")) {
                 spawnInitialMonsters();
             }
+        }
+
+        // Apply pending NPC spawns if returning to main level
+        if (newMapName.equals("Main_level.tmx") && !pendingNPCSpawns.isEmpty()) {
+            System.out.println("[NPC Cache] Applying cached spawn configs...");
+            for (NPCSpawnConfig config : pendingNPCSpawns) {
+                EntityType type = config.type.equalsIgnoreCase("Guider") ? EntityType.GUIDER : EntityType.TRADER;
+                FXGL.getGameWorld().getEntitiesByType(type).forEach(npc -> {
+                    NPCBehaviorComponent ai = npc.getComponent(NPCBehaviorComponent.class);
+                    if (ai != null) {
+                        if (config.isHidden) {
+                            ai.disappear();
+                        } else {
+                            ai.reappear();
+                        }
+                    }
+                });
+            }
+            pendingNPCSpawns.clear();
         }
     }
 
@@ -579,43 +638,70 @@ public class Main extends GameApplication {
         }
 
         // AI: Đi vào nhà lúc 8:00 PM và xuất hiện lại lúc 6:00 AM
-        if (currentMap.equals("Main_level.tmx") && timeSystem != null) {
-            // 8:00 PM: đi vào nhà
-            if (timeSystem.getHour() == 20 && timeSystem.getMinute() == 0) {
-                FXGL.getGameWorld().getEntitiesByType(EntityType.GUIDER).forEach(npc -> {
-                    NPCBehaviorComponent ai = npc.getComponent(NPCBehaviorComponent.class);
-                    if (!ai.isGoingHome() && !ai.isHidden()) {
-                        FXGL.getGameWorld().getEntitiesByType(EntityType.GUIDER_IN).stream().findFirst()
-                                .ifPresent(target -> {
-                                    ai.goHome(target);
-                                });
-                    }
-                });
+        if (timeSystem != null) {
+            if (currentMap.equals("Main_level.tmx")) {
+                // 8:00 PM: đi vào nhà
+                if (timeSystem.getHour() >= 20 || timeSystem.getHour() < 6) {
+                    FXGL.getGameWorld().getEntitiesByType(EntityType.GUIDER).forEach(npc -> {
+                        NPCBehaviorComponent ai = npc.getComponent(NPCBehaviorComponent.class);
+                        if (ai != null && !ai.isGoingHome() && !ai.isHidden()) {
+                            FXGL.getGameWorld().getEntitiesByType(EntityType.GUIDER_IN).stream().findFirst()
+                                    .ifPresent(target -> {
+                                        ai.goHome(target);
+                                    });
+                        }
+                    });
 
-                FXGL.getGameWorld().getEntitiesByType(EntityType.TRADER).forEach(npc -> {
-                    NPCBehaviorComponent ai = npc.getComponent(NPCBehaviorComponent.class);
-                    if (!ai.isGoingHome() && !ai.isHidden()) {
-                        FXGL.getGameWorld().getEntitiesByType(EntityType.TRADER_IN).stream().findFirst()
-                                .ifPresent(target -> {
-                                    ai.goHome(target);
-                                });
-                    }
-                });
-            }
-            // 6:00 AM: xuất hiện trở lại
-            if (timeSystem.getHour() == 6 && timeSystem.getMinute() == 0) {
-                java.util.List<Entity> toReappear = new java.util.ArrayList<>(
-                        Project1Game.component.npc.NPCBehaviorComponent.getHiddenNPCs());
-                for (Entity npc : toReappear) {
-                    FXGL.getGameWorld().addEntity(npc);
-                    NPCBehaviorComponent ai = npc.getComponent(NPCBehaviorComponent.class);
-                    if (ai != null) {
-                        ai.reappear();
+                    FXGL.getGameWorld().getEntitiesByType(EntityType.TRADER).forEach(npc -> {
+                        NPCBehaviorComponent ai = npc.getComponent(NPCBehaviorComponent.class);
+                        if (ai != null && !ai.isGoingHome() && !ai.isHidden()) {
+                            FXGL.getGameWorld().getEntitiesByType(EntityType.TRADER_IN).stream().findFirst()
+                                    .ifPresent(target -> {
+                                        ai.goHome(target);
+                                    });
+                        }
+                    });
+                }
+                // 6:00 AM: xuất hiện trở lại
+                if (timeSystem.getHour() >= 6 && timeSystem.getHour() < 20) {
+                    java.util.List<Entity> toReappear = new java.util.ArrayList<>(
+                            Project1Game.component.npc.NPCBehaviorComponent.getHiddenNPCs());
+                    if (!toReappear.isEmpty()) {
+                        for (Entity npc : toReappear) {
+                            FXGL.getGameWorld().addEntity(npc);
+                            NPCBehaviorComponent ai = npc.getComponent(NPCBehaviorComponent.class);
+                            if (ai != null) {
+                                ai.reappear();
+                            }
+                        }
+                        Project1Game.component.npc.NPCBehaviorComponent.clearHiddenNPCs();
                     }
                 }
-                Project1Game.component.npc.NPCBehaviorComponent.clearHiddenNPCs();
+            } else {
+                // 8:00 PM: cache that they should be hidden (go home)
+                if (timeSystem.getHour() >= 20 || timeSystem.getHour() < 6) {
+                    boolean alreadyCachedHidden = pendingNPCSpawns.stream().anyMatch(c -> c.isHidden);
+                    if (!alreadyCachedHidden) {
+                        pendingNPCSpawns.clear();
+                        pendingNPCSpawns.add(new NPCSpawnConfig("Guider", 1792, 1024, true));
+                        pendingNPCSpawns.add(new NPCSpawnConfig("Trader", 1600, 1024, true));
+                        System.out.println("[NPC Cache] Cached 8:00 PM transitions: NPCs are hidden");
+                    }
+                }
+                // 6:00 AM: cache that they should spawn/reappear
+                if (timeSystem.getHour() >= 6 && timeSystem.getHour() < 20) {
+                    boolean alreadyCachedVisible = pendingNPCSpawns.stream().anyMatch(c -> !c.isHidden);
+                    if (!alreadyCachedVisible) {
+                        pendingNPCSpawns.clear();
+                        pendingNPCSpawns.add(new NPCSpawnConfig("Guider", 1792, 1024, false));
+                        pendingNPCSpawns.add(new NPCSpawnConfig("Trader", 1600, 1024, false));
+                        System.out.println("[NPC Cache] Cached 6:00 AM transitions: NPCs are visible");
+                    }
+                }
             }
+        }
 
+        if (currentMap.equals("Main_level.tmx")) {
             // Spawning Bush Monsters periodically
             bushMonsterSpawnTimer += tpf;
             if (bushMonsterSpawnTimer >= 15.0) {
@@ -660,8 +746,15 @@ public class Main extends GameApplication {
         // 1. DI CHUYỂN
         input.addAction(new UserAction("Move Right") {
             @Override
+            protected void onActionBegin() {
+                isDraggingCamera = false;
+                FXGL.getGameScene().getViewport().bindToEntity(player, FXGL.getAppWidth() / 2.0, FXGL.getAppHeight() / 2.0);
+            }
+
+            @Override
             protected void onAction() {
-                player.getComponent(PhysicsComponent.class).setVelocityX(200);
+                double speed = isShiftHeld() ? 300 : 200;
+                player.getComponent(PhysicsComponent.class).setVelocityX(speed);
             }
 
             @Override
@@ -672,8 +765,15 @@ public class Main extends GameApplication {
 
         input.addAction(new UserAction("Move Left") {
             @Override
+            protected void onActionBegin() {
+                isDraggingCamera = false;
+                FXGL.getGameScene().getViewport().bindToEntity(player, FXGL.getAppWidth() / 2.0, FXGL.getAppHeight() / 2.0);
+            }
+
+            @Override
             protected void onAction() {
-                player.getComponent(PhysicsComponent.class).setVelocityX(-200);
+                double speed = isShiftHeld() ? 300 : 200;
+                player.getComponent(PhysicsComponent.class).setVelocityX(-speed);
             }
 
             @Override
@@ -684,8 +784,15 @@ public class Main extends GameApplication {
 
         input.addAction(new UserAction("Move Up") {
             @Override
+            protected void onActionBegin() {
+                isDraggingCamera = false;
+                FXGL.getGameScene().getViewport().bindToEntity(player, FXGL.getAppWidth() / 2.0, FXGL.getAppHeight() / 2.0);
+            }
+
+            @Override
             protected void onAction() {
-                player.getComponent(PhysicsComponent.class).setVelocityY(-200);
+                double speed = isShiftHeld() ? 300 : 200;
+                player.getComponent(PhysicsComponent.class).setVelocityY(-speed);
             }
 
             @Override
@@ -696,8 +803,15 @@ public class Main extends GameApplication {
 
         input.addAction(new UserAction("Move Down") {
             @Override
+            protected void onActionBegin() {
+                isDraggingCamera = false;
+                FXGL.getGameScene().getViewport().bindToEntity(player, FXGL.getAppWidth() / 2.0, FXGL.getAppHeight() / 2.0);
+            }
+
+            @Override
             protected void onAction() {
-                player.getComponent(PhysicsComponent.class).setVelocityY(200);
+                double speed = isShiftHeld() ? 300 : 200;
+                player.getComponent(PhysicsComponent.class).setVelocityY(speed);
             }
 
             @Override
@@ -858,6 +972,42 @@ public class Main extends GameApplication {
                 inventory.selectPrevious();
             toolbarView.updateSelection();
         });
+
+        // 8. CAMERA ROAMING (Middle / Right Click Drag)
+        input.addEventHandler(MouseEvent.MOUSE_PRESSED, e -> {
+            if (e.getButton() == MouseButton.SECONDARY || e.getButton() == MouseButton.MIDDLE) {
+                FXGL.getGameScene().getViewport().unbind();
+                lastMouseX = e.getScreenX();
+                lastMouseY = e.getScreenY();
+                isDraggingCamera = true;
+            }
+        });
+
+        input.addEventHandler(MouseEvent.MOUSE_DRAGGED, e -> {
+            if (isDraggingCamera) {
+                double dx = e.getScreenX() - lastMouseX;
+                double dy = e.getScreenY() - lastMouseY;
+                var viewport = FXGL.getGameScene().getViewport();
+                double targetX = viewport.getX() - dx;
+                double targetY = viewport.getY() - dy;
+                double maxX = currentMapWidth - FXGL.getAppWidth();
+                double maxY = currentMapHeight - FXGL.getAppHeight();
+                if (targetX < 0) targetX = 0;
+                if (targetX > maxX) targetX = maxX;
+                if (targetY < 0) targetY = 0;
+                if (targetY > maxY) targetY = maxY;
+                viewport.setX(targetX);
+                viewport.setY(targetY);
+                lastMouseX = e.getScreenX();
+                lastMouseY = e.getScreenY();
+            }
+        });
+
+        input.addEventHandler(MouseEvent.MOUSE_RELEASED, e -> {
+            if (isDraggingCamera && (e.getButton() == MouseButton.SECONDARY || e.getButton() == MouseButton.MIDDLE)) {
+                isDraggingCamera = false;
+            }
+        });
     }
 
     /** Điều phối sử dụng vật phẩm dựa trên loại đang chọn */
@@ -949,6 +1099,9 @@ public class Main extends GameApplication {
             mapH = Math.max(mapH, maxH);
         }
 
+        currentMapWidth = mapW;
+        currentMapHeight = mapH;
+
         FXGL.getGameScene().getViewport().setBounds(0, 0, (int) mapW, (int) mapH);
         FXGL.getGameScene().getViewport().bindToEntity(player, FXGL.getAppWidth() / 2.0, FXGL.getAppHeight() / 2.0);
         FXGL.getGameScene().getViewport().setLazy(true);
@@ -997,7 +1150,7 @@ public class Main extends GameApplication {
         FXGL.getGameWorld().getEntitiesByComponent(CropComponent.class).forEach(e -> {
             CropComponent cc = e.getComponentOptional(CropComponent.class).orElse(null);
             if (cc != null) {
-                cc.setStage(3); // Max stage
+                cc.setStage(Project1Game.config.CropData.STAGE_RIPE);
             }
         });
 
@@ -1021,6 +1174,16 @@ public class Main extends GameApplication {
         FXGL.spawn("BushMonster", targetBush.getX() + targetBush.getWidth()/2 - 16, targetBush.getY() + targetBush.getHeight()/2 - 16);
         FXGL.getNotificationService().pushNotification("Admin: Đã spawn một quái vật từ bụi cây!");
         System.out.println("Admin spawned BushMonster at " + targetBush.getPosition());
+    }
+
+    public static boolean isShiftHeld() {
+        try {
+            Input input = FXGL.getInput();
+            java.lang.reflect.Method method = input.getClass().getMethod("isHeldKey", KeyCode.class);
+            return (boolean) method.invoke(input, KeyCode.SHIFT);
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     public static boolean isDayTime() {

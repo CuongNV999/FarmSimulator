@@ -251,10 +251,16 @@ public class AdminView extends VBox {
         itemGrid.setStyle("-fx-background-color: rgba(20, 20, 30, 0.6); -fx-background-radius: 10;");
 
         List<ItemType> items = Arrays.asList(
-                ItemType.WHEAT_SEED, ItemType.CORN_SEED, ItemType.RADISH_SEED,
-                ItemType.CABBAGE_SEED, ItemType.LETTUCE_SEED, ItemType.TOMATO_SEED,
-                ItemType.WHEAT, ItemType.CORN, ItemType.RADISH,
-                ItemType.CABBAGE, ItemType.LETTUCE, ItemType.TOMATO,
+                ItemType.WHEAT_SEED, ItemType.RADISH_SEED,
+                ItemType.CABBAGE_SEED,
+                ItemType.GRAPE_SEED, ItemType.CUCUMBER_SEED, ItemType.PEPPER_SEED,
+                ItemType.CAULIFLOWER_SEED, ItemType.BEAN_SEED, ItemType.PINEAPPLE_SEED,
+                ItemType.SUNFLOWER_SEED, ItemType.COCONUT_SEED, ItemType.APPLE_SEED,
+                ItemType.WHEAT, ItemType.RADISH,
+                ItemType.CABBAGE,
+                ItemType.GRAPE, ItemType.CUCUMBER, ItemType.PEPPER,
+                ItemType.CAULIFLOWER, ItemType.BEAN, ItemType.PINEAPPLE,
+                ItemType.SUNFLOWER, ItemType.COCONUT, ItemType.APPLE,
                 ItemType.BREAD_SLICE, ItemType.BAGUETTE, ItemType.BREAD_LOAF, ItemType.BREAD_BUN,
                 ItemType.CROISSANT, ItemType.PRETZEL, ItemType.DONUT, ItemType.PANCAKE,
                 ItemType.COOKED_DRUMSTICK, ItemType.COOKED_CHICKEN,

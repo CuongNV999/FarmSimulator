@@ -17,27 +17,37 @@ public enum ItemType implements Usable {
     HOE("Cuốc", "Crops/soil_1.png", null, 0, 0, new HoeAction()),
     WATERING_CAN("Bình tưới", "Crops/soil_2.png", null, 0, 0, new WateringCanAction()),
 
-    // Hạt giống
-    WHEAT_SEED("Hạt lúa mì", "Crops/rice_1.png", "Wheat", 10, 5, new PlantCropAction()),
-    RADISH_SEED("Hạt củ cải", "Crops/rice_1.png", "Radish", 40, 20, new PlantCropAction()),
-    CABBAGE_SEED("Hạt bắp cải", "Crops/rice_1.png", "Cabbage", 60, 30, new PlantCropAction()),
-    LETTUCE_SEED("Hạt xà lách", "Crops/rice_1.png", "Lettuce", 15, 7, new PlantCropAction()),
-    TOMATO_SEED("Hạt cà chua", "Crops/rice_1.png", "Tomato", 50, 25, new PlantCropAction()),
-    CORN_SEED("Hạt ngô", "Crops/rice_1.png", "Corn", 80, 40, new PlantCropAction()),
+    // Hạt giống (6 cây gốc)
+    WHEAT_SEED   ("Hạt lúa mì",  "Crops/OldCrops/wheat/seed.png",   "Wheat",   10,  5, new PlantCropAction()),
+    RADISH_SEED  ("Hạt củ cải",  "Crops/OldCrops/radish/seed.png",  "Radish",  40, 20, new PlantCropAction()),
+    CABBAGE_SEED ("Hạt bắp cải", "Crops/OldCrops/cabbage/seed.png", "Cabbage", 60, 30, new PlantCropAction()),
 
-    // Nông sản
-    WHEAT("Lúa mì", "Crops/rice_3.png", null, 0, 25, (player, target) -> {
-    }),
-    RADISH("Củ cải", "Crops/rice_3.png", null, 0, 90, (player, target) -> {
-    }),
-    CABBAGE("Bắp cải", "Crops/rice_3.png", null, 0, 150, (player, target) -> {
-    }),
-    LETTUCE("Xà lách", "Crops/rice_3.png", null, 0, 35, (player, target) -> {
-    }),
-    TOMATO("Cà chua", "Crops/rice_3.png", null, 0, 60, (player, target) -> {
-    }),
-    CORN("Ngô", "Crops/rice_3.png", null, 0, 110, (player, target) -> {
-    }),
+    // Hạt giống (9 cây mới)
+    GRAPE_SEED      ("Hạt nho",       "Crops/NewCrops/grape/seed.png",       "Grape",       50, 25, new PlantCropAction()),
+    CUCUMBER_SEED   ("Hạt dưa chuột", "Crops/NewCrops/cucumber/seed.png",    "Cucumber",    12,  6, new PlantCropAction()),
+    PEPPER_SEED     ("Hạt ớt",        "Crops/NewCrops/pepper/seed.png",      "Pepper",      20, 10, new PlantCropAction()),
+    CAULIFLOWER_SEED("Hạt súp lơ",    "Crops/NewCrops/cauliflower/seed.png", "Cauliflower", 30, 15, new PlantCropAction()),
+    BEAN_SEED       ("Hạt đỗ",        "Crops/NewCrops/bean/seed.png",        "Bean",         8,  4, new PlantCropAction()),
+    PINEAPPLE_SEED  ("Hạt dứa",       "Crops/NewCrops/pineapple/seed.png",   "Pineapple",   60, 30, new PlantCropAction()),
+    SUNFLOWER_SEED  ("Hạt hướng dương","Crops/NewCrops/sunflower/seed.png",  "Sunflower",   25, 12, new PlantCropAction()),
+    COCONUT_SEED    ("Hạt dừa",       "Crops/NewCrops/coconut/seed.png",     "Coconut",     80, 40, new PlantCropAction()),
+    APPLE_SEED      ("Hạt táo",       "Crops/NewCrops/apple/seed.png",       "Apple",       45, 22, new PlantCropAction()),
+
+    // Nông sản (6 cây gốc)
+    WHEAT   ("Lúa mì",  "Crops/OldCrops/wheat/harvest.png",   null, 0,  25, (player, target) -> {}),
+    RADISH  ("Củ cải",  "Crops/OldCrops/radish/harvest.png",  null, 0,  90, (player, target) -> {}),
+    CABBAGE ("Bắp cải", "Crops/OldCrops/cabbage/harvest.png", null, 0, 150, (player, target) -> {}),
+
+    // Nông sản (9 cây mới)
+    GRAPE      ("Nho",        "Crops/NewCrops/grape/harvest.png",       null, 0,  60, (player, target) -> {}),
+    CUCUMBER   ("Dưa chuột",  "Crops/NewCrops/cucumber/harvest.png",    null, 0,  18, (player, target) -> {}),
+    PEPPER     ("Ớt",         "Crops/NewCrops/pepper/harvest.png",      null, 0,  30, (player, target) -> {}),
+    CAULIFLOWER("Súp lơ",     "Crops/NewCrops/cauliflower/harvest.png", null, 0,  55, (player, target) -> {}),
+    BEAN       ("Đỗ",         "Crops/NewCrops/bean/harvest.png",        null, 0,  12, (player, target) -> {}),
+    PINEAPPLE  ("Dứa",        "Crops/NewCrops/pineapple/harvest.png",   null, 0,  80, (player, target) -> {}),
+    SUNFLOWER  ("Hướng dương","Crops/NewCrops/sunflower/harvest.png",   null, 0,  45, (player, target) -> {}),
+    COCONUT    ("Dừa",        "Crops/NewCrops/coconut/harvest.png",     null, 0, 100, (player, target) -> {}),
+    APPLE      ("Táo",        "Crops/NewCrops/apple/harvest.png",       null, 0,  70, (player, target) -> {}),
 
     // Bánh mì (Thực phẩm)
     BREAD_SLICE("Bánh mì lát", "food:20:1", null, 10, 4, new EatAction(8, 1)),

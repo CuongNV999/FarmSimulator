@@ -49,19 +49,21 @@ public class FarmingSystem {
         double selX = selector.getX();
         double selY = selector.getY();
 
-        boolean inField = FXGL.getGameWorld().getEntitiesByType(EntityType.FIELD).stream()
-                .anyMatch(f -> f.getX() <= selX && selX < f.getX() + f.getWidth()
-                        && f.getY() <= selY && selY < f.getY() + f.getHeight());
-
-        if (inField) {
-            boolean hasSoil = FXGL.getGameWorld().getEntitiesAt(new Point2D(selX + 16, selY + 16)).stream()
-                    .anyMatch(e -> e.isType(EntityType.SOIL));
-
-            if (!hasSoil) {
-                FXGL.spawn("Soil", selX, selY);
-                FXGL.getGameWorld().getEntitiesByType(EntityType.SOIL)
-                        .forEach(s -> s.getComponent(SoilComponent.class).updateTexture());
+        // O(1) single-pass lookup of entities at the cuock coordinates
+        java.util.List<Entity> localEntities = FXGL.getGameWorld().getEntitiesAt(new Point2D(selX + 16, selY + 16));
+        boolean inField = false;
+        boolean hasSoil = false;
+        for (Entity e : localEntities) {
+            if (e.isType(EntityType.FIELD)) {
+                inField = true;
+            } else if (e.isType(EntityType.SOIL)) {
+                hasSoil = true;
             }
+        }
+
+        if (inField && !hasSoil) {
+            Entity s = FXGL.spawn("Soil", selX, selY);
+            s.getComponent(SoilComponent.class).updateTexture();
         }
     }
 
@@ -94,8 +96,7 @@ public class FarmingSystem {
     /** Logic thu hoạch */
     public void handleHarvest(Entity selector) {
         if (selector.getViewComponent().getOpacity() < 1.0) return;
-        EntityType[] cropTypes = {EntityType.WHEAT, EntityType.RADISH, EntityType.CABBAGE,
-                EntityType.LETTUCE, EntityType.TOMATO, EntityType.CORN};
+        EntityType[] cropTypes = {EntityType.WHEAT, EntityType.RADISH, EntityType.CABBAGE};
 
         for (EntityType t : cropTypes) {
             FXGL.getGameWorld().getEntitiesByType(t).stream()

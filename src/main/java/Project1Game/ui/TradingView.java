@@ -54,16 +54,20 @@ public class TradingView extends VBox {
     // Shopping Cart list
     private final List<CartItem> cartItems = new ArrayList<>();
 
-    // Danh sách các vật phẩm có thể mua (hạt giống)
     private final List<ItemType> buyableItems = Arrays.asList(
-            ItemType.WHEAT_SEED, ItemType.CORN_SEED, ItemType.RADISH_SEED,
-            ItemType.CABBAGE_SEED, ItemType.LETTUCE_SEED, ItemType.TOMATO_SEED
+            ItemType.WHEAT_SEED, ItemType.RADISH_SEED,
+            ItemType.CABBAGE_SEED,
+            ItemType.GRAPE_SEED, ItemType.CUCUMBER_SEED, ItemType.PEPPER_SEED,
+            ItemType.CAULIFLOWER_SEED, ItemType.BEAN_SEED, ItemType.PINEAPPLE_SEED,
+            ItemType.SUNFLOWER_SEED, ItemType.COCONUT_SEED, ItemType.APPLE_SEED
     );
-
-    // Danh sách các vật phẩm có thể bán (nông sản)
+ 
     private final List<ItemType> sellableItems = Arrays.asList(
-            ItemType.WHEAT, ItemType.CORN, ItemType.RADISH,
-            ItemType.CABBAGE, ItemType.LETTUCE, ItemType.TOMATO
+            ItemType.WHEAT, ItemType.RADISH,
+            ItemType.CABBAGE,
+            ItemType.GRAPE, ItemType.CUCUMBER, ItemType.PEPPER,
+            ItemType.CAULIFLOWER, ItemType.BEAN, ItemType.PINEAPPLE,
+            ItemType.SUNFLOWER, ItemType.COCONUT, ItemType.APPLE
     );
 
     // Danh sách các vật phẩm có thể mua (thực phẩm ăn được)

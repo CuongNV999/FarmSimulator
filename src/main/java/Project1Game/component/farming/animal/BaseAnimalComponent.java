@@ -63,6 +63,7 @@ public class BaseAnimalComponent extends Component implements Interactable {
     private double fleeCheckTimer = 0.0;
     
     private Point2D homePosition = null;
+    private Point2D initialSpawnPos = null;
     
     protected PhysicsComponent physics;
 
@@ -218,6 +219,7 @@ public class BaseAnimalComponent extends Component implements Interactable {
         physics = entity.getComponent(PhysicsComponent.class);
         initAnimation();
         homePosition = entity.getPosition();
+        initialSpawnPos = entity.getPosition();
 
         // Listen for day passage
         dayHandler = e -> growOneDay();
@@ -262,9 +264,8 @@ public class BaseAnimalComponent extends Component implements Interactable {
             return true;
         }
 
-        if (homePosition != null) {
-            Point2D nextPos = new Point2D(nextX, nextY);
-            if (nextPos.distance(homePosition) > 300.0) {
+        if (initialSpawnPos != null) {
+            if (Math.abs(nextX - initialSpawnPos.getX()) > 300.0 || Math.abs(nextY - initialSpawnPos.getY()) > 300.0) {
                 return true;
             }
         }
@@ -384,8 +385,8 @@ public class BaseAnimalComponent extends Component implements Interactable {
 
         List<Entity> monsters = FXGL.getGameWorld().getEntitiesByType(EntityType.MONSTER);
         for (Entity m : monsters) {
-            Project1Game.component.farming.monster.BushMonsterComponent bmc = 
-                    m.getComponentOptional(Project1Game.component.farming.monster.BushMonsterComponent.class).orElse(null);
+            Project1Game.component.farming.monster.BaseMonsterComponent bmc = 
+                    m.getComponentOptional(Project1Game.component.farming.monster.BaseMonsterComponent.class).orElse(null);
             if (bmc != null && !bmc.isReturning()) {
                 double dist = entity.distance(m);
                 if (dist < 250.0) {

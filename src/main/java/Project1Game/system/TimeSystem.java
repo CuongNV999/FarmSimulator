@@ -56,15 +56,26 @@ public class TimeSystem {
 
     public void onUpdate(double tpf) {
         // Tốc độ dòng chảy thời gian: 10 phút game bằng 7 giây thực tế (giống Stardew Valley)
-        gameTime += tpf * (10.0 / 7.0) * timeSpeedMultiplier;
-        if (gameTime >= 1440) {
-            gameTime = 0;
-            dayCount++; // Bước sang ngày mới
+        double deltaMinutes = tpf * (10.0 / 7.0) * timeSpeedMultiplier;
+        
+        int oldHour = hour;
+
+        // Progressive step loop: advance in maximum 1.0 minute steps to avoid skipping boundary triggers
+        double remaining = deltaMinutes;
+        while (remaining > 0) {
+            double step = Math.min(remaining, 1.0);
+            gameTime += step;
+            remaining -= step;
+
+            if (gameTime >= 1440) {
+                gameTime -= 1440;
+                dayCount++; // Bước sang ngày mới
+                FXGL.getEventBus().fireEvent(new DayNightEvent(DayNightEvent.SET_DAY));
+            }
         }
 
         WeatherSystem.getInstance().updateTime(gameTime);
 
-        int oldHour = hour;
         hour = (int) (gameTime / 60);
         minute = (int) (gameTime % 60);
 
