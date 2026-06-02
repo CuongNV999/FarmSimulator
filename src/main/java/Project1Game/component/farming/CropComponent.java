@@ -32,7 +32,8 @@ public class CropComponent extends Component {
     @Override
     public void onAdded() {
         updateView();
-        // Sử dụng data.growthTime thay vì data.growthInterval
+        
+        // Khởi chạy timer lớn lên theo thời gian thực của cây
         growTimer = FXGL.getGameTimer().runAtInterval(this::grow, data.growthTime);
 
         // Đảm bảo ban đầu kiểm tra đúng trạng thái ngày đêm
@@ -53,9 +54,12 @@ public class CropComponent extends Component {
         FXGL.getEventBus().addEventHandler(DayNightEvent.SET_NIGHT, nightHandler);
         FXGL.getEventBus().addEventHandler(DayNightEvent.SET_DAY, dayHandler);
     }
+
     @Override
     public void onRemoved() {
-        if (growTimer != null) growTimer.expire();
+        if (growTimer != null) {
+            growTimer.expire();
+        }
         if (nightHandler != null) {
             FXGL.getEventBus().removeEventHandler(DayNightEvent.SET_NIGHT, nightHandler);
         }
@@ -81,9 +85,10 @@ public class CropComponent extends Component {
             return;
         }
 
-        // Drought slows down growth by 50%
+        // Hạn hán làm giảm 50% tốc độ lớn
         if (Project1Game.system.WeatherSystem.getCurrentWeather() == Project1Game.system.WeatherSystem.Weather.DROUGHT) {
             if (Math.random() < 0.5) {
+                System.out.println(data.type + " không phát triển nhịp này do hạn hán.");
                 return;
             }
         }
@@ -95,16 +100,23 @@ public class CropComponent extends Component {
                     .ifPresent(soil -> {
                         SoilComponent sc = soil.getComponent(SoilComponent.class);
                         boolean isRaining = (Project1Game.system.WeatherSystem.getCurrentWeather() == Project1Game.system.WeatherSystem.Weather.RAINY);
-                        if (sc.isWet()) {
+                        // Cây chỉ lớn khi đất ẩm (đất được tưới nước hoặc trời đang mưa)
+                        if (sc.isWet() || isRaining) {
                             stage++;
                             updateView();
+                            System.out.println(data.type + " đã lớn lên giai đoạn " + stage);
+
+                            // Làm khô đất sau khi lớn lên 1 giai đoạn (trừ khi trời đang mưa)
                             if (!isRaining) {
                                 sc.setWet(false);
                             }
+                        } else {
+                            System.out.println(data.type + " không lớn được do đất khô.");
                         }
                     });
         }
     }
+
     public int getStage() { return stage; }
     public void setStage(int stage) {
         this.stage = stage;
@@ -114,7 +126,6 @@ public class CropComponent extends Component {
         return stage == MAX_STAGE;
     }
 
-    // Phương thức mới để truy cập CropData
     public CropData getData() {
         return data;
     }

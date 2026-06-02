@@ -5,10 +5,15 @@ import Project1Game.model.item.HoeAction;
 import Project1Game.model.item.WateringCanAction;
 import Project1Game.model.item.PlantCropAction;
 import Project1Game.model.item.PlaceAnimalAction;
+import Project1Game.model.item.EatAction;
 import com.almasb.fxgl.entity.Entity;
+import com.almasb.fxgl.dsl.FXGL;
+import javafx.scene.image.Image;
+import javafx.scene.image.WritableImage;
 
 public enum ItemType implements Usable {
-    // Định nghĩa: Tên hiển thị, Icon, Tên Entity Spawn, Giá mua, Giá bán, Hành động sử dụng
+    // Định nghĩa: Tên hiển thị, Icon, Tên Entity Spawn, Giá mua, Giá bán, Hành động
+    // sử dụng
     HOE("Cuốc", "Crops/soil_1.png", null, 0, 0, new HoeAction()),
     WATERING_CAN("Bình tưới", "Crops/soil_2.png", null, 0, 0, new WateringCanAction()),
 
@@ -16,17 +21,42 @@ public enum ItemType implements Usable {
     WHEAT_SEED("Hạt lúa mì", "Crops/rice_1.png", "Wheat", 10, 5, new PlantCropAction()),
     RADISH_SEED("Hạt củ cải", "Crops/rice_1.png", "Radish", 40, 20, new PlantCropAction()),
     CABBAGE_SEED("Hạt bắp cải", "Crops/rice_1.png", "Cabbage", 60, 30, new PlantCropAction()),
-    LETTUCE_SEED("Hạt xà lách", "Crops/rice_1.png", "Lettuce", 5, 2, new PlantCropAction()),
-    TOMATO_SEED("Hạt cà chua", "Crops/rice_1.png", "Tomato", 25, 12, new PlantCropAction()),
-    CORN_SEED("Hạt ngô", "Crops/rice_1.png", "Corn", 15, 7, new PlantCropAction()),
+    LETTUCE_SEED("Hạt xà lách", "Crops/rice_1.png", "Lettuce", 15, 7, new PlantCropAction()),
+    TOMATO_SEED("Hạt cà chua", "Crops/rice_1.png", "Tomato", 50, 25, new PlantCropAction()),
+    CORN_SEED("Hạt ngô", "Crops/rice_1.png", "Corn", 80, 40, new PlantCropAction()),
 
     // Nông sản
-    WHEAT("Lúa mì", "Crops/rice_3.png", null, 0, 10, (player, target) -> {}),
-    RADISH("Củ cải", "Crops/rice_3.png", null, 0, 45, (player, target) -> {}),
-    CABBAGE("Bắp cải", "Crops/rice_3.png", null, 0, 50, (player, target) -> {}),
-    LETTUCE("Xà lách", "Crops/rice_3.png", null, 0, 8, (player, target) -> {}),
-    TOMATO("Cà chua", "Crops/rice_3.png", null, 0, 20, (player, target) -> {}),
-    CORN("Ngô", "Crops/rice_3.png", null, 0, 15, (player, target) -> {}),
+    WHEAT("Lúa mì", "Crops/rice_3.png", null, 0, 25, (player, target) -> {
+    }),
+    RADISH("Củ cải", "Crops/rice_3.png", null, 0, 90, (player, target) -> {
+    }),
+    CABBAGE("Bắp cải", "Crops/rice_3.png", null, 0, 150, (player, target) -> {
+    }),
+    LETTUCE("Xà lách", "Crops/rice_3.png", null, 0, 35, (player, target) -> {
+    }),
+    TOMATO("Cà chua", "Crops/rice_3.png", null, 0, 60, (player, target) -> {
+    }),
+    CORN("Ngô", "Crops/rice_3.png", null, 0, 110, (player, target) -> {
+    }),
+
+    // Bánh mì (Thực phẩm)
+    BREAD_SLICE("Bánh mì lát", "food:20:1", null, 10, 4, new EatAction(8, 1)),
+    BAGUETTE("Bánh mì dài", "food:20:3", null, 25, 12, new EatAction(20, 2)),
+    BREAD_LOAF("Ổ bánh mì", "food:20:2", null, 40, 20, new EatAction(35, 4)),
+    BREAD_BUN("Bánh mì tròn", "food:20:5", null, 15, 7, new EatAction(12, 1)),
+    CROISSANT("Bánh sừng bò", "food:20:7", null, 20, 9, new EatAction(16, 2)),
+    PRETZEL("Bánh Pretzel", "food:20:11", null, 18, 8, new EatAction(14, 2)),
+    DONUT("Bánh Donut", "food:20:17", null, 12, 5, new EatAction(10, 1)),
+    PANCAKE("Bánh Pancake", "food:20:18", null, 30, 15, new EatAction(25, 3)),
+
+    // Thịt (Thực phẩm)
+    COOKED_DRUMSTICK("Đùi gà chín", "food:25:1", null, 40, 22, new EatAction(25, 3)),
+
+    COOKED_CHICKEN("Thịt gà chín", "food:25:2", null, 90, 50, new EatAction(45, 6)),
+
+    COOKED_MEAT("Thịt bò chín", "food:25:5", null, 120, 75, new EatAction(60, 8)),
+
+    SAUSAGE("Xúc xích", "food:25:6", null, 45, 25, new EatAction(30, 4)),
 
     // Baby Animals (Buyable)
     CHICK("Gà con", "Animal/Chick_animation_with_shadow.png", "Chick", 50, 0, new PlaceAnimalAction("Chick")),
@@ -36,17 +66,26 @@ public enum ItemType implements Usable {
     TURKEY("Gà tây", "Animal/Turkey_animation_with_shadow.png", "Turkey", 100, 220, new PlaceAnimalAction("Turkey")),
 
     // Mature Animals (Harvested and Sellable)
-    ROOSTER("Gà trống", "Animal/Rooster_animation_with_shadow.png", null, 0, 120, (player, target) -> {}),
-    BULL("Bò đực", "Animal/Bull_animation_with_shadow.png", null, 0, 650, (player, target) -> {}),
-    SHEEP("Cừu trưởng thành", "Animal/Sheep_animation_with_shadow.png", null, 0, 350, (player, target) -> {}),
-    PIG("Heo trưởng thành", "Animal/Piglet_animation_with_shadow.png", null, 0, 480, (player, target) -> {}),
+    ROOSTER("Gà trống", "Animal/Rooster_animation_with_shadow.png", null, 0, 120, (player, target) -> {
+    }),
+    BULL("Bò đực", "Animal/Bull_animation_with_shadow.png", null, 0, 650, (player, target) -> {
+    }),
+    SHEEP("Cừu trưởng thành", "Animal/Sheep_animation_with_shadow.png", null, 0, 350, (player, target) -> {
+    }),
+    PIG("Heo trưởng thành", "Animal/Piglet_animation_with_shadow.png", null, 0, 480, (player, target) -> {
+    }),
 
     // Các ô trống (có thể bỏ qua giá mua/bán)
-    EMPTY_5("Ô trống", "", null, 0, 0, (player, target) -> {}),
-    EMPTY_6("Ô trống", "", null, 0, 0, (player, target) -> {}),
-    EMPTY_7("Ô trống", "", null, 0, 0, (player, target) -> {}),
-    EMPTY_8("Ô trống", "", null, 0, 0, (player, target) -> {}),
-    EMPTY_9("Ô trống", "", null, 0, 0, (player, target) -> {});
+    EMPTY_5("Ô trống", "", null, 0, 0, (player, target) -> {
+    }),
+    EMPTY_6("Ô trống", "", null, 0, 0, (player, target) -> {
+    }),
+    EMPTY_7("Ô trống", "", null, 0, 0, (player, target) -> {
+    }),
+    EMPTY_8("Ô trống", "", null, 0, 0, (player, target) -> {
+    }),
+    EMPTY_9("Ô trống", "", null, 0, 0, (player, target) -> {
+    });
 
     private final String displayName;
     private final String iconName;
@@ -64,13 +103,45 @@ public enum ItemType implements Usable {
         this.action = action;
     }
 
-    public String getDisplayName() { return displayName; }
-    public String getIconName() { return iconName; }
-    public String getSpawnName() { return spawnName; }
-    public int getBuyPrice() { return buyPrice; }
-    public int getSellPrice() { return sellPrice; }
+    public String getDisplayName() {
+        return displayName;
+    }
 
-    public boolean isSeed() { return spawnName != null && name().endsWith("_SEED"); }
+    public String getIconName() {
+        return iconName;
+    }
+
+    public String getSpawnName() {
+        return spawnName;
+    }
+
+    public int getBuyPrice() {
+        return buyPrice;
+    }
+
+    public int getSellPrice() {
+        return sellPrice;
+    }
+
+    public boolean isSeed() {
+        return spawnName != null && name().endsWith("_SEED");
+    }
+
+    public static Image extractFoodImage(String iconName) {
+        try {
+            String[] parts = iconName.split(":");
+            int rowIdx = Integer.parseInt(parts[1]);
+            int colIdx = Integer.parseInt(parts[2]);
+            Image fullImage = FXGL.image("Crops/food.png");
+            int cellSize = 32;
+            int x = colIdx * cellSize;
+            int y = rowIdx * cellSize;
+            return new WritableImage(fullImage.getPixelReader(), x, y, cellSize, cellSize);
+        } catch (Exception e) {
+            System.err.println("Error extracting food image for iconName " + iconName + ": " + e.getMessage());
+            return FXGL.image("empty.png");
+        }
+    }
 
     @Override
     public void use(Entity player, Entity target) {

@@ -118,6 +118,12 @@ public class NPCBehaviorComponent extends Component implements Interactable {
             return;
         }
 
+        // Cập nhật trạng thái di chuyển cho animation
+        if (physics != null && animation != null) {
+            boolean moving = Math.abs(physics.getVelocityX()) > 1.0 || Math.abs(physics.getVelocityY()) > 1.0;
+            animation.setMoving(moving);
+        }
+
         if (isMovingToHouse && target != null) {
             totalHomeTimer += tpf;
             // Nếu mất quá 25 giây mà chưa về được nhà (do kẹt quá sâu), tự động dịch chuyển

@@ -55,8 +55,8 @@ public class TimeSystem {
     }
 
     public void onUpdate(double tpf) {
-        // Tốc độ dòng chảy thời gian (tpf * 10 * timeSpeedMultiplier)
-        gameTime += tpf * 10 * timeSpeedMultiplier;
+        // Tốc độ dòng chảy thời gian: 10 phút game bằng 7 giây thực tế (giống Stardew Valley)
+        gameTime += tpf * (10.0 / 7.0) * timeSpeedMultiplier;
         if (gameTime >= 1440) {
             gameTime = 0;
             dayCount++; // Bước sang ngày mới

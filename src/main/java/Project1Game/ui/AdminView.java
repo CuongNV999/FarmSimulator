@@ -246,6 +246,10 @@ public class AdminView extends VBox {
                 ItemType.CABBAGE_SEED, ItemType.LETTUCE_SEED, ItemType.TOMATO_SEED,
                 ItemType.WHEAT, ItemType.CORN, ItemType.RADISH,
                 ItemType.CABBAGE, ItemType.LETTUCE, ItemType.TOMATO,
+                ItemType.BREAD_SLICE, ItemType.BAGUETTE, ItemType.BREAD_LOAF, ItemType.BREAD_BUN,
+                ItemType.CROISSANT, ItemType.PRETZEL, ItemType.DONUT, ItemType.PANCAKE,
+                ItemType.COOKED_DRUMSTICK, ItemType.COOKED_CHICKEN,
+                ItemType.COOKED_MEAT, ItemType.SAUSAGE,
                 ItemType.CHICK, ItemType.CALF, ItemType.LAMB, ItemType.PIGLET, ItemType.TURKEY,
                 ItemType.ROOSTER, ItemType.BULL, ItemType.SHEEP, ItemType.PIG
         );
@@ -279,7 +283,9 @@ public class AdminView extends VBox {
 
         // Icon
         Texture icon;
-        if (type.getIconName() != null && type.getIconName().startsWith("Animal/")) {
+        if (type.getIconName() != null && type.getIconName().startsWith("food:")) {
+            icon = new Texture(ItemType.extractFoodImage(type.getIconName()));
+        } else if (type.getIconName() != null && type.getIconName().startsWith("Animal/")) {
             icon = new Texture(Project1Game.component.farming.animal.BaseAnimalComponent.extractFaceDownIdleImage(type.getIconName()));
         } else if (type.getIconName() != null && !type.getIconName().isEmpty()) {
             icon = FXGL.texture(type.getIconName());

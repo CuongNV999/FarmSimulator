@@ -144,7 +144,53 @@ public abstract class BaseAnimalComponent extends Component implements Interacta
         // Configure solid bounding box dynamically
         if (entity != null && entity.getBoundingBoxComponent() != null) {
             entity.getBoundingBoxComponent().clearHitBoxes();
-            entity.getBoundingBoxComponent().addHitBox(new HitBox("ANIMAL_BODY", BoundingShape.box(frameW, frameH)));
+            HitBox hitbox;
+            switch (type) {
+                case COW:
+                    if (isMature) {
+                        // Bò trưởng thành (Bull) - 64x64 frame
+                        hitbox = new HitBox("ANIMAL_BODY", new Point2D(16, 16), BoundingShape.box(32, 32));
+                    } else {
+                        // Con bê (Calf) - 64x64 frame
+                        hitbox = new HitBox("ANIMAL_BODY", new Point2D(22, 22), BoundingShape.box(20, 20));
+                    }
+                    break;
+                case CHICKEN:
+                    if (isMature) {
+                        // Gà trưởng thành (Rooster) - 32x32 frame
+                        hitbox = new HitBox("ANIMAL_BODY", new Point2D(6, 6), BoundingShape.box(20, 20));
+                    } else {
+                        // Gà con (Chick) - 16x16 frame
+                        hitbox = new HitBox("ANIMAL_BODY", new Point2D(2, 2), BoundingShape.box(12, 12));
+                    }
+                    break;
+                case SHEEP:
+                    if (isMature) {
+                        // Cừu trưởng thành - 32x32 frame
+                        hitbox = new HitBox("ANIMAL_BODY", new Point2D(4, 4), BoundingShape.box(24, 24));
+                    } else {
+                        // Cừu non - 32x32 frame
+                        hitbox = new HitBox("ANIMAL_BODY", new Point2D(8, 8), BoundingShape.box(16, 16));
+                    }
+                    break;
+                case PIG:
+                    if (isMature) {
+                        // Heo trưởng thành - 32x32 frame
+                        hitbox = new HitBox("ANIMAL_BODY", new Point2D(4, 4), BoundingShape.box(24, 24));
+                    } else {
+                        // Heo con - 32x32 frame
+                        hitbox = new HitBox("ANIMAL_BODY", new Point2D(8, 8), BoundingShape.box(16, 16));
+                    }
+                    break;
+                case TURKEY:
+                    // Gà tây - 32x32 frame
+                    hitbox = new HitBox("ANIMAL_BODY", new Point2D(6, 6), BoundingShape.box(20, 20));
+                    break;
+                default:
+                    hitbox = new HitBox("ANIMAL_BODY", BoundingShape.box(frameW, frameH));
+                    break;
+            }
+            entity.getBoundingBoxComponent().addHitBox(hitbox);
         }
     }
 

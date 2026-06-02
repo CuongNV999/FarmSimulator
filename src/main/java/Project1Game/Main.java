@@ -47,18 +47,35 @@ import java.util.Map;
 
 public class Main extends GameApplication {
     private static Main instance;
+
     public static Main getInstance() {
         return instance;
     }
+
     public TimeSystem getTimeSystem() {
         return timeSystem;
     }
-    public Inventory getInventory() { return inventory; }
-    public ToolbarView getToolbarView() { return toolbarView; }
-    public DialogView getDialogView() { return dialogView; }
-    public TradingView getTradingView() { return tradingView; }
-    public StatusBarsView getStatusBarsView() { return statusBarsView; }
-    
+
+    public Inventory getInventory() {
+        return inventory;
+    }
+
+    public ToolbarView getToolbarView() {
+        return toolbarView;
+    }
+
+    public DialogView getDialogView() {
+        return dialogView;
+    }
+
+    public TradingView getTradingView() {
+        return tradingView;
+    }
+
+    public StatusBarsView getStatusBarsView() {
+        return statusBarsView;
+    }
+
     public void registerWeatherText(Text weatherText) {
         if (hudContainer != null && weatherText != null) {
             if (!hudContainer.getChildren().contains(weatherText)) {
@@ -100,10 +117,12 @@ public class Main extends GameApplication {
         lastHungerDrainTime = -1;
         lastStarveHPTime = -1;
 
-        if (dialogView.isOpen()) dialogView.hide();
+        if (dialogView.isOpen())
+            dialogView.hide();
         updateLevel("Main_house.tmx", 550, 350);
 
-        dialogView.setDialog("Thông báo", "Bạn đã bị kiệt sức và ngất xỉu!", "Bác nông dân đã đưa bạn về nhà.", "Phạt viện phí: 100 G. Sức khỏe phục hồi 50%.");
+        dialogView.setDialog("Thông báo", "Bạn đã bị kiệt sức và ngất xỉu!", "Bác nông dân đã đưa bạn về nhà.",
+                "Phạt viện phí: 100 G. Sức khỏe phục hồi 50%.");
         dialogView.show();
     }
 
@@ -123,7 +142,8 @@ public class Main extends GameApplication {
             System.out.println("Using cached outdoor position: " + tx + ", " + ty);
         }
 
-        if (dialogView.isOpen()) dialogView.hide();
+        if (dialogView.isOpen())
+            dialogView.hide();
 
         nearbyDoor = null;
         updateLevel(mapFile, tx, ty);
@@ -135,7 +155,6 @@ public class Main extends GameApplication {
         if (timeSystem != null) {
             timeSystem.advanceToNextDay();
             statusBarsView.setHealth(statusBarsView.getMaxHealth());
-            statusBarsView.setHunger(statusBarsView.getMaxHunger());
             dialogView.setDialog("Thông báo", "Bạn đã ngủ một giấc thật ngon.", "Sức khỏe đã được hồi phục!");
             dialogView.show();
             System.out.println("Nhân vật đã đi ngủ.");
@@ -191,7 +210,7 @@ public class Main extends GameApplication {
         gameSettings.setHeight(720);
         gameSettings.setTitle("Java Farming Professional");
         gameSettings.setVersion("2.5");
-        gameSettings.setDeveloperMenuEnabled(true);     
+        gameSettings.setDeveloperMenuEnabled(true);
         gameSettings.setMainMenuEnabled(true);
         gameSettings.setSceneFactory(new FarmSceneFactory());
     }
@@ -202,10 +221,14 @@ public class Main extends GameApplication {
         // Sửa đổi: Truyền trực tiếp nearbyNPC và dialogView
         PhysicsSystem.init(new PhysicsSystem.NPCListener() {
             @Override
-            public void onNPCNear(Entity npc) { nearbyNPC = npc; }
+            public void onNPCNear(Entity npc) {
+                nearbyNPC = npc;
+            }
 
             @Override
-            public void onNPCAway() { nearbyNPC = null; }
+            public void onNPCAway() {
+                nearbyNPC = null;
+            }
         }, dialogView);
 
         // Thêm CollisionHandler cho DOOR
@@ -227,6 +250,7 @@ public class Main extends GameApplication {
             protected void onCollisionBegin(Entity player, Entity sleep) {
                 nearbySleep = sleep;
             }
+
             @Override
             protected void onCollisionEnd(Entity player, Entity sleep) {
                 nearbySleep = null;
@@ -247,8 +271,8 @@ public class Main extends GameApplication {
         });
 
         // Collision handlers between MONSTER and CROPS
-        EntityType[] cropTypes = {EntityType.WHEAT, EntityType.RADISH, EntityType.CABBAGE,
-                EntityType.LETTUCE, EntityType.TOMATO, EntityType.CORN};
+        EntityType[] cropTypes = { EntityType.WHEAT, EntityType.RADISH, EntityType.CABBAGE,
+                EntityType.LETTUCE, EntityType.TOMATO, EntityType.CORN };
         for (EntityType cropType : cropTypes) {
             FXGL.getPhysicsWorld().addCollisionHandler(new CollisionHandler(EntityType.MONSTER, cropType) {
                 @Override
@@ -282,15 +306,26 @@ public class Main extends GameApplication {
                         int maxDays = 0;
                         if (asd.type != null) {
                             switch (asd.type.toUpperCase()) {
-                                case "CHICKEN": maxDays = 4; break;
-                                case "COW": maxDays = 7; break;
-                                case "SHEEP": maxDays = 5; break;
-                                case "PIG": maxDays = 6; break;
-                                case "TURKEY": maxDays = 3; break;
+                                case "CHICKEN":
+                                    maxDays = 4;
+                                    break;
+                                case "COW":
+                                    maxDays = 7;
+                                    break;
+                                case "SHEEP":
+                                    maxDays = 5;
+                                    break;
+                                case "PIG":
+                                    maxDays = 6;
+                                    break;
+                                case "TURKEY":
+                                    maxDays = 3;
+                                    break;
                             }
                             if (asd.daysGrown < maxDays) {
                                 asd.daysGrown++;
-                                System.out.println("[Main] Inactive animal " + asd.type + " grew to " + asd.daysGrown + "/" + maxDays);
+                                System.out.println("[Main] Inactive animal " + asd.type + " grew to " + asd.daysGrown
+                                        + "/" + maxDays);
                             }
                         }
                     }
@@ -321,7 +356,8 @@ public class Main extends GameApplication {
         dialogView = new DialogView(FXGL.getAppWidth(), FXGL.getAppHeight());
 
         statusBarsView = new StatusBarsView();
-        statusBarsView.setLayoutX(20); statusBarsView.setLayoutY(20);
+        statusBarsView.setLayoutX(20);
+        statusBarsView.setLayoutY(20);
 
         minimap = new MinimapView();
         double minimapHeight = 150;
@@ -333,7 +369,8 @@ public class Main extends GameApplication {
 
         clockText = new Text();
         clockText.setFont(Font.font("Arial", FontWeight.BOLD, 20));
-        clockText.setStroke(Color.BLACK); clockText.setStrokeWidth(0.5);
+        clockText.setStroke(Color.BLACK);
+        clockText.setStrokeWidth(0.5);
 
         // Khởi tạo Text hiển thị tiền
         moneyText = new Text();
@@ -346,14 +383,16 @@ public class Main extends GameApplication {
         hudContainer = new VBox(6);
         hudContainer.setPadding(new Insets(10, 15, 10, 15));
         hudContainer.setPrefWidth(hudContainerWidth);
-        hudContainer.setStyle("-fx-background-color: rgba(0, 0, 0, 0.45); -fx-background-radius: 8; -fx-border-color: rgba(255, 255, 255, 0.15); -fx-border-width: 1; -fx-border-radius: 8;");
+        hudContainer.setStyle(
+                "-fx-background-color: rgba(0, 0, 0, 0.45); -fx-background-radius: 8; -fx-border-color: rgba(255, 255, 255, 0.15); -fx-border-width: 1; -fx-border-radius: 8;");
         hudContainer.setAlignment(Pos.TOP_RIGHT);
         hudContainer.setLayoutX(FXGL.getAppWidth() - hudContainerWidth - 15);
         hudContainer.setLayoutY(15);
         hudContainer.getChildren().addAll(clockText, moneyText);
 
         // Đưa tất cả UI vào màn hình
-        FXGL.getGameScene().addUINodes(nightOverlay, toolbarView, inventoryView, dialogView, statusBarsView, minimap, hudContainer);
+        FXGL.getGameScene().addUINodes(nightOverlay, toolbarView, inventoryView, dialogView, statusBarsView, minimap,
+                hudContainer);
 
         // Khởi tạo các System phụ thuộc UI
         timeSystem = new TimeSystem(nightOverlay, clockText);
@@ -402,7 +441,8 @@ public class Main extends GameApplication {
         // CHỈ LƯU NẾU PLAYER ĐÃ TỒN TẠI (không phải lần tải map đầu tiên)
         if (player != null && currentMap != null) {
             SaveData currentMapState = new SaveData();
-            saveLoadSystem.save(currentMapState, true); // Lưu trạng thái các thực thể động của bản đồ hiện tại (truyền true cho chuyển cảnh)
+            saveLoadSystem.save(currentMapState, true); // Lưu trạng thái các thực thể động của bản đồ hiện tại (truyền
+                                                        // true cho chuyển cảnh)
             mapStates.put(currentMap, currentMapState); // Lưu vào mapStates
             System.out.println("Đã lưu trạng thái bản đồ: " + currentMap);
         }
@@ -454,7 +494,8 @@ public class Main extends GameApplication {
         FXGL.getGameScene().addUINode(adminView);
 
         bindPlayerUI();
-        if (selector == null) selector = FXGL.spawn("Selector"); // Đảm bảo selector được spawn nếu chưa có
+        if (selector == null)
+            selector = FXGL.spawn("Selector"); // Đảm bảo selector được spawn nếu chưa có
 
         // 4. CẤU HÌNH CAMERA & KÍCH THƯỚC BẢN ĐỒ
         double mapW = 3520;
@@ -464,25 +505,28 @@ public class Main extends GameApplication {
             mapH = 1024;
         } else {
             // Tự động tính toán dựa trên các thực thể có sẵn
-            double maxW = FXGL.getGameWorld().getEntitiesByType(EntityType.FIELD, EntityType.WALL, EntityType.COLLISION).stream()
+            double maxW = FXGL.getGameWorld().getEntitiesByType(EntityType.FIELD, EntityType.WALL, EntityType.COLLISION)
+                    .stream()
                     .mapToDouble(e -> e.getRightX()).max().orElse(3520);
-            double maxH = FXGL.getGameWorld().getEntitiesByType(EntityType.FIELD, EntityType.WALL, EntityType.COLLISION).stream()
+            double maxH = FXGL.getGameWorld().getEntitiesByType(EntityType.FIELD, EntityType.WALL, EntityType.COLLISION)
+                    .stream()
                     .mapToDouble(e -> e.getBottomY()).max().orElse(2048);
             mapW = Math.max(mapW, maxW);
             mapH = Math.max(mapH, maxH);
         }
 
-        FXGL.getGameScene().getViewport().setBounds(0, 0, (int)mapW, (int)mapH);
+        FXGL.getGameScene().getViewport().setBounds(0, 0, (int) mapW, (int) mapH);
         FXGL.getGameScene().getViewport().bindToEntity(player, FXGL.getAppWidth() / 2.0, FXGL.getAppHeight() / 2.0);
         FXGL.getGameScene().getViewport().setLazy(true);
 
         // Tạo biên bản đồ (Wall) bao quanh map để chặn người chơi đi ra ngoài
-        spawnBoundaries((int)mapW, (int)mapH);
+        spawnBoundaries((int) mapW, (int) mapH);
 
         // 5. TẢI TRẠNG THÁI BẢN ĐỒ MỚI (nếu có)
         if (mapStates.containsKey(newMapName)) {
             SaveData newMapState = mapStates.get(newMapName);
-            saveLoadSystem.load(newMapState, true); // Tải trạng thái đã lưu cho bản đồ mới (truyền true cho chuyển cảnh)
+            saveLoadSystem.load(newMapState, true); // Tải trạng thái đã lưu cho bản đồ mới (truyền true cho chuyển
+                                                    // cảnh)
             System.out.println("Đã tải trạng thái bản đồ: " + newMapName);
         } else {
             // Nếu chưa có trạng thái lưu, đây là lần đầu tiên tải bản đồ này
@@ -507,9 +551,11 @@ public class Main extends GameApplication {
     @Override
     protected void onUpdate(double tpf) {
         // 1. Cập nhật các hệ thống độc lập
-        if (timeSystem != null) timeSystem.onUpdate(tpf);
+        if (timeSystem != null)
+            timeSystem.onUpdate(tpf);
         WeatherSystem.getInstance().onUpdate(tpf);
-        if (minimap != null) minimap.update();
+        if (minimap != null)
+            minimap.update();
 
         if (nightOverlay != null && player != null) {
             PlayerComponent pc = player.getComponent(PlayerComponent.class);
@@ -525,12 +571,13 @@ public class Main extends GameApplication {
             }
 
             double hungerDiff = currentMins - lastHungerDrainTime;
-            if (hungerDiff < 0) hungerDiff += 1440;
-            if (hungerDiff >= 10) {
-                int intervals = (int)(hungerDiff / 10);
+            if (hungerDiff < 0)
+                hungerDiff += 1440;
+            if (hungerDiff >= 30) {
+                int intervals = (int) (hungerDiff / 30);
                 double newHunger = Math.max(0, statusBarsView.getHunger() - intervals);
                 statusBarsView.setHunger(newHunger);
-                lastHungerDrainTime = (lastHungerDrainTime + intervals * 10) % 1440;
+                lastHungerDrainTime = (lastHungerDrainTime + intervals * 30) % 1440;
             }
 
             if (statusBarsView.getHunger() <= 0) {
@@ -539,9 +586,10 @@ public class Main extends GameApplication {
                         lastStarveHPTime = currentMins;
                     }
                     double starveDiff = currentMins - lastStarveHPTime;
-                    if (starveDiff < 0) starveDiff += 1440;
+                    if (starveDiff < 0)
+                        starveDiff += 1440;
                     if (starveDiff >= 5) {
-                        int intervals = (int)(starveDiff / 5);
+                        int intervals = (int) (starveDiff / 5);
                         double newHP = Math.max(0, statusBarsView.getHealth() - (intervals * 1.0));
                         statusBarsView.setHealth(newHP);
                         lastStarveHPTime = (lastStarveHPTime + intervals * 5) % 1440;
@@ -565,24 +613,27 @@ public class Main extends GameApplication {
                 FXGL.getGameWorld().getEntitiesByType(EntityType.GUIDER).forEach(npc -> {
                     NPCBehaviorComponent ai = npc.getComponent(NPCBehaviorComponent.class);
                     if (!ai.isGoingHome() && !ai.isHidden()) {
-                        FXGL.getGameWorld().getEntitiesByType(EntityType.GUIDER_IN).stream().findFirst().ifPresent(target -> {
-                            ai.goHome(target);
-                        });
+                        FXGL.getGameWorld().getEntitiesByType(EntityType.GUIDER_IN).stream().findFirst()
+                                .ifPresent(target -> {
+                                    ai.goHome(target);
+                                });
                     }
                 });
-                
+
                 FXGL.getGameWorld().getEntitiesByType(EntityType.TRADER).forEach(npc -> {
                     NPCBehaviorComponent ai = npc.getComponent(NPCBehaviorComponent.class);
                     if (!ai.isGoingHome() && !ai.isHidden()) {
-                        FXGL.getGameWorld().getEntitiesByType(EntityType.TRADER_IN).stream().findFirst().ifPresent(target -> {
-                            ai.goHome(target);
-                        });
+                        FXGL.getGameWorld().getEntitiesByType(EntityType.TRADER_IN).stream().findFirst()
+                                .ifPresent(target -> {
+                                    ai.goHome(target);
+                                });
                     }
                 });
             }
             // 6:00 AM: xuất hiện trở lại
             if (timeSystem.getHour() == 6 && timeSystem.getMinute() == 0) {
-                java.util.List<Entity> toReappear = new java.util.ArrayList<>(Project1Game.component.npc.NPCBehaviorComponent.getHiddenNPCs());
+                java.util.List<Entity> toReappear = new java.util.ArrayList<>(
+                        Project1Game.component.npc.NPCBehaviorComponent.getHiddenNPCs());
                 for (Entity npc : toReappear) {
                     FXGL.getGameWorld().addEntity(npc);
                     NPCBehaviorComponent ai = npc.getComponent(NPCBehaviorComponent.class);
@@ -598,7 +649,8 @@ public class Main extends GameApplication {
         if (player != null) {
             PhysicsComponent physics = player.getComponent(PhysicsComponent.class);
             if (physics != null) {
-                // Nếu vận tốc cực nhỏ (dưới 15) -> Đây chắc chắn là nhiễu trôi vật lý, ép thẳng về 0
+                // Nếu vận tốc cực nhỏ (dưới 15) -> Đây chắc chắn là nhiễu trôi vật lý, ép thẳng
+                // về 0
                 if (Math.abs(physics.getVelocityX()) > 0 && Math.abs(physics.getVelocityX()) < 15) {
                     physics.setVelocityX(0);
                 }
@@ -609,7 +661,8 @@ public class Main extends GameApplication {
         }
 
         // 2. Cập nhật bộ chọn ô đất và đồng bộ chuyển động nhân vật
-        if (farmingSystem != null) farmingSystem.updateSelector(selector, player);
+        if (farmingSystem != null)
+            farmingSystem.updateSelector(selector, player);
     }
 
     @Override
@@ -618,23 +671,51 @@ public class Main extends GameApplication {
 
         // 1. DI CHUYỂN
         input.addAction(new UserAction("Move Right") {
-            @Override protected void onAction() { player.getComponent(PhysicsComponent.class).setVelocityX(200); }
-            @Override protected void onActionEnd() { player.getComponent(PhysicsComponent.class).setVelocityX(0); }
+            @Override
+            protected void onAction() {
+                player.getComponent(PhysicsComponent.class).setVelocityX(200);
+            }
+
+            @Override
+            protected void onActionEnd() {
+                player.getComponent(PhysicsComponent.class).setVelocityX(0);
+            }
         }, KeyCode.D);
 
         input.addAction(new UserAction("Move Left") {
-            @Override protected void onAction() { player.getComponent(PhysicsComponent.class).setVelocityX(-200); }
-            @Override protected void onActionEnd() { player.getComponent(PhysicsComponent.class).setVelocityX(0); }
+            @Override
+            protected void onAction() {
+                player.getComponent(PhysicsComponent.class).setVelocityX(-200);
+            }
+
+            @Override
+            protected void onActionEnd() {
+                player.getComponent(PhysicsComponent.class).setVelocityX(0);
+            }
         }, KeyCode.A);
 
         input.addAction(new UserAction("Move Up") {
-            @Override protected void onAction() { player.getComponent(PhysicsComponent.class).setVelocityY(-200); }
-            @Override protected void onActionEnd() { player.getComponent(PhysicsComponent.class).setVelocityY(0); }
+            @Override
+            protected void onAction() {
+                player.getComponent(PhysicsComponent.class).setVelocityY(-200);
+            }
+
+            @Override
+            protected void onActionEnd() {
+                player.getComponent(PhysicsComponent.class).setVelocityY(0);
+            }
         }, KeyCode.W);
 
         input.addAction(new UserAction("Move Down") {
-            @Override protected void onAction() { player.getComponent(PhysicsComponent.class).setVelocityY(200); }
-            @Override protected void onActionEnd() { player.getComponent(PhysicsComponent.class).setVelocityY(0); }
+            @Override
+            protected void onAction() {
+                player.getComponent(PhysicsComponent.class).setVelocityY(200);
+            }
+
+            @Override
+            protected void onActionEnd() {
+                player.getComponent(PhysicsComponent.class).setVelocityY(0);
+            }
         }, KeyCode.S);
 
         // 2. TƯƠNG TÁC TỔNG HỢP (NPC / THU HOẠCH / CỬA)
@@ -646,9 +727,8 @@ public class Main extends GameApplication {
                     double radius = 80.0;
                     javafx.geometry.Point2D playerCenter = player.getCenter();
                     javafx.geometry.Rectangle2D range = new javafx.geometry.Rectangle2D(
-                        playerCenter.getX() - radius, playerCenter.getY() - radius,
-                        radius * 2, radius * 2
-                    );
+                            playerCenter.getX() - radius, playerCenter.getY() - radius,
+                            radius * 2, radius * 2);
                     target = FXGL.getGameWorld().getEntitiesInRange(range).stream()
                             .filter(e -> e.hasComponent(Project1Game.interaction.InteractableComponent.class))
                             .findFirst()
@@ -665,11 +745,17 @@ public class Main extends GameApplication {
 
         // 3. SỬ DỤNG CÔNG CỤ (F & CLICK CHUỘT)
         input.addAction(new UserAction("Use Tool Keyboard") {
-            @Override protected void onActionBegin() { handleUseItem(); }
+            @Override
+            protected void onActionBegin() {
+                handleUseItem();
+            }
         }, KeyCode.F);
 
         input.addAction(new UserAction("Use Tool Mouse") {
-            @Override protected void onActionBegin() { handleUseItem(); }
+            @Override
+            protected void onActionBegin() {
+                handleUseItem();
+            }
         }, MouseButton.PRIMARY);
 
         input.addAction(new UserAction("Test Quick Water") {
@@ -682,63 +768,94 @@ public class Main extends GameApplication {
 
         // 4. HỆ THỐNG GIAO DIỆN
         input.addAction(new UserAction("Close UI Window") {
-            @Override protected void onActionBegin() {
-                if (dialogView.isOpen()) dialogView.hide();
-                if (tradingView.isOpen()) tradingView.toggle(); // Đóng TradingView khi nhấn R
-                if (inventoryView.isOpen()) inventoryView.toggle(); // Đóng InventoryView khi nhấn R
-                if (adminView.isOpen()) adminView.toggle(); // Đóng AdminView khi nhấn R
+            @Override
+            protected void onActionBegin() {
+                if (dialogView.isOpen())
+                    dialogView.hide();
+                if (tradingView.isOpen())
+                    tradingView.toggle(); // Đóng TradingView khi nhấn R
+                if (inventoryView.isOpen())
+                    inventoryView.toggle(); // Đóng InventoryView khi nhấn R
+                if (adminView.isOpen())
+                    adminView.toggle(); // Đóng AdminView khi nhấn R
             }
         }, KeyCode.R); // Sử dụng R để đóng UI
 
         input.addAction(new UserAction("Toggle Inventory Window") {
-            @Override protected void onActionBegin() { inventoryView.toggle(); }
+            @Override
+            protected void onActionBegin() {
+                inventoryView.toggle();
+            }
         }, KeyCode.I);
 
         input.addAction(new UserAction("Toggle Inventory Window TAB") {
-            @Override protected void onActionBegin() { inventoryView.toggle(); }
+            @Override
+            protected void onActionBegin() {
+                inventoryView.toggle();
+            }
         }, KeyCode.TAB);
 
         input.addAction(new UserAction("Toggle Admin Panel") {
-            @Override protected void onActionBegin() { adminView.toggle(); }
+            @Override
+            protected void onActionBegin() {
+                adminView.toggle();
+            }
         }, KeyCode.BACK_QUOTE);
 
         // 5. LƯU & TẢI (F5 / F9)
         input.addAction(new UserAction("Quick Save") {
-            @Override protected void onActionBegin() { saveLoadSystem.saveGameToFile(); } // Gọi phương thức lưu vào file
+            @Override
+            protected void onActionBegin() {
+                saveLoadSystem.saveGameToFile();
+            } // Gọi phương thức lưu vào file
         }, KeyCode.F5);
 
         input.addAction(new UserAction("Quick Load") {
-            @Override protected void onActionBegin() { saveLoadSystem.loadGameFromFile(); } // Gọi phương thức tải từ file
+            @Override
+            protected void onActionBegin() {
+                saveLoadSystem.loadGameFromFile();
+            } // Gọi phương thức tải từ file
         }, KeyCode.F9);
 
         input.addAction(new UserAction("Toggle HP Depletion") {
-            @Override protected void onActionBegin() { toggleHPDepletion(); }
+            @Override
+            protected void onActionBegin() {
+                toggleHPDepletion();
+            }
         }, KeyCode.F6);
 
         input.addAction(new UserAction("Cheat Mature All") {
-            @Override protected void onActionBegin() { matureAllCropsAndAnimals(); }
+            @Override
+            protected void onActionBegin() {
+                matureAllCropsAndAnimals();
+            }
         }, KeyCode.F7);
 
         // Admin Console Time Speed Controls
         input.addAction(new UserAction("Set Time Speed 1x") {
-            @Override protected void onActionBegin() {
-                if (timeSystem != null) timeSystem.setTimeSpeedMultiplier(1.0);
+            @Override
+            protected void onActionBegin() {
+                if (timeSystem != null)
+                    timeSystem.setTimeSpeedMultiplier(1.0);
             }
         }, KeyCode.NUMPAD7);
 
         input.addAction(new UserAction("Set Time Speed 50x") {
-            @Override protected void onActionBegin() {
-                if (timeSystem != null) timeSystem.setTimeSpeedMultiplier(50.0);
+            @Override
+            protected void onActionBegin() {
+                if (timeSystem != null)
+                    timeSystem.setTimeSpeedMultiplier(50.0);
             }
         }, KeyCode.NUMPAD8);
 
         // 6. CHỌN SLOT 1-9
-        KeyCode[] digitCodes = {KeyCode.DIGIT1, KeyCode.DIGIT2, KeyCode.DIGIT3, KeyCode.DIGIT4,
-                KeyCode.DIGIT5, KeyCode.DIGIT6, KeyCode.DIGIT7, KeyCode.DIGIT8, KeyCode.DIGIT9};
+        KeyCode[] digitCodes = { KeyCode.DIGIT1, KeyCode.DIGIT2, KeyCode.DIGIT3, KeyCode.DIGIT4,
+                KeyCode.DIGIT5, KeyCode.DIGIT6, KeyCode.DIGIT7, KeyCode.DIGIT8, KeyCode.DIGIT9 };
         for (int i = 0; i < 9; i++) {
             final int slot = i;
             input.addAction(new UserAction("Select Inventory Slot " + (i + 1)) {
-                @Override protected void onActionBegin() {
+                @Override
+                protected void onActionBegin() {
                     inventory.setSelectedSlot(slot);
                     toolbarView.updateSelection();
                 }
@@ -747,8 +864,10 @@ public class Main extends GameApplication {
 
         // 7. CUỘN CHUỘT ĐỔI VẬT PHẨM
         input.addEventHandler(ScrollEvent.SCROLL, e -> {
-            if (e.getDeltaY() < 0) inventory.selectNext();
-            else inventory.selectPrevious();
+            if (e.getDeltaY() < 0)
+                inventory.selectNext();
+            else
+                inventory.selectPrevious();
             toolbarView.updateSelection();
         });
     }
@@ -791,7 +910,8 @@ public class Main extends GameApplication {
     }
 
     private void bindPlayerUI() {
-        if (player == null || moneyText == null) return;
+        if (player == null || moneyText == null)
+            return;
         PlayerComponent playerComponent = player.getComponent(PlayerComponent.class);
         playerComponent.moneyProperty().addListener((obs, old, newV) -> {
             moneyText.setText("Tiền: " + newV + " G");
@@ -822,7 +942,8 @@ public class Main extends GameApplication {
         FXGL.getGameScene().addUINode(adminView);
 
         bindPlayerUI();
-        if (selector == null) selector = FXGL.spawn("Selector");
+        if (selector == null)
+            selector = FXGL.spawn("Selector");
 
         double mapW = 3520;
         double mapH = 2048;
@@ -830,32 +951,34 @@ public class Main extends GameApplication {
             mapW = 1024;
             mapH = 1024;
         } else {
-            double maxW = FXGL.getGameWorld().getEntitiesByType(EntityType.FIELD, EntityType.WALL, EntityType.COLLISION).stream()
+            double maxW = FXGL.getGameWorld().getEntitiesByType(EntityType.FIELD, EntityType.WALL, EntityType.COLLISION)
+                    .stream()
                     .mapToDouble(e -> e.getRightX()).max().orElse(3520);
-            double maxH = FXGL.getGameWorld().getEntitiesByType(EntityType.FIELD, EntityType.WALL, EntityType.COLLISION).stream()
+            double maxH = FXGL.getGameWorld().getEntitiesByType(EntityType.FIELD, EntityType.WALL, EntityType.COLLISION)
+                    .stream()
                     .mapToDouble(e -> e.getBottomY()).max().orElse(2048);
             mapW = Math.max(mapW, maxW);
             mapH = Math.max(mapH, maxH);
         }
 
-        FXGL.getGameScene().getViewport().setBounds(0, 0, (int)mapW, (int)mapH);
+        FXGL.getGameScene().getViewport().setBounds(0, 0, (int) mapW, (int) mapH);
         FXGL.getGameScene().getViewport().bindToEntity(player, FXGL.getAppWidth() / 2.0, FXGL.getAppHeight() / 2.0);
         FXGL.getGameScene().getViewport().setLazy(true);
 
-        spawnBoundaries((int)mapW, (int)mapH);
+        spawnBoundaries((int) mapW, (int) mapH);
     }
 
     public void spawnInitialMonsters() {
         System.out.println("--- Spawning Initial Monsters ---");
-        String[] types = {"Boar", "Fox", "Deer", "Hare"};
-        int[] counts = {2, 2, 3, 3};
-        
+        String[] types = { "Boar", "Fox", "Deer", "Hare" };
+        int[] counts = { 2, 2, 3, 3 };
+
         java.util.Random rand = new java.util.Random();
         javafx.geometry.Point2D[] corners = {
-            new javafx.geometry.Point2D(100, 100),    // Top-Left Boundary Corner
-            new javafx.geometry.Point2D(2900, 100),   // Top-Right Boundary Corner
-            new javafx.geometry.Point2D(100, 1900),   // Bottom-Left Boundary Corner
-            new javafx.geometry.Point2D(2900, 1900)   // Bottom-Right Boundary Corner
+                new javafx.geometry.Point2D(100, 100), // Top-Left Boundary Corner
+                new javafx.geometry.Point2D(2900, 100), // Top-Right Boundary Corner
+                new javafx.geometry.Point2D(100, 1900), // Bottom-Left Boundary Corner
+                new javafx.geometry.Point2D(2900, 1900) // Bottom-Right Boundary Corner
         };
 
         for (int i = 0; i < types.length; i++) {
@@ -898,5 +1021,7 @@ public class Main extends GameApplication {
         return app.timeSystem != null && app.timeSystem.isDayTime();
     }
 
-    public static void main(String[] args) { launch(args); }
+    public static void main(String[] args) {
+        launch(args);
+    }
 }

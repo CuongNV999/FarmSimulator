@@ -245,7 +245,7 @@ public class GameEntityFactory implements EntityFactory {
         });
         
         return FXGL.entityBuilder(data).type(EntityType.GUIDER)
-                .bbox(new HitBox(BoundingShape.box(32, 64)))
+                .bbox(new HitBox(new javafx.geometry.Point2D(4, 40), BoundingShape.box(24, 24)))
                 .with(physics)
                 .with(new NPCAnimationComponent())
                 .with(new NPCBehaviorComponent())
@@ -280,7 +280,7 @@ public class GameEntityFactory implements EntityFactory {
 
         return FXGL.entityBuilder(data)
                 .type(EntityType.TRADER)
-                .bbox(new HitBox(BoundingShape.box(32, 64)))
+                .bbox(new HitBox(new javafx.geometry.Point2D(4, 40), BoundingShape.box(24, 24)))
                 .with(physics)
                 .with(new NPCAnimationComponent("NPC/Trader/Trader.png")) // Gắn animation component cho Trader
                 .with(new NPCBehaviorComponent()) // Thêm component điều khiển hành vi
