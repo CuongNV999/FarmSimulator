@@ -1,0 +1,56 @@
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+.kotlin
+
+### IntelliJ IDEA ###
+.idea/modules.xml
+.idea/jarRepositories.xml
+.idea/compiler.xml
+.idea/libraries/
+*.iws
+*.iml
+*.ipr
+
+### Eclipse ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+### VS Code ###
+.vscode/
+
+### Mac OS ###
+.DS_Store
+
+# Hoặc chặn nguyên cả thư mục chứa log (nếu bạn gom log vào 1 chỗ)
+logs/
+
+# Chặn hoàn toàn thư mục cấu hình của IntelliJ (thay vì chặn lẻ tẻ vài file như trên)
+.idea/
+
+# Chặn file save game cục bộ (để tránh ghi đè khi đổi máy)
+save_game.dat
+
+# Chặn file danh sách việc cần làm cá nhân của bạn
+tash list
+
+# Chặn các file ảnh nháp tự sinh của hệ thống
+Untitled*
+*.png
+!src/**/*.png
