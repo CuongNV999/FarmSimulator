@@ -52,6 +52,38 @@ public class Main extends GameApplication {
         return instance;
     }
 
+    public static boolean isAllowedNotification(String message) {
+        if (message == null) {
+            return false;
+        }
+        String msg = message.toLowerCase();
+        
+        // Ăn (Eat)
+        if (msg.contains("ăn") || msg.contains("đầy bụng") || msg.contains("đói") || msg.contains("thức ăn") || msg.contains("eat")) {
+            return true;
+        }
+        
+        // Mua / Bán / Giao dịch (Buy / Sell / Trade / Negotiate)
+        if (msg.contains("giao dịch") || msg.contains("tiền") || msg.contains("mua") || 
+            msg.contains("bán") || msg.contains("kho đồ") || msg.contains("giỏ hàng") || 
+            msg.contains("trader") || msg.contains("thương lượng") || msg.contains("giá") || msg.contains("shop")) {
+            return true;
+        }
+        
+        // Ngủ (Sleep)
+        if (msg.contains("ngủ") || msg.contains("sleep") || msg.contains("hồi phục") || msg.contains("ngon")) {
+            return true;
+        }
+        
+        return false;
+    }
+
+    public static void pushNotification(String message) {
+        if (isAllowedNotification(message)) {
+            com.almasb.fxgl.dsl.FXGL.getNotificationService().pushNotification(message);
+        }
+    }
+
     public TimeSystem getTimeSystem() {
         return timeSystem;
     }
@@ -215,6 +247,13 @@ public class Main extends GameApplication {
     private boolean shouldLoadSaveOnStart = false; // Flag to load save game on startup
     private Point2D lastOutdoorPosition = null;
 
+    // --- TMX Map for Overhead querying ---
+    private com.almasb.fxgl.entity.level.tiled.TiledMap currentTMXMap = null;
+    private java.util.List<Long> overheadLayerData = null;
+    private int currentTMXMapWidth = 0;
+    private int currentTMXMapHeight = 0;
+    private Entity overheadLayerEntity = null;
+
     // --- Camera Roaming ---
     private double lastMouseX;
     private double lastMouseY;
@@ -244,7 +283,7 @@ public class Main extends GameApplication {
 
     public void toggleHPDepletion() {
         this.isHPDepletionEnabled = !this.isHPDepletionEnabled;
-        FXGL.getNotificationService().pushNotification("HP Depletion: " + (isHPDepletionEnabled ? "ON" : "OFF"));
+        pushNotification("HP Depletion: " + (isHPDepletionEnabled ? "ON" : "OFF"));
     }
 
     @Override
@@ -257,6 +296,7 @@ public class Main extends GameApplication {
         gameSettings.setMainMenuEnabled(true);
         gameSettings.setFullScreenAllowed(true);
         gameSettings.setSceneFactory(new FarmSceneFactory());
+        gameSettings.setNotificationViewClass(CustomNotificationView.class);
     }
 
     @Override
@@ -306,6 +346,18 @@ public class Main extends GameApplication {
     @Override
     protected void initGame() {
         instance = this;
+        
+        // Reset state variables to prevent carry-over from previous sessions
+        player = null;
+        selector = null;
+        nearbyNPC = null;
+        nearbyDoor = null;
+        nearbySleep = null;
+        lastOutdoorPosition = null;
+        mapStates.clear();
+        pendingNPCSpawns.clear();
+        Project1Game.component.npc.NPCBehaviorComponent.clearHiddenNPCs();
+
         // 1. Khởi tạo dữ liệu và System nông nghiệp
         inventory = new Inventory();
         farmingSystem = new FarmingSystem(inventory);
@@ -449,12 +501,10 @@ public class Main extends GameApplication {
     private void updateLevel(String newMapName, double x, double y) {
         int tempMoney = 1000;
         String tempSkin = "Player";
-        if (player != null) {
+        if (player != null && player.isActive() && player.hasComponent(PlayerComponent.class)) {
             PlayerComponent pc = player.getComponent(PlayerComponent.class);
-            if (pc != null) {
-                tempMoney = pc.getMoney();
-                tempSkin = pc.getCurrentSkin();
-            }
+            tempMoney = pc.getMoney();
+            tempSkin = pc.getCurrentSkin();
         }
 
         // 1. LƯU TRẠNG THÁI BẢN ĐỒ HIỆN TẠI (nếu có)
@@ -470,6 +520,28 @@ public class Main extends GameApplication {
         // 2. TẢI BẢN ĐỒ MỚI
         currentMap = newMapName; // Cập nhật bản đồ hiện tại
         FXGL.setLevelFromMap(newMapName);
+
+        // Load the TMX map details to query overhead tiles
+        try (java.io.InputStream is = FXGL.getAssetLoader().getStream("levels/" + newMapName)) {
+            com.almasb.fxgl.entity.level.tiled.TMXLevelLoader loader = new com.almasb.fxgl.entity.level.tiled.TMXLevelLoader();
+            currentTMXMap = loader.parse(is);
+            overheadLayerData = null;
+            if (currentTMXMap != null) {
+                currentTMXMapWidth = currentTMXMap.getWidth();
+                currentTMXMapHeight = currentTMXMap.getHeight();
+                for (com.almasb.fxgl.entity.level.tiled.Layer layer : currentTMXMap.getLayers()) {
+                    if (layer.getName().equalsIgnoreCase("OverheadLayer")) {
+                        overheadLayerData = layer.getData();
+                        break;
+                    }
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error loading TMX map details: " + e.getMessage());
+            currentTMXMap = null;
+            overheadLayerData = null;
+        }
+        overheadLayerEntity = null;
 
         // Clear hidden NPCs from the previous level
         Project1Game.component.npc.NPCBehaviorComponent.clearHiddenNPCs();
@@ -569,7 +641,7 @@ public class Main extends GameApplication {
             for (NPCSpawnConfig config : pendingNPCSpawns) {
                 EntityType type = config.type.equalsIgnoreCase("Guider") ? EntityType.GUIDER : EntityType.TRADER;
                 FXGL.getGameWorld().getEntitiesByType(type).forEach(npc -> {
-                    NPCBehaviorComponent ai = npc.getComponent(NPCBehaviorComponent.class);
+                    NPCBehaviorComponent ai = npc.getComponentOptional(NPCBehaviorComponent.class).orElse(null);
                     if (ai != null) {
                         if (config.isHidden) {
                             ai.disappear();
@@ -600,7 +672,7 @@ public class Main extends GameApplication {
         if (minimap != null)
             minimap.update();
 
-        if (nightOverlay != null && player != null) {
+        if (nightOverlay != null && player != null && player.isActive() && player.hasComponent(PlayerComponent.class)) {
             PlayerComponent pc = player.getComponent(PlayerComponent.class);
             nightOverlay.update(player.getCenter(), pc.getDirection());
         }
@@ -655,7 +727,7 @@ public class Main extends GameApplication {
                 // 8:00 PM: đi vào nhà
                 if (timeSystem.getHour() >= 20 || timeSystem.getHour() < 6) {
                     FXGL.getGameWorld().getEntitiesByType(EntityType.GUIDER).forEach(npc -> {
-                        NPCBehaviorComponent ai = npc.getComponent(NPCBehaviorComponent.class);
+                        NPCBehaviorComponent ai = npc.getComponentOptional(NPCBehaviorComponent.class).orElse(null);
                         if (ai != null && !ai.isGoingHome() && !ai.isHidden()) {
                             FXGL.getGameWorld().getEntitiesByType(EntityType.GUIDER_IN).stream().findFirst()
                                     .ifPresent(target -> {
@@ -666,7 +738,7 @@ public class Main extends GameApplication {
                     });
 
                     FXGL.getGameWorld().getEntitiesByType(EntityType.TRADER).forEach(npc -> {
-                        NPCBehaviorComponent ai = npc.getComponent(NPCBehaviorComponent.class);
+                        NPCBehaviorComponent ai = npc.getComponentOptional(NPCBehaviorComponent.class).orElse(null);
                         if (ai != null && !ai.isGoingHome() && !ai.isHidden()) {
                             FXGL.getGameWorld().getEntitiesByType(EntityType.TRADER_IN).stream().findFirst()
                                     .ifPresent(target -> {
@@ -686,7 +758,7 @@ public class Main extends GameApplication {
                     if (!toReappear.isEmpty()) {
                         for (Entity npc : toReappear) {
                             FXGL.getGameWorld().addEntity(npc);
-                            NPCBehaviorComponent ai = npc.getComponent(NPCBehaviorComponent.class);
+                            NPCBehaviorComponent ai = npc.getComponentOptional(NPCBehaviorComponent.class).orElse(null);
                             if (ai != null) {
                                 ai.reappear();
                             }
@@ -728,7 +800,7 @@ public class Main extends GameApplication {
                     if (rng.nextDouble() < 0.15) {
                         Entity targetBush = bushes.get(rng.nextInt(bushes.size()));
                         FXGL.spawn("BushMonster", targetBush.getX() + targetBush.getWidth()/2 - 16, targetBush.getY() + targetBush.getHeight()/2 - 16);
-                        FXGL.getNotificationService().pushNotification("Cảnh báo: Có quái vật xuất hiện từ bụi cây!");
+                        pushNotification("Cảnh báo: Có quái vật xuất hiện từ bụi cây!");
                         System.out.println("Spawned BushMonster at " + targetBush.getPosition());
                     }
                 }
@@ -753,6 +825,57 @@ public class Main extends GameApplication {
         // 2. Cập nhật bộ chọn ô đất và đồng bộ chuyển động nhân vật
         if (farmingSystem != null)
             farmingSystem.updateSelector(selector, player);
+
+        // --- Overhead Layer Transparency Logic ---
+
+        if (overheadLayerData != null && player != null && player.isActive()) {
+            if (overheadLayerEntity == null || !overheadLayerEntity.isActive()) {
+                overheadLayerEntity = FXGL.getGameWorld().getEntities().stream()
+                        .filter(e -> {
+                            if (e.getProperties().keys().contains("layer")) {
+                                Object layerObj = e.getProperties().getValue("layer");
+                                if (layerObj instanceof com.almasb.fxgl.entity.level.tiled.Layer) {
+                                    com.almasb.fxgl.entity.level.tiled.Layer l = (com.almasb.fxgl.entity.level.tiled.Layer) layerObj;
+                                    return l.getName().equalsIgnoreCase("OverheadLayer");
+                                }
+                            }
+                            return false;
+                        })
+                        .findFirst()
+                        .orElse(null);
+                
+                if (overheadLayerEntity != null && overheadLayerEntity.getViewComponent() != null) {
+                    overheadLayerEntity.getViewComponent().setZIndex(15);
+                    System.out.println("Set OverheadLayer Z-index to 15!");
+                }
+            }
+            if (overheadLayerEntity != null && overheadLayerEntity.getViewComponent() != null) {
+                // Check if player (head/chest) is under any overhead tile
+                boolean underOverhead = isUnderOverhead(player.getCenter().getX(), player.getY() + 16.0);
+                double currentOpacity = overheadLayerEntity.getViewComponent().getOpacity();
+                double targetOpacity = underOverhead ? 0.45 : 1.0;
+                if (Math.abs(currentOpacity - targetOpacity) > 0.01) {
+                    overheadLayerEntity.getViewComponent().setOpacity(targetOpacity);
+                }
+            }
+        }
+    }
+
+    private boolean isUnderOverhead(double x, double y) {
+        if (overheadLayerData == null || currentTMXMapWidth <= 0) {
+            return false;
+        }
+        int col = (int) (x / 32.0);
+        int row = (int) (y / 32.0);
+        if (col < 0 || col >= currentTMXMapWidth || row < 0 || row >= currentTMXMapHeight) {
+            return false;
+        }
+        int index = row * currentTMXMapWidth + col;
+        if (index >= 0 && index < overheadLayerData.size()) {
+            Long gid = overheadLayerData.get(index);
+            return gid != null && gid > 0;
+        }
+        return false;
     }
 
     @Override
@@ -1075,7 +1198,7 @@ public class Main extends GameApplication {
     }
 
     private void bindPlayerUI() {
-        if (player == null || moneyText == null)
+        if (player == null || !player.isActive() || !player.hasComponent(PlayerComponent.class) || moneyText == null)
             return;
         PlayerComponent playerComponent = player.getComponent(PlayerComponent.class);
         if (boundMoneyProperty != null && moneyListener != null) {
@@ -1187,24 +1310,24 @@ public class Main extends GameApplication {
             }
         });
 
-        FXGL.getNotificationService().pushNotification("Admin Cheat: All animals and crops are now fully mature!");
+        pushNotification("Admin Cheat: All animals and crops are now fully mature!");
     }
 
     public void spawnBushMonsterAdmin() {
         if (!currentMap.equals("Main_level.tmx")) {
-            FXGL.getNotificationService().pushNotification("Chỉ có thể spawn quái vật ở bản đồ ngoài trời!");
+            pushNotification("Chỉ có thể spawn quái vật ở bản đồ ngoài trời!");
             return;
         }
 
         java.util.List<Entity> bushes = FXGL.getGameWorld().getEntitiesByType(EntityType.BUSH);
         if (bushes.isEmpty()) {
-            FXGL.getNotificationService().pushNotification("Không tìm thấy bụi cây nào trên map để spawn!");
+            pushNotification("Không tìm thấy bụi cây nào trên map để spawn!");
             return;
         }
 
         Entity targetBush = bushes.get(rng.nextInt(bushes.size()));
         FXGL.spawn("BushMonster", targetBush.getX() + targetBush.getWidth()/2 - 16, targetBush.getY() + targetBush.getHeight()/2 - 16);
-        FXGL.getNotificationService().pushNotification("Admin: Đã spawn một quái vật từ bụi cây!");
+        pushNotification("Admin: Đã spawn một quái vật từ bụi cây!");
         System.out.println("Admin spawned BushMonster at " + targetBush.getPosition());
     }
 

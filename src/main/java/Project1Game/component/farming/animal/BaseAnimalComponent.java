@@ -65,6 +65,11 @@ public class BaseAnimalComponent extends Component implements Interactable {
     private Point2D homePosition = null;
     private Point2D initialSpawnPos = null;
     
+    private int lastStartGridX = -1;
+    private int lastEndGridX = -1;
+    private int lastStartGridY = -1;
+    private int lastEndGridY = -1;
+    
     protected PhysicsComponent physics;
 
     public BaseAnimalComponent(AnimalType type, String animalName, String babyName, String adultName, int maxGrowthDays,
@@ -104,6 +109,23 @@ public class BaseAnimalComponent extends Component implements Interactable {
         return maxGrowthDays;
     }
 
+    // Following variables
+    private boolean isFollowing = false;
+
+    public boolean isFollowing() {
+        return isFollowing;
+    }
+
+    public void setFollowing(boolean following) {
+        this.isFollowing = following;
+    }
+
+    private void setAnimationChannel(AnimationChannel channel) {
+        if (texture != null && texture.getAnimationChannel() != channel) {
+            texture.loopAnimationChannel(channel);
+        }
+    }
+
     // Dynamic icon extraction utility method
     public static Image extractFaceDownIdleImage(String texturePath) {
         Image fullImage = FXGL.image(texturePath);
@@ -112,8 +134,9 @@ public class BaseAnimalComponent extends Component implements Interactable {
         double frameWidth = imgWidth / 6;
         double frameHeight = imgHeight / 8;
         
+        boolean isBull = texturePath.contains("Bull");
         int x = 0;
-        int y = (int) (4 * frameHeight); // Row 5 is index 4
+        int y = isBull ? 0 : (int) (4 * frameHeight); // Row 1 (index 0) for Bull, Row 5 (index 4) for others
         
         return new WritableImage(fullImage.getPixelReader(), x, y, (int) frameWidth, (int) frameHeight);
     }
@@ -124,15 +147,24 @@ public class BaseAnimalComponent extends Component implements Interactable {
         int frameW = isMature ? adultWidth : babyWidth;
         int frameH = isMature ? adultHeight : babyHeight;
 
+        boolean isBull = currentTexture.contains("Bull");
+
         animWalkDown  = new AnimationChannel(FXGL.image(currentTexture), 6, frameW, frameH, Duration.seconds(0.8), 0, 5);
         animWalkUp    = new AnimationChannel(FXGL.image(currentTexture), 6, frameW, frameH, Duration.seconds(0.8), 6, 11);
         animWalkLeft  = new AnimationChannel(FXGL.image(currentTexture), 6, frameW, frameH, Duration.seconds(0.8), 12, 17);
         animWalkRight = new AnimationChannel(FXGL.image(currentTexture), 6, frameW, frameH, Duration.seconds(0.8), 18, 23);
         
-        animIdleDown  = new AnimationChannel(FXGL.image(currentTexture), 6, frameW, frameH, Duration.seconds(1.0), 24, 27);
-        animIdleUp    = new AnimationChannel(FXGL.image(currentTexture), 6, frameW, frameH, Duration.seconds(1.0), 30, 33);
-        animIdleLeft  = new AnimationChannel(FXGL.image(currentTexture), 6, frameW, frameH, Duration.seconds(1.0), 36, 39);
-        animIdleRight = new AnimationChannel(FXGL.image(currentTexture), 6, frameW, frameH, Duration.seconds(1.0), 42, 45);
+        if (isBull) {
+            animIdleDown  = new AnimationChannel(FXGL.image(currentTexture), 6, frameW, frameH, Duration.seconds(1.0), 0, 0);
+            animIdleUp    = new AnimationChannel(FXGL.image(currentTexture), 6, frameW, frameH, Duration.seconds(1.0), 6, 6);
+            animIdleLeft  = new AnimationChannel(FXGL.image(currentTexture), 6, frameW, frameH, Duration.seconds(1.0), 12, 12);
+            animIdleRight = new AnimationChannel(FXGL.image(currentTexture), 6, frameW, frameH, Duration.seconds(1.0), 18, 18);
+        } else {
+            animIdleDown  = new AnimationChannel(FXGL.image(currentTexture), 6, frameW, frameH, Duration.seconds(1.0), 24, 27);
+            animIdleUp    = new AnimationChannel(FXGL.image(currentTexture), 6, frameW, frameH, Duration.seconds(1.0), 30, 33);
+            animIdleLeft  = new AnimationChannel(FXGL.image(currentTexture), 6, frameW, frameH, Duration.seconds(1.0), 36, 39);
+            animIdleRight = new AnimationChannel(FXGL.image(currentTexture), 6, frameW, frameH, Duration.seconds(1.0), 42, 45);
+        }
 
         if (texture == null) {
             texture = new AnimatedTexture(animIdleDown);
@@ -205,10 +237,10 @@ public class BaseAnimalComponent extends Component implements Interactable {
 
     private void updateScale(boolean isMature) {
         if (type == AnimalType.TURKEY) {
-            entity.setScaleX(2.0);
-            entity.setScaleY(2.0);
+            entity.setScaleX(2.4);
+            entity.setScaleY(2.4);
         } else {
-            double scale = isMature ? 2.2 : 1.5;
+            double scale = isMature ? 2.6 : 1.8;
             entity.setScaleX(scale);
             entity.setScaleY(scale);
         }
@@ -287,6 +319,106 @@ public class BaseAnimalComponent extends Component implements Interactable {
 
     @Override
     public void onUpdate(double tpf) {
+        if (isFollowing) {
+            // Auto-tilling logic for mature Bull in Field zone
+            if (adultItem == ItemType.BULL && isReadyToHarvest()) {
+                double minX = entity.getX();
+                double minY = entity.getY();
+                double maxX = minX + entity.getWidth();
+                double maxY = minY + entity.getHeight();
+
+                int startGridX = (int) Math.floor(minX / 32) * 32;
+                int endGridX = (int) Math.floor((maxX - 1) / 32) * 32;
+                int startGridY = (int) Math.floor(minY / 32) * 32;
+                int endGridY = (int) Math.floor((maxY - 1) / 32) * 32;
+
+                if (startGridX != lastStartGridX || endGridX != lastEndGridX ||
+                    startGridY != lastStartGridY || endGridY != lastEndGridY) {
+
+                    lastStartGridX = startGridX;
+                    lastEndGridX = endGridX;
+                    lastStartGridY = startGridY;
+                    lastEndGridY = endGridY;
+
+                    List<Entity> fields = FXGL.getGameWorld().getEntitiesByType(EntityType.FIELD);
+                    List<Entity> soils = FXGL.getGameWorld().getEntitiesByType(EntityType.SOIL);
+
+                    for (int cellX = startGridX; cellX <= endGridX; cellX += 32) {
+                        for (int cellY = startGridY; cellY <= endGridY; cellY += 32) {
+                            final int cx = cellX;
+                            final int cy = cellY;
+
+                            boolean cellInField = fields.stream()
+                                    .anyMatch(f -> f.getX() <= cx && cx < f.getX() + f.getWidth()
+                                            && f.getY() <= cy && cy < f.getY() + f.getHeight());
+
+                            if (cellInField) {
+                                boolean cellHasSoil = soils.stream()
+                                        .anyMatch(s -> s.getX() == cx && s.getY() == cy);
+
+                                if (!cellHasSoil) {
+                                    FXGL.spawn("Soil", cx, cy);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Find player entity
+            Entity player = FXGL.getGameWorld().getSingleton(Project1Game.core.EntityType.PLAYER);
+            if (player != null) {
+                Point2D playerCenter = player.getCenter();
+                Point2D myCenter = entity.getCenter();
+                double distance = playerCenter.distance(myCenter);
+
+                if (distance > 90.0) {
+                    Point2D dir = playerCenter.subtract(myCenter).normalize();
+                    double speed = 150.0; // Moderate speed to keep up with player
+                    Point2D velocity = dir.multiply(speed);
+
+                    if (physics != null && physics.getBody() != null) {
+                        physics.setVelocityX(velocity.getX());
+                        physics.setVelocityY(velocity.getY());
+                    } else {
+                        entity.translate(velocity.multiply(tpf));
+                    }
+
+                    // Update animations
+                    if (Math.abs(dir.getX()) > Math.abs(dir.getY())) {
+                        if (dir.getX() > 0) {
+                            setAnimationChannel(animWalkRight);
+                        } else {
+                            setAnimationChannel(animWalkLeft);
+                        }
+                    } else {
+                        if (dir.getY() > 0) {
+                            setAnimationChannel(animWalkDown);
+                        } else {
+                            setAnimationChannel(animWalkUp);
+                        }
+                    }
+                } else {
+                    if (physics != null && physics.getBody() != null) {
+                        physics.setVelocityX(0);
+                        physics.setVelocityY(0);
+                    }
+                    
+                    // Loop idle animation in the direction of the last active walk animation
+                    if (texture.getAnimationChannel() == animWalkRight) {
+                        setAnimationChannel(animIdleRight);
+                    } else if (texture.getAnimationChannel() == animWalkLeft) {
+                        setAnimationChannel(animIdleLeft);
+                    } else if (texture.getAnimationChannel() == animWalkUp) {
+                        setAnimationChannel(animIdleUp);
+                    } else if (texture.getAnimationChannel() == animWalkDown) {
+                        setAnimationChannel(animIdleDown);
+                    }
+                }
+            }
+            return;
+        }
+
         fleeCheckTimer += tpf;
         if (fleeCheckTimer >= 0.3) {
             fleeCheckTimer = 0.0;
@@ -358,24 +490,48 @@ public class BaseAnimalComponent extends Component implements Interactable {
 
     @Override
     public void interact(Entity player, Entity target) {
-        if (isReadyToHarvest()) {
-            Project1Game.model.Inventory inventory = Main.getInstance().getInventory();
-            if (inventory != null) {
-                inventory.addItem(adultItem, 1);
-                FXGL.getNotificationService().pushNotification("Đã thu hoạch một " + adultName + "!");
-                entity.removeFromWorld();
+        if (Project1Game.Main.isShiftHeld()) {
+            if (isReadyToHarvest()) {
+                Project1Game.model.Inventory inventory = Main.getInstance().getInventory();
+                if (inventory != null) {
+                    inventory.addItem(adultItem, 1);
+                    Project1Game.Main.pushNotification("Đã thu hoạch một " + adultName + "!");
+                    entity.removeFromWorld();
+                }
+            } else {
+                int daysRemaining = maxGrowthDays - daysGrown;
+                String msg;
+                if (type == AnimalType.TURKEY) {
+                    msg = "Gà tây cần thêm " + daysRemaining + " ngày để sẵn sàng thu hoạch.";
+                } else {
+                    msg = babyName + " cần thêm " + daysRemaining + " ngày để lớn lên.";
+                }
+                DialogView dialogView = Main.getInstance().getDialogView();
+                dialogView.setDialog(animalName, msg);
+                dialogView.show();
             }
         } else {
-            int daysRemaining = maxGrowthDays - daysGrown;
-            String msg;
-            if (type == AnimalType.TURKEY) {
-                msg = "Gà tây cần thêm " + daysRemaining + " ngày để sẵn sàng thu hoạch.";
+            isFollowing = !isFollowing;
+            String name = isReadyToHarvest() ? adultName : babyName;
+            if (isFollowing) {
+                Project1Game.Main.pushNotification(name + " đang đi theo bạn!");
             } else {
-                msg = babyName + " cần thêm " + daysRemaining + " ngày để lớn lên.";
+                if (physics != null && physics.getBody() != null) {
+                    physics.setVelocityX(0);
+                    physics.setVelocityY(0);
+                }
+                
+                // Reset initial spawn position to current position so the animal can wander in this new area
+                initialSpawnPos = entity.getPosition();
+                moveDir = Point2D.ZERO;
+                wanderTimer = 0;
+                wanderDuration = 2.0 + random.nextDouble() * 3.0;
+                if (texture != null && animIdleDown != null) {
+                    texture.loopAnimationChannel(animIdleDown);
+                }
+
+                Project1Game.Main.pushNotification(name + " đã dừng lại.");
             }
-            DialogView dialogView = Main.getInstance().getDialogView();
-            dialogView.setDialog(animalName, msg);
-            dialogView.show();
         }
     }
 

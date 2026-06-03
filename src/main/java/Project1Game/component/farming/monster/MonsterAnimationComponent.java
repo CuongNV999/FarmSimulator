@@ -86,11 +86,20 @@ public class MonsterAnimationComponent extends Component {
 
             // Left triggers true Left channel (Row 3, frames 10-14 for Walk, 8-11 for Idle)
             // Right triggers true Right channel (Row 4, frames 15-19 for Walk, 12-15 for Idle)
-            animWalkLeft  = new AnimationChannel(runImg, 5, runFrameW, runFrameH, Duration.seconds(0.8), 10, 14); // Row 3
-            animWalkRight = new AnimationChannel(runImg, 5, runFrameW, runFrameH, Duration.seconds(0.8), 15, 19); // Row 4
-            
-            animIdleLeft  = new AnimationChannel(idleImg, 4, idleFrameW, idleFrameH, Duration.seconds(1.0), 8, 11); // Row 3
-            animIdleRight = new AnimationChannel(idleImg, 4, idleFrameW, idleFrameH, Duration.seconds(1.0), 12, 15); // Row 4
+            if ("Fox".equalsIgnoreCase(monsterType)) {
+                // Fox animations are reversed in the sprite sheet relative to expectations
+                animWalkLeft  = new AnimationChannel(runImg, 5, runFrameW, runFrameH, Duration.seconds(0.8), 15, 19); // Row 4
+                animWalkRight = new AnimationChannel(runImg, 5, runFrameW, runFrameH, Duration.seconds(0.8), 10, 14); // Row 3
+                
+                animIdleLeft  = new AnimationChannel(idleImg, 4, idleFrameW, idleFrameH, Duration.seconds(1.0), 12, 15); // Row 4
+                animIdleRight = new AnimationChannel(idleImg, 4, idleFrameW, idleFrameH, Duration.seconds(1.0), 8, 11); // Row 3
+            } else {
+                animWalkLeft  = new AnimationChannel(runImg, 5, runFrameW, runFrameH, Duration.seconds(0.8), 10, 14); // Row 3
+                animWalkRight = new AnimationChannel(runImg, 5, runFrameW, runFrameH, Duration.seconds(0.8), 15, 19); // Row 4
+                
+                animIdleLeft  = new AnimationChannel(idleImg, 4, idleFrameW, idleFrameH, Duration.seconds(1.0), 8, 11); // Row 3
+                animIdleRight = new AnimationChannel(idleImg, 4, idleFrameW, idleFrameH, Duration.seconds(1.0), 12, 15); // Row 4
+            }
 
             texture = new AnimatedTexture(animIdleDown);
             lastWalkAnim = animWalkDown;
@@ -102,6 +111,15 @@ public class MonsterAnimationComponent extends Component {
     @Override
     public void onAdded() {
         physics = entity.getComponentOptional(PhysicsComponent.class).orElse(null);
+
+        // Scale wild monsters up to look more appropriate
+        if (entity != null) {
+            entity.getTransformComponent().setScaleOrigin(new javafx.geometry.Point2D(16.0, 16.0));
+            entity.getTransformComponent().setRotationOrigin(new javafx.geometry.Point2D(16.0, 16.0));
+            entity.setScaleX(1.8);
+            entity.setScaleY(1.8);
+        }
+
         if (useFallback) {
             Rectangle box = new Rectangle(32, 32);
             Color color;

@@ -80,7 +80,7 @@ public abstract class BaseMonsterComponent extends Component {
                 isReturning = true;
                 targetEntity = findClosestBush();
                 recalculatePath();
-                FXGL.getNotificationService().pushNotification("Quái vật đang quay trở lại bụi cây!");
+                // FXGL.getNotificationService().pushNotification("Quái vật đang quay trở lại bụi cây!");
             }
         }
 
@@ -302,14 +302,15 @@ public abstract class BaseMonsterComponent extends Component {
 
         double dist = entity.distance(targetEntity);
         if (dist < 48.0) {
-            if (classification == MonsterClassification.CARNIVORE && targetEntity.isType(EntityType.ANIMAL)) {
+            BaseAnimalComponent bac = targetEntity.getComponentOptional(BaseAnimalComponent.class).orElse(null);
+            if (classification == MonsterClassification.CARNIVORE && targetEntity.isType(EntityType.ANIMAL) && (bac == null || !bac.isFollowing())) {
                 targetEntity.removeFromWorld();
-                FXGL.getNotificationService().pushNotification("Quái vật đã ăn thịt động vật của bạn!");
+                Project1Game.Main.pushNotification("Quái vật đã ăn thịt động vật của bạn!");
                 targetEntity = null;
                 damageCooldown = 2.0;
             } else if (classification == MonsterClassification.HERBIVORE && targetEntity.getType() instanceof EntityType && isCrop((EntityType) targetEntity.getType())) {
                 targetEntity.removeFromWorld();
-                FXGL.getNotificationService().pushNotification("Quái vật đã phá hoại mùa màng của bạn!");
+                Project1Game.Main.pushNotification("Quái vật đã phá hoại mùa màng của bạn!");
                 targetEntity = null;
                 damageCooldown = 2.0;
             }
@@ -351,6 +352,10 @@ public abstract class BaseMonsterComponent extends Component {
         if (classification == MonsterClassification.CARNIVORE) {
             List<Entity> animals = FXGL.getGameWorld().getEntitiesByType(EntityType.ANIMAL);
             for (Entity animal : animals) {
+                BaseAnimalComponent bac = animal.getComponentOptional(BaseAnimalComponent.class).orElse(null);
+                if (bac != null && bac.isFollowing()) {
+                    continue;
+                }
                 double dist = entity.distance(animal);
                 if (dist < minDist) {
                     minDist = dist;
