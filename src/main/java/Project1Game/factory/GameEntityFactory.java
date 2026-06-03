@@ -347,6 +347,17 @@ public class GameEntityFactory implements EntityFactory {
         return createAnimal(data, "turkey", 32, 32);
     }
 
+    @Spawns("Bull")
+    public Entity spawnBull(SpawnData data) {
+        Entity bull = createAnimal(data, "bull", 64, 64);
+        BaseAnimalComponent bac = bull.getComponent(BaseAnimalComponent.class);
+        if (bac != null) {
+            bac.setDaysGrown(bac.getMaxGrowthDays());
+            bac.initAnimation();
+        }
+        return bull;
+    }
+
     private Entity createMonster(SpawnData data, String monsterType, String runTexturePath, String idleTexturePath) {
         PhysicsComponent physics = new PhysicsComponent();
         physics.setFixtureDef(new FixtureDef().friction(0f).density(0.1f));
@@ -414,6 +425,7 @@ public class GameEntityFactory implements EntityFactory {
         return FXGL.entityBuilder(data)
                 .type(EntityType.BUSH)
                 .bbox(new HitBox(BoundingShape.box(w, h)))
+                .collidable()
                 .build();
     }
 

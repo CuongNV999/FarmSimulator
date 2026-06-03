@@ -271,7 +271,9 @@ public class SaveLoadSystem {
                     String typeName = asd.type;
                     String spawnName = "";
                     if (typeName.equals("CHICKEN")) spawnName = "Chick";
-                    else if (typeName.equals("COW")) spawnName = "Calf";
+                    else if (typeName.equals("COW")) {
+                        spawnName = asd.daysGrown >= 7 ? "Bull" : "Calf";
+                    }
                     else if (typeName.equals("SHEEP")) spawnName = "Lamb";
                     else if (typeName.equals("PIG")) spawnName = "Piglet";
                     else if (typeName.equals("TURKEY")) spawnName = "Turkey";

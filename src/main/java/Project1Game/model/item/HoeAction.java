@@ -24,8 +24,6 @@ public class HoeAction implements Usable {
 
             if (!hasSoil) {
                 FXGL.spawn("Soil", selX, selY);
-                FXGL.getGameWorld().getEntitiesByType(EntityType.SOIL)
-                        .forEach(s -> s.getComponent(SoilComponent.class).updateTexture());
                 if (Project1Game.Main.getInstance() != null) {
                     Project1Game.Main.getInstance().drainHungerForWork(1.0);
                 }

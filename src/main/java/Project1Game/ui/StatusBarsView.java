@@ -16,10 +16,10 @@ import java.util.List;
 
 public class StatusBarsView extends Parent {
 
-    private static final double BAR_WIDTH = 300;
+    private static final int NUM_HEARTS = 9;
+    private static final double BAR_WIDTH = NUM_HEARTS * 32 + (NUM_HEARTS - 1) * 4;
     private static final double BAR_HEIGHT = 28;
     private static final double SPACING = 12;
-    private static final int NUM_HEARTS = 9;
 
     private final DoubleProperty health = new SimpleDoubleProperty(18);
     private final DoubleProperty maxHealth = new SimpleDoubleProperty(18);
@@ -32,7 +32,6 @@ public class StatusBarsView extends Parent {
     private final Texture halfHeart;
     private final Texture emptyHeart;
     private final Rectangle hungerFill;
-    private final Text hungerText;
 
     public StatusBarsView() {
         double y = 0;
@@ -56,40 +55,26 @@ public class StatusBarsView extends Parent {
             heartsContainer.getChildren().add(heart);
         }
 
-
-
         // --- Thanh thức ăn ---
         y += BAR_HEIGHT + SPACING;
-
-        Text hungerLabel = new Text("\uD83C\uDF5E Food");
-        hungerLabel.setFont(Font.font("Arial", 18));
-        hungerLabel.setFill(Color.WHITE);
-        hungerLabel.setTranslateY(y + 20);
 
         Rectangle hungerBg = new Rectangle(BAR_WIDTH, BAR_HEIGHT);
         hungerBg.setFill(Color.rgb(60, 60, 60, 0.8));
         hungerBg.setArcWidth(8);
         hungerBg.setArcHeight(8);
-        hungerBg.setTranslateX(70);
+        hungerBg.setTranslateX(0);
         hungerBg.setTranslateY(y);
 
         hungerFill = new Rectangle(BAR_WIDTH, BAR_HEIGHT);
         hungerFill.setFill(Color.rgb(200, 150, 30));
         hungerFill.setArcWidth(8);
         hungerFill.setArcHeight(8);
-        hungerFill.setTranslateX(70);
+        hungerFill.setTranslateX(0);
         hungerFill.setTranslateY(y);
-
-        hungerText = new Text("100 / 100");
-        hungerText.setFont(Font.font("Arial", 16));
-        hungerText.setFill(Color.WHITE);
-        hungerText.setTranslateX(70 + BAR_WIDTH / 2 - 35);
-        hungerText.setTranslateY(y + 20);
 
         getChildren().addAll(
                 heartsContainer,
-                hungerBg, hungerFill, hungerLabel, hungerText
-        );
+                hungerBg, hungerFill);
 
         // Bind fill width to property
         health.addListener((obs, oldVal, newVal) -> updateBars());
@@ -122,25 +107,50 @@ public class StatusBarsView extends Parent {
             }
         }
 
-
         double foodRatio = Math.max(0, Math.min(1, hunger.get() / maxHunger.get()));
         hungerFill.setWidth(BAR_WIDTH * foodRatio);
-        hungerText.setText((int) hunger.get() + " / " + (int) maxHunger.get());
+
     }
 
     // --- Getters / Setters ---
 
-    public double getHealth() { return health.get(); }
-    public void setHealth(double value) { health.set(value); }
-    public DoubleProperty healthProperty() { return health; }
+    public double getHealth() {
+        return health.get();
+    }
 
-    public double getMaxHealth() { return maxHealth.get(); }
-    public void setMaxHealth(double value) { maxHealth.set(value); }
+    public void setHealth(double value) {
+        health.set(value);
+    }
 
-    public double getHunger() { return hunger.get(); }
-    public void setHunger(double value) { hunger.set(value); }
-    public DoubleProperty hungerProperty() { return hunger; }
+    public DoubleProperty healthProperty() {
+        return health;
+    }
 
-    public double getMaxHunger() { return maxHunger.get(); }
-    public void setMaxHunger(double value) { maxHunger.set(value); }
+    public double getMaxHealth() {
+        return maxHealth.get();
+    }
+
+    public void setMaxHealth(double value) {
+        maxHealth.set(value);
+    }
+
+    public double getHunger() {
+        return hunger.get();
+    }
+
+    public void setHunger(double value) {
+        hunger.set(value);
+    }
+
+    public DoubleProperty hungerProperty() {
+        return hunger;
+    }
+
+    public double getMaxHunger() {
+        return maxHunger.get();
+    }
+
+    public void setMaxHunger(double value) {
+        maxHunger.set(value);
+    }
 }

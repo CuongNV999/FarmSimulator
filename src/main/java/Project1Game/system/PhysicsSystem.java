@@ -46,6 +46,20 @@ public class PhysicsSystem {
             }
         });
 
-        // Bạn có thể thêm các Handler khác vào đây (Water, v.v.)
+        // Va chạm Động vật (ANIMAL) và Bụi cây (BUSH) -> Động vật biến mất
+        FXGL.getPhysicsWorld().addCollisionHandler(new CollisionHandler(EntityType.ANIMAL, EntityType.BUSH) {
+            @Override
+            protected void onCollisionBegin(Entity animal, Entity bush) {
+                animal.removeFromWorld();
+            }
+        });
+
+        // Va chạm Quái vật (MONSTER) và Bụi cây (BUSH) -> Quái vật biến mất
+        FXGL.getPhysicsWorld().addCollisionHandler(new CollisionHandler(EntityType.MONSTER, EntityType.BUSH) {
+            @Override
+            protected void onCollisionBegin(Entity monster, Entity bush) {
+                monster.removeFromWorld();
+            }
+        });
     }
 }

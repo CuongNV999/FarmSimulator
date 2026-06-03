@@ -99,7 +99,7 @@ public class TradingView extends VBox {
     private StackPane foodTabBtn;
 
     private final List<ItemType> buyableAnimals = Arrays.asList(
-            ItemType.CHICK, ItemType.CALF, ItemType.LAMB, ItemType.PIGLET, ItemType.TURKEY
+            ItemType.CHICK, ItemType.CALF, ItemType.LAMB, ItemType.PIGLET, ItemType.TURKEY, ItemType.BULL
     );
 
     private final List<ItemType> sellableAnimals = Arrays.asList(
@@ -269,12 +269,12 @@ public class TradingView extends VBox {
      */
     private void handleNegotiation() {
         if (currentTrader == null) {
-            FXGL.getNotificationService().pushNotification("Không có Trader nào để thương lượng!");
+            Project1Game.Main.pushNotification("Không có Trader nào để thương lượng!");
             return;
         }
 
         if (currentTrader.hasNegotiatedThisSession()) {
-            FXGL.getNotificationService().pushNotification("Bạn đã thương lượng rồi! Mỗi lần vào shop chỉ được thương lượng 1 lần.");
+            Project1Game.Main.pushNotification("Bạn đã thương lượng rồi! Mỗi lần vào shop chỉ được thương lượng 1 lần.");
             return;
         }
 
@@ -284,12 +284,12 @@ public class TradingView extends VBox {
         if (success) {
             negotiationResultText.setText("✓ Thành công! Giảm " + requestedPercent + "%");
             negotiationResultText.setFill(Color.LIMEGREEN);
-            FXGL.getNotificationService().pushNotification("Thương lượng thành công! Giảm " + requestedPercent + "% giá!");
+            Project1Game.Main.pushNotification("Thương lượng thành công! Giảm " + requestedPercent + "% giá!");
         } else {
             int penalty = currentTrader.getNegotiationBonusPercent();
             negotiationResultText.setText("✗ Thất bại! Phạt " + Math.abs(penalty) + "%");
             negotiationResultText.setFill(Color.TOMATO);
-            FXGL.getNotificationService().pushNotification("Thương lượng thất bại! Bị phạt " + Math.abs(penalty) + "% giá!");
+            Project1Game.Main.pushNotification("Thương lượng thất bại! Bị phạt " + Math.abs(penalty) + "% giá!");
         }
 
         // Cập nhật lịch sử thương lượng
@@ -569,7 +569,7 @@ public class TradingView extends VBox {
 
     private void addToCart(ItemType itemType, boolean isBuying) {
         if (currentTrader != null && currentTrader.willRefuseTrade()) {
-            FXGL.getNotificationService().pushNotification("Trader đang bực bội và từ chối giao dịch!");
+            Project1Game.Main.pushNotification("Trader đang bực bội và từ chối giao dịch!");
             return;
         }
 
@@ -579,7 +579,7 @@ public class TradingView extends VBox {
                 if (!isBuying) {
                     int inventoryCount = inventory.getCount(itemType);
                     if (ci.quantity >= inventoryCount) {
-                        FXGL.getNotificationService().pushNotification("Không thể bán nhiều hơn số lượng trong kho đồ!");
+                        Project1Game.Main.pushNotification("Không thể bán nhiều hơn số lượng trong kho đồ!");
                         return;
                     }
                 }
@@ -593,7 +593,7 @@ public class TradingView extends VBox {
         if (!isBuying) {
             int inventoryCount = inventory.getCount(itemType);
             if (inventoryCount <= 0) {
-                FXGL.getNotificationService().pushNotification("Không có " + itemType.getDisplayName() + " để bán!");
+                Project1Game.Main.pushNotification("Không có " + itemType.getDisplayName() + " để bán!");
                 return;
             }
         }
@@ -766,7 +766,7 @@ public class TradingView extends VBox {
             if (!cartItem.isBuying) {
                 int inventoryCount = inventory.getCount(cartItem.itemType);
                 if (cartItem.quantity >= inventoryCount) {
-                    FXGL.getNotificationService().pushNotification("Không thể bán nhiều hơn số lượng trong kho đồ!");
+                    Project1Game.Main.pushNotification("Không thể bán nhiều hơn số lượng trong kho đồ!");
                     return;
                 }
             }
@@ -823,12 +823,12 @@ public class TradingView extends VBox {
 
     private void handleCheckout(int netCost) {
         if (cartItems.isEmpty()) {
-            FXGL.getNotificationService().pushNotification("Giỏ hàng của bạn đang trống!");
+            Project1Game.Main.pushNotification("Giỏ hàng của bạn đang trống!");
             return;
         }
 
         if (currentTrader != null && currentTrader.willRefuseTrade()) {
-            FXGL.getNotificationService().pushNotification("Trader đang bực bội và từ chối giao dịch!");
+            Project1Game.Main.pushNotification("Trader đang bực bội và từ chối giao dịch!");
             return;
         }
 
@@ -856,7 +856,7 @@ public class TradingView extends VBox {
                     }
                 }
                 if (remaining > 0) {
-                    FXGL.getNotificationService().pushNotification("Không đủ " + ci.itemType.getDisplayName() + " trong kho đồ!");
+                    Project1Game.Main.pushNotification("Không đủ " + ci.itemType.getDisplayName() + " trong kho đồ!");
                     return;
                 }
             }
@@ -885,7 +885,7 @@ public class TradingView extends VBox {
                     }
                 }
                 if (remaining > 0) {
-                    FXGL.getNotificationService().pushNotification("Kho đồ không đủ chỗ trống để chứa " + ci.itemType.getDisplayName() + "!");
+                    Project1Game.Main.pushNotification("Kho đồ không đủ chỗ trống để chứa " + ci.itemType.getDisplayName() + "!");
                     return;
                 }
             }
@@ -894,7 +894,7 @@ public class TradingView extends VBox {
         // 2. Kiểm tra tiền người chơi
         if (netCost > 0) {
             if (playerComponent.getMoney() < netCost) {
-                FXGL.getNotificationService().pushNotification("Bạn không đủ tiền để thực hiện giao dịch!");
+                Project1Game.Main.pushNotification("Bạn không đủ tiền để thực hiện giao dịch!");
                 if (currentTrader != null) {
                     currentTrader.updateRelationship(false, true);
                     relationshipText.setText("Mức quan hệ với Trader: " + currentTrader.getRelationship().name());
@@ -929,7 +929,7 @@ public class TradingView extends VBox {
         }
 
         // 4. Hoàn tất & cập nhật mối quan hệ
-        FXGL.getNotificationService().pushNotification("Giao dịch thành công!");
+        Project1Game.Main.pushNotification("Giao dịch thành công!");
         if (currentTrader != null) {
             currentTrader.updateRelationship(true, netCost > 0);
         }

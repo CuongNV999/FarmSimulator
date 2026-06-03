@@ -55,7 +55,7 @@ public class BushMonsterComponent extends Component {
                 state = State.RETURNING;
                 targetEntity = findClosestBush();
                 recalculatePath();
-                FXGL.getNotificationService().pushNotification("Quái vật đang quay trở lại bụi cây!");
+                // FXGL.getNotificationService().pushNotification("Quái vật đang quay trở lại bụi cây!");
                 return;
             }
 
@@ -161,7 +161,7 @@ public class BushMonsterComponent extends Component {
             if (targetEntity.getType() == EntityType.ANIMAL) {
                 // Consume Animal
                 targetEntity.removeFromWorld();
-                FXGL.getNotificationService().pushNotification("Quái vật đã ăn thịt động vật của bạn!");
+                Project1Game.Main.pushNotification("Quái vật đã ăn thịt động vật của bạn!");
                 targetEntity = null;
                 damageCooldown = 1.5;
             }
