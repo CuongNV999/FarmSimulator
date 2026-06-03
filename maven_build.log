@@ -1,0 +1,687 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ------------------------< org.example:Project1 >------------------------
+[INFO] Building Project1 1.0-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[WARNING] 6 problems were encountered while building the effective model for org.openjfx:javafx-graphics:jar:20.0.2 during dependency collection step for project (use -X to see details)
+[INFO] 
+[INFO] --- clean:3.2.0:clean (default-clean) @ Project1 ---
+[INFO] Deleting D:\GameDevelop\Project1\target
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ Project1 ---
+[INFO] Copying 50 resources from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.15.0:compile (default-compile) @ Project1 ---
+[INFO] Recompiling the module because of changed source code.
+[INFO] Compiling 41 source files with javac [debug release 11] to target\classes
+[INFO] Some messages have been simplified; recompile with -Xdiags:verbose to get full output
+[INFO] -------------------------------------------------------------
+[ERROR] COMPILATION ERROR : 
+[INFO] -------------------------------------------------------------
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/Main.java:[20,27] cannot access com.almasb.fxgl.app.GameApplication
+  bad class file: C:\Users\Admin\.m2\repository\com\github\almasb\fxgl\25\fxgl-25.jar(/com/almasb/fxgl/app/GameApplication.class)
+    class file has wrong version 69.0, should be 65.0
+    Please remove or make sure it appears in the correct subdirectory of the classpath.
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/Main.java:[23,30] cannot access com.almasb.fxgl.entity.Entity
+  bad class file: C:\Users\Admin\.m2\repository\com\github\almasb\fxgl-entity\25\fxgl-entity-25.jar(/com/almasb/fxgl/entity/Entity.class)
+    class file has wrong version 69.0, should be 65.0
+    Please remove or make sure it appears in the correct subdirectory of the classpath.
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/Main.java:[26,31] cannot access com.almasb.fxgl.physics.CollisionHandler
+  bad class file: C:\Users\Admin\.m2\repository\com\github\almasb\fxgl-entity\25\fxgl-entity-25.jar(/com/almasb/fxgl/physics/CollisionHandler.class)
+    class file has wrong version 69.0, should be 65.0
+    Please remove or make sure it appears in the correct subdirectory of the classpath.
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/Main.java:[27,31] cannot access com.almasb.fxgl.physics.PhysicsComponent
+  bad class file: C:\Users\Admin\.m2\repository\com\github\almasb\fxgl-entity\25\fxgl-entity-25.jar(/com/almasb/fxgl/physics/PhysicsComponent.class)
+    class file has wrong version 69.0, should be 65.0
+    Please remove or make sure it appears in the correct subdirectory of the classpath.
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/Main.java:[30,23] cannot access javafx.geometry.Point2D
+  bad class file: C:\Users\Admin\.m2\repository\org\openjfx\javafx-graphics\25.0.1\javafx-graphics-25.0.1-win.jar(/javafx/geometry/Point2D.class)
+    class file has wrong version 67.0, should be 65.0
+    Please remove or make sure it appears in the correct subdirectory of the classpath.
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/Main.java:[31,26] cannot access javafx.scene.input.KeyCode
+  bad class file: C:\Users\Admin\.m2\repository\org\openjfx\javafx-graphics\25.0.1\javafx-graphics-25.0.1-win.jar(/javafx/scene/input/KeyCode.class)
+    class file has wrong version 67.0, should be 65.0
+    Please remove or make sure it appears in the correct subdirectory of the classpath.
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/Main.java:[32,26] cannot access javafx.scene.input.MouseButton
+  bad class file: C:\Users\Admin\.m2\repository\org\openjfx\javafx-graphics\25.0.1\javafx-graphics-25.0.1-win.jar(/javafx/scene/input/MouseButton.class)
+    class file has wrong version 67.0, should be 65.0
+    Please remove or make sure it appears in the correct subdirectory of the classpath.
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/Main.java:[33,26] cannot access javafx.scene.input.ScrollEvent
+  bad class file: C:\Users\Admin\.m2\repository\org\openjfx\javafx-graphics\25.0.1\javafx-graphics-25.0.1-win.jar(/javafx/scene/input/ScrollEvent.class)
+    class file has wrong version 67.0, should be 65.0
+    Please remove or make sure it appears in the correct subdirectory of the classpath.
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/Main.java:[34,26] cannot access javafx.scene.shape.Rectangle
+  bad class file: C:\Users\Admin\.m2\repository\org\openjfx\javafx-graphics\25.0.1\javafx-graphics-25.0.1-win.jar(/javafx/scene/shape/Rectangle.class)
+    class file has wrong version 67.0, should be 65.0
+    Please remove or make sure it appears in the correct subdirectory of the classpath.
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/Main.java:[35,26] cannot access javafx.scene.paint.Color
+  bad class file: C:\Users\Admin\.m2\repository\org\openjfx\javafx-graphics\25.0.1\javafx-graphics-25.0.1-win.jar(/javafx/scene/paint/Color.class)
+    class file has wrong version 67.0, should be 65.0
+    Please remove or make sure it appears in the correct subdirectory of the classpath.
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/Main.java:[36,25] cannot access javafx.scene.text.Font
+  bad class file: C:\Users\Admin\.m2\repository\org\openjfx\javafx-graphics\25.0.1\javafx-graphics-25.0.1-win.jar(/javafx/scene/text/Font.class)
+    class file has wrong version 67.0, should be 65.0
+    Please remove or make sure it appears in the correct subdirectory of the classpath.
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/Main.java:[37,25] cannot access javafx.scene.text.FontWeight
+  bad class file: C:\Users\Admin\.m2\repository\org\openjfx\javafx-graphics\25.0.1\javafx-graphics-25.0.1-win.jar(/javafx/scene/text/FontWeight.class)
+    class file has wrong version 67.0, should be 65.0
+    Please remove or make sure it appears in the correct subdirectory of the classpath.
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/Main.java:[38,25] cannot access javafx.scene.text.Text
+  bad class file: C:\Users\Admin\.m2\repository\org\openjfx\javafx-graphics\25.0.1\javafx-graphics-25.0.1-win.jar(/javafx/scene/text/Text.class)
+    class file has wrong version 67.0, should be 65.0
+    Please remove or make sure it appears in the correct subdirectory of the classpath.
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/Main.java:[43,27] cannot find symbol
+  symbol: class GameApplication
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/Main.java:[45,13] cannot find symbol
+  symbol:   class Entity
+  location: class Project1Game.Main
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/Main.java:[46,13] cannot find symbol
+  symbol:   class Entity
+  location: class Project1Game.Main
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/model/Inventory.java:[4,29] cannot access javafx.beans.property.IntegerProperty
+  bad class file: C:\Users\Admin\.m2\repository\org\openjfx\javafx-base\25.0.1\javafx-base-25.0.1-win.jar(/javafx/beans/property/IntegerProperty.class)
+    class file has wrong version 67.0, should be 65.0
+    Please remove or make sure it appears in the correct subdirectory of the classpath.
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/model/Inventory.java:[5,29] cannot access javafx.beans.property.ObjectProperty
+  bad class file: C:\Users\Admin\.m2\repository\org\openjfx\javafx-base\25.0.1\javafx-base-25.0.1-win.jar(/javafx/beans/property/ObjectProperty.class)
+    class file has wrong version 67.0, should be 65.0
+    Please remove or make sure it appears in the correct subdirectory of the classpath.
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/model/Inventory.java:[6,29] cannot access javafx.beans.property.SimpleIntegerProperty
+  bad class file: C:\Users\Admin\.m2\repository\org\openjfx\javafx-base\25.0.1\javafx-base-25.0.1-win.jar(/javafx/beans/property/SimpleIntegerProperty.class)
+    class file has wrong version 67.0, should be 65.0
+    Please remove or make sure it appears in the correct subdirectory of the classpath.
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/model/Inventory.java:[7,29] cannot access javafx.beans.property.SimpleObjectProperty
+  bad class file: C:\Users\Admin\.m2\repository\org\openjfx\javafx-base\25.0.1\javafx-base-25.0.1-win.jar(/javafx/beans/property/SimpleObjectProperty.class)
+    class file has wrong version 67.0, should be 65.0
+    Please remove or make sure it appears in the correct subdirectory of the classpath.
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/ToolbarView.java:[9,28] cannot access javafx.beans.binding.Bindings
+  bad class file: C:\Users\Admin\.m2\repository\org\openjfx\javafx-base\25.0.1\javafx-base-25.0.1-win.jar(/javafx/beans/binding/Bindings.class)
+    class file has wrong version 67.0, should be 65.0
+    Please remove or make sure it appears in the correct subdirectory of the classpath.
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/ToolbarView.java:[10,23] cannot access javafx.geometry.Pos
+  bad class file: C:\Users\Admin\.m2\repository\org\openjfx\javafx-graphics\25.0.1\javafx-graphics-25.0.1-win.jar(/javafx/geometry/Pos.class)
+    class file has wrong version 67.0, should be 65.0
+    Please remove or make sure it appears in the correct subdirectory of the classpath.
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/ToolbarView.java:[11,26] cannot access javafx.scene.input.ClipboardContent
+  bad class file: C:\Users\Admin\.m2\repository\org\openjfx\javafx-graphics\25.0.1\javafx-graphics-25.0.1-win.jar(/javafx/scene/input/ClipboardContent.class)
+    class file has wrong version 67.0, should be 65.0
+    Please remove or make sure it appears in the correct subdirectory of the classpath.
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/ToolbarView.java:[12,26] cannot access javafx.scene.input.DragEvent
+  bad class file: C:\Users\Admin\.m2\repository\org\openjfx\javafx-graphics\25.0.1\javafx-graphics-25.0.1-win.jar(/javafx/scene/input/DragEvent.class)
+    class file has wrong version 67.0, should be 65.0
+    Please remove or make sure it appears in the correct subdirectory of the classpath.
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/ToolbarView.java:[13,26] cannot access javafx.scene.input.Dragboard
+  bad class file: C:\Users\Admin\.m2\repository\org\openjfx\javafx-graphics\25.0.1\javafx-graphics-25.0.1-win.jar(/javafx/scene/input/Dragboard.class)
+    class file has wrong version 67.0, should be 65.0
+    Please remove or make sure it appears in the correct subdirectory of the classpath.
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/ToolbarView.java:[14,26] cannot access javafx.scene.input.TransferMode
+  bad class file: C:\Users\Admin\.m2\repository\org\openjfx\javafx-graphics\25.0.1\javafx-graphics-25.0.1-win.jar(/javafx/scene/input/TransferMode.class)
+    class file has wrong version 67.0, should be 65.0
+    Please remove or make sure it appears in the correct subdirectory of the classpath.
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/ToolbarView.java:[15,27] cannot access javafx.scene.layout.HBox
+  bad class file: C:\Users\Admin\.m2\repository\org\openjfx\javafx-graphics\25.0.1\javafx-graphics-25.0.1-win.jar(/javafx/scene/layout/HBox.class)
+    class file has wrong version 67.0, should be 65.0
+    Please remove or make sure it appears in the correct subdirectory of the classpath.
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/ToolbarView.java:[16,27] cannot access javafx.scene.layout.StackPane
+  bad class file: C:\Users\Admin\.m2\repository\org\openjfx\javafx-graphics\25.0.1\javafx-graphics-25.0.1-win.jar(/javafx/scene/layout/StackPane.class)
+    class file has wrong version 67.0, should be 65.0
+    Please remove or make sure it appears in the correct subdirectory of the classpath.
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/ToolbarView.java:[22,34] cannot find symbol
+  symbol: class HBox
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/InventoryView.java:[10,23] cannot access javafx.geometry.Insets
+  bad class file: C:\Users\Admin\.m2\repository\org\openjfx\javafx-graphics\25.0.1\javafx-graphics-25.0.1-win.jar(/javafx/geometry/Insets.class)
+    class file has wrong version 67.0, should be 65.0
+    Please remove or make sure it appears in the correct subdirectory of the classpath.
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/InventoryView.java:[16,27] cannot access javafx.scene.layout.GridPane
+  bad class file: C:\Users\Admin\.m2\repository\org\openjfx\javafx-graphics\25.0.1\javafx-graphics-25.0.1-win.jar(/javafx/scene/layout/GridPane.class)
+    class file has wrong version 67.0, should be 65.0
+    Please remove or make sure it appears in the correct subdirectory of the classpath.
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/InventoryView.java:[18,27] cannot access javafx.scene.layout.VBox
+  bad class file: C:\Users\Admin\.m2\repository\org\openjfx\javafx-graphics\25.0.1\javafx-graphics-25.0.1-win.jar(/javafx/scene/layout/VBox.class)
+    class file has wrong version 67.0, should be 65.0
+    Please remove or make sure it appears in the correct subdirectory of the classpath.
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/InventoryView.java:[24,36] cannot find symbol
+  symbol: class VBox
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/StatusBarsView.java:[5,29] cannot access javafx.beans.property.DoubleProperty
+  bad class file: C:\Users\Admin\.m2\repository\org\openjfx\javafx-base\25.0.1\javafx-base-25.0.1-win.jar(/javafx/beans/property/DoubleProperty.class)
+    class file has wrong version 67.0, should be 65.0
+    Please remove or make sure it appears in the correct subdirectory of the classpath.
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/StatusBarsView.java:[6,29] cannot access javafx.beans.property.SimpleDoubleProperty
+  bad class file: C:\Users\Admin\.m2\repository\org\openjfx\javafx-base\25.0.1\javafx-base-25.0.1-win.jar(/javafx/beans/property/SimpleDoubleProperty.class)
+    class file has wrong version 67.0, should be 65.0
+    Please remove or make sure it appears in the correct subdirectory of the classpath.
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/StatusBarsView.java:[7,20] cannot access javafx.scene.Parent
+  bad class file: C:\Users\Admin\.m2\repository\org\openjfx\javafx-graphics\25.0.1\javafx-graphics-25.0.1-win.jar(/javafx/scene/Parent.class)
+    class file has wrong version 67.0, should be 65.0
+    Please remove or make sure it appears in the correct subdirectory of the classpath.
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/StatusBarsView.java:[17,37] cannot find symbol
+  symbol: class Parent
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/DialogView.java:[17,33] cannot find symbol
+  symbol: class Parent
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/MinimapView.java:[6,27] cannot access javafx.scene.canvas.Canvas
+  bad class file: C:\Users\Admin\.m2\repository\org\openjfx\javafx-graphics\25.0.1\javafx-graphics-25.0.1-win.jar(/javafx/scene/canvas/Canvas.class)
+    class file has wrong version 67.0, should be 65.0
+    Please remove or make sure it appears in the correct subdirectory of the classpath.
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/MinimapView.java:[7,27] cannot access javafx.scene.canvas.GraphicsContext
+  bad class file: C:\Users\Admin\.m2\repository\org\openjfx\javafx-graphics\25.0.1\javafx-graphics-25.0.1-win.jar(/javafx/scene/canvas/GraphicsContext.class)
+    class file has wrong version 67.0, should be 65.0
+    Please remove or make sure it appears in the correct subdirectory of the classpath.
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/MinimapView.java:[8,27] cannot access javafx.scene.layout.Pane
+  bad class file: C:\Users\Admin\.m2\repository\org\openjfx\javafx-graphics\25.0.1\javafx-graphics-25.0.1-win.jar(/javafx/scene/layout/Pane.class)
+    class file has wrong version 67.0, should be 65.0
+    Please remove or make sure it appears in the correct subdirectory of the classpath.
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/MinimapView.java:[14,34] cannot find symbol
+  symbol: class Pane
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/Main.java:[55,13] cannot find symbol
+  symbol:   class Text
+  location: class Project1Game.Main
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/TradingView.java:[25,34] cannot find symbol
+  symbol: class VBox
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/Main.java:[64,13] cannot find symbol
+  symbol:   class Rectangle
+  location: class Project1Game.Main
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/Main.java:[65,13] cannot find symbol
+  symbol:   class Text
+  location: class Project1Game.Main
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/Main.java:[68,13] cannot find symbol
+  symbol:   class Entity
+  location: class Project1Game.Main
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/Main.java:[69,13] cannot find symbol
+  symbol:   class Entity
+  location: class Project1Game.Main
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/Main.java:[70,13] cannot find symbol
+  symbol:   class Entity
+  location: class Project1Game.Main
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/system/FarmingSystem.java:[46,24] cannot find symbol
+  symbol:   class Entity
+  location: class Project1Game.system.FarmingSystem
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/system/FarmingSystem.java:[69,27] cannot find symbol
+  symbol:   class Entity
+  location: class Project1Game.system.FarmingSystem
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/system/FarmingSystem.java:[84,32] cannot find symbol
+  symbol:   class Entity
+  location: class Project1Game.system.FarmingSystem
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/system/FarmingSystem.java:[95,31] cannot find symbol
+  symbol:   class Entity
+  location: class Project1Game.system.FarmingSystem
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/system/TimeSystem.java:[15,19] cannot find symbol
+  symbol:   class Rectangle
+  location: class Project1Game.system.TimeSystem
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/system/TimeSystem.java:[16,19] cannot find symbol
+  symbol:   class Text
+  location: class Project1Game.system.TimeSystem
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/system/TimeSystem.java:[31,23] cannot find symbol
+  symbol:   class Rectangle
+  location: class Project1Game.system.TimeSystem
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/system/TimeSystem.java:[31,47] cannot find symbol
+  symbol:   class Text
+  location: class Project1Game.system.TimeSystem
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/component/player/PlayerComponent.java:[4,40] cannot access com.almasb.fxgl.entity.component.Component
+  bad class file: C:\Users\Admin\.m2\repository\com\github\almasb\fxgl-entity\25\fxgl-entity-25.jar(/com/almasb/fxgl/entity/component/Component.class)
+    class file has wrong version 69.0, should be 65.0
+    Please remove or make sure it appears in the correct subdirectory of the classpath.
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/component/player/PlayerComponent.java:[11,19] cannot access javafx.util.Duration
+  bad class file: C:\Users\Admin\.m2\repository\org\openjfx\javafx-base\25.0.1\javafx-base-25.0.1-win.jar(/javafx/util/Duration.class)
+    class file has wrong version 67.0, should be 65.0
+    Please remove or make sure it appears in the correct subdirectory of the classpath.
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/component/player/PlayerComponent.java:[13,38] cannot find symbol
+  symbol: class Component
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/component/TraderComponent.java:[9,38] cannot find symbol
+  symbol: class Component
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/TradingView.java:[35,19] cannot find symbol
+  symbol:   class VBox
+  location: class Project1Game.ui.TradingView
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/TradingView.java:[36,19] cannot find symbol
+  symbol:   class VBox
+  location: class Project1Game.ui.TradingView
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/TradingView.java:[37,19] cannot find symbol
+  symbol:   class Text
+  location: class Project1Game.ui.TradingView
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/TradingView.java:[109,13] cannot find symbol
+  symbol:   class VBox
+  location: class Project1Game.ui.TradingView
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/TradingView.java:[132,13] cannot find symbol
+  symbol:   class VBox
+  location: class Project1Game.ui.TradingView
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/TradingView.java:[155,13] cannot find symbol
+  symbol:   class StackPane
+  location: class Project1Game.ui.TradingView
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/component/TraderComponent.java:[11,19] cannot find symbol
+  symbol:   class ObjectProperty
+  location: class Project1Game.component.TraderComponent
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/component/TraderComponent.java:[25,12] cannot find symbol
+  symbol:   class ObjectProperty
+  location: class Project1Game.component.TraderComponent
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/component/player/PlayerComponent.java:[23,13] cannot find symbol
+  symbol:   class Point2D
+  location: class Project1Game.component.player.PlayerComponent
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/component/player/PlayerComponent.java:[27,19] cannot find symbol
+  symbol:   class IntegerProperty
+  location: class Project1Game.component.player.PlayerComponent
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/component/player/PlayerComponent.java:[136,12] cannot find symbol
+  symbol:   class IntegerProperty
+  location: class Project1Game.component.player.PlayerComponent
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/MinimapView.java:[22,13] cannot find symbol
+  symbol:   class Canvas
+  location: class Project1Game.ui.MinimapView
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/MinimapView.java:[23,13] cannot find symbol
+  symbol:   class GraphicsContext
+  location: class Project1Game.ui.MinimapView
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/MinimapView.java:[66,48] cannot find symbol
+  symbol:   class Color
+  location: class Project1Game.ui.MinimapView
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/DialogView.java:[21,19] cannot find symbol
+  symbol:   class Text
+  location: class Project1Game.ui.DialogView
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/DialogView.java:[22,19] cannot find symbol
+  symbol:   class Text
+  location: class Project1Game.ui.DialogView
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/StatusBarsView.java:[24,19] cannot find symbol
+  symbol:   class DoubleProperty
+  location: class Project1Game.ui.StatusBarsView
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/StatusBarsView.java:[25,19] cannot find symbol
+  symbol:   class DoubleProperty
+  location: class Project1Game.ui.StatusBarsView
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/StatusBarsView.java:[26,19] cannot find symbol
+  symbol:   class DoubleProperty
+  location: class Project1Game.ui.StatusBarsView
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/StatusBarsView.java:[27,19] cannot find symbol
+  symbol:   class DoubleProperty
+  location: class Project1Game.ui.StatusBarsView
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/StatusBarsView.java:[29,19] cannot find symbol
+  symbol:   class HBox
+  location: class Project1Game.ui.StatusBarsView
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/StatusBarsView.java:[34,19] cannot find symbol
+  symbol:   class Rectangle
+  location: class Project1Game.ui.StatusBarsView
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/StatusBarsView.java:[35,19] cannot find symbol
+  symbol:   class Text
+  location: class Project1Game.ui.StatusBarsView
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/StatusBarsView.java:[135,12] cannot find symbol
+  symbol:   class DoubleProperty
+  location: class Project1Game.ui.StatusBarsView
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/StatusBarsView.java:[142,12] cannot find symbol
+  symbol:   class DoubleProperty
+  location: class Project1Game.ui.StatusBarsView
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/InventoryView.java:[73,13] cannot find symbol
+  symbol:   class StackPane
+  location: class Project1Game.ui.InventoryView
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/model/InventorySlot.java:[10,19] cannot find symbol
+  symbol:   class ObjectProperty
+  location: class Project1Game.model.InventorySlot
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/model/InventorySlot.java:[11,19] cannot find symbol
+  symbol:   class IntegerProperty
+  location: class Project1Game.model.InventorySlot
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/model/InventorySlot.java:[17,12] cannot find symbol
+  symbol:   class ObjectProperty
+  location: class Project1Game.model.InventorySlot
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/model/InventorySlot.java:[29,12] cannot find symbol
+  symbol:   class IntegerProperty
+  location: class Project1Game.model.InventorySlot
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/ToolbarView.java:[26,19] cannot find symbol
+  symbol:   class StackPane
+  location: class Project1Game.ui.ToolbarView
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/ToolbarView.java:[45,13] cannot find symbol
+  symbol:   class StackPane
+  location: class Project1Game.ui.ToolbarView
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/model/Inventory.java:[96,12] cannot find symbol
+  symbol:   class IntegerProperty
+  location: class Project1Game.model.Inventory
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/component/NPCAnimationComponent.java:[9,44] cannot find symbol
+  symbol: class Component
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/component/NPCBehaviorComponent.java:[10,43] cannot find symbol
+  symbol: class Component
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/component/NPCBehaviorComponent.java:[11,13] cannot find symbol
+  symbol:   class PhysicsComponent
+  location: class Project1Game.component.NPCBehaviorComponent
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/component/NPCBehaviorComponent.java:[14,13] cannot find symbol
+  symbol:   class Point2D
+  location: class Project1Game.component.NPCBehaviorComponent
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/component/NPCBehaviorComponent.java:[15,13] cannot find symbol
+  symbol:   class Point2D
+  location: class Project1Game.component.NPCBehaviorComponent
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/component/NPCBehaviorComponent.java:[21,13] cannot find symbol
+  symbol:   class Point2D
+  location: class Project1Game.component.NPCBehaviorComponent
+[INFO] 100 errors 
+[INFO] -------------------------------------------------------------
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  1.854 s
+[INFO] Finished at: 2026-05-29T12:49:28+07:00
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-compiler-plugin:3.15.0:compile (default-compile) on project Project1: Compilation failure: Compilation failure: 
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/Main.java:[20,27] cannot access com.almasb.fxgl.app.GameApplication
+[ERROR]   bad class file: C:\Users\Admin\.m2\repository\com\github\almasb\fxgl\25\fxgl-25.jar(/com/almasb/fxgl/app/GameApplication.class)
+[ERROR]     class file has wrong version 69.0, should be 65.0
+[ERROR]     Please remove or make sure it appears in the correct subdirectory of the classpath.
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/Main.java:[23,30] cannot access com.almasb.fxgl.entity.Entity
+[ERROR]   bad class file: C:\Users\Admin\.m2\repository\com\github\almasb\fxgl-entity\25\fxgl-entity-25.jar(/com/almasb/fxgl/entity/Entity.class)
+[ERROR]     class file has wrong version 69.0, should be 65.0
+[ERROR]     Please remove or make sure it appears in the correct subdirectory of the classpath.
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/Main.java:[26,31] cannot access com.almasb.fxgl.physics.CollisionHandler
+[ERROR]   bad class file: C:\Users\Admin\.m2\repository\com\github\almasb\fxgl-entity\25\fxgl-entity-25.jar(/com/almasb/fxgl/physics/CollisionHandler.class)
+[ERROR]     class file has wrong version 69.0, should be 65.0
+[ERROR]     Please remove or make sure it appears in the correct subdirectory of the classpath.
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/Main.java:[27,31] cannot access com.almasb.fxgl.physics.PhysicsComponent
+[ERROR]   bad class file: C:\Users\Admin\.m2\repository\com\github\almasb\fxgl-entity\25\fxgl-entity-25.jar(/com/almasb/fxgl/physics/PhysicsComponent.class)
+[ERROR]     class file has wrong version 69.0, should be 65.0
+[ERROR]     Please remove or make sure it appears in the correct subdirectory of the classpath.
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/Main.java:[30,23] cannot access javafx.geometry.Point2D
+[ERROR]   bad class file: C:\Users\Admin\.m2\repository\org\openjfx\javafx-graphics\25.0.1\javafx-graphics-25.0.1-win.jar(/javafx/geometry/Point2D.class)
+[ERROR]     class file has wrong version 67.0, should be 65.0
+[ERROR]     Please remove or make sure it appears in the correct subdirectory of the classpath.
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/Main.java:[31,26] cannot access javafx.scene.input.KeyCode
+[ERROR]   bad class file: C:\Users\Admin\.m2\repository\org\openjfx\javafx-graphics\25.0.1\javafx-graphics-25.0.1-win.jar(/javafx/scene/input/KeyCode.class)
+[ERROR]     class file has wrong version 67.0, should be 65.0
+[ERROR]     Please remove or make sure it appears in the correct subdirectory of the classpath.
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/Main.java:[32,26] cannot access javafx.scene.input.MouseButton
+[ERROR]   bad class file: C:\Users\Admin\.m2\repository\org\openjfx\javafx-graphics\25.0.1\javafx-graphics-25.0.1-win.jar(/javafx/scene/input/MouseButton.class)
+[ERROR]     class file has wrong version 67.0, should be 65.0
+[ERROR]     Please remove or make sure it appears in the correct subdirectory of the classpath.
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/Main.java:[33,26] cannot access javafx.scene.input.ScrollEvent
+[ERROR]   bad class file: C:\Users\Admin\.m2\repository\org\openjfx\javafx-graphics\25.0.1\javafx-graphics-25.0.1-win.jar(/javafx/scene/input/ScrollEvent.class)
+[ERROR]     class file has wrong version 67.0, should be 65.0
+[ERROR]     Please remove or make sure it appears in the correct subdirectory of the classpath.
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/Main.java:[34,26] cannot access javafx.scene.shape.Rectangle
+[ERROR]   bad class file: C:\Users\Admin\.m2\repository\org\openjfx\javafx-graphics\25.0.1\javafx-graphics-25.0.1-win.jar(/javafx/scene/shape/Rectangle.class)
+[ERROR]     class file has wrong version 67.0, should be 65.0
+[ERROR]     Please remove or make sure it appears in the correct subdirectory of the classpath.
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/Main.java:[35,26] cannot access javafx.scene.paint.Color
+[ERROR]   bad class file: C:\Users\Admin\.m2\repository\org\openjfx\javafx-graphics\25.0.1\javafx-graphics-25.0.1-win.jar(/javafx/scene/paint/Color.class)
+[ERROR]     class file has wrong version 67.0, should be 65.0
+[ERROR]     Please remove or make sure it appears in the correct subdirectory of the classpath.
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/Main.java:[36,25] cannot access javafx.scene.text.Font
+[ERROR]   bad class file: C:\Users\Admin\.m2\repository\org\openjfx\javafx-graphics\25.0.1\javafx-graphics-25.0.1-win.jar(/javafx/scene/text/Font.class)
+[ERROR]     class file has wrong version 67.0, should be 65.0
+[ERROR]     Please remove or make sure it appears in the correct subdirectory of the classpath.
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/Main.java:[37,25] cannot access javafx.scene.text.FontWeight
+[ERROR]   bad class file: C:\Users\Admin\.m2\repository\org\openjfx\javafx-graphics\25.0.1\javafx-graphics-25.0.1-win.jar(/javafx/scene/text/FontWeight.class)
+[ERROR]     class file has wrong version 67.0, should be 65.0
+[ERROR]     Please remove or make sure it appears in the correct subdirectory of the classpath.
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/Main.java:[38,25] cannot access javafx.scene.text.Text
+[ERROR]   bad class file: C:\Users\Admin\.m2\repository\org\openjfx\javafx-graphics\25.0.1\javafx-graphics-25.0.1-win.jar(/javafx/scene/text/Text.class)
+[ERROR]     class file has wrong version 67.0, should be 65.0
+[ERROR]     Please remove or make sure it appears in the correct subdirectory of the classpath.
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/Main.java:[43,27] cannot find symbol
+[ERROR]   symbol: class GameApplication
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/Main.java:[45,13] cannot find symbol
+[ERROR]   symbol:   class Entity
+[ERROR]   location: class Project1Game.Main
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/Main.java:[46,13] cannot find symbol
+[ERROR]   symbol:   class Entity
+[ERROR]   location: class Project1Game.Main
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/model/Inventory.java:[4,29] cannot access javafx.beans.property.IntegerProperty
+[ERROR]   bad class file: C:\Users\Admin\.m2\repository\org\openjfx\javafx-base\25.0.1\javafx-base-25.0.1-win.jar(/javafx/beans/property/IntegerProperty.class)
+[ERROR]     class file has wrong version 67.0, should be 65.0
+[ERROR]     Please remove or make sure it appears in the correct subdirectory of the classpath.
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/model/Inventory.java:[5,29] cannot access javafx.beans.property.ObjectProperty
+[ERROR]   bad class file: C:\Users\Admin\.m2\repository\org\openjfx\javafx-base\25.0.1\javafx-base-25.0.1-win.jar(/javafx/beans/property/ObjectProperty.class)
+[ERROR]     class file has wrong version 67.0, should be 65.0
+[ERROR]     Please remove or make sure it appears in the correct subdirectory of the classpath.
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/model/Inventory.java:[6,29] cannot access javafx.beans.property.SimpleIntegerProperty
+[ERROR]   bad class file: C:\Users\Admin\.m2\repository\org\openjfx\javafx-base\25.0.1\javafx-base-25.0.1-win.jar(/javafx/beans/property/SimpleIntegerProperty.class)
+[ERROR]     class file has wrong version 67.0, should be 65.0
+[ERROR]     Please remove or make sure it appears in the correct subdirectory of the classpath.
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/model/Inventory.java:[7,29] cannot access javafx.beans.property.SimpleObjectProperty
+[ERROR]   bad class file: C:\Users\Admin\.m2\repository\org\openjfx\javafx-base\25.0.1\javafx-base-25.0.1-win.jar(/javafx/beans/property/SimpleObjectProperty.class)
+[ERROR]     class file has wrong version 67.0, should be 65.0
+[ERROR]     Please remove or make sure it appears in the correct subdirectory of the classpath.
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/ToolbarView.java:[9,28] cannot access javafx.beans.binding.Bindings
+[ERROR]   bad class file: C:\Users\Admin\.m2\repository\org\openjfx\javafx-base\25.0.1\javafx-base-25.0.1-win.jar(/javafx/beans/binding/Bindings.class)
+[ERROR]     class file has wrong version 67.0, should be 65.0
+[ERROR]     Please remove or make sure it appears in the correct subdirectory of the classpath.
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/ToolbarView.java:[10,23] cannot access javafx.geometry.Pos
+[ERROR]   bad class file: C:\Users\Admin\.m2\repository\org\openjfx\javafx-graphics\25.0.1\javafx-graphics-25.0.1-win.jar(/javafx/geometry/Pos.class)
+[ERROR]     class file has wrong version 67.0, should be 65.0
+[ERROR]     Please remove or make sure it appears in the correct subdirectory of the classpath.
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/ToolbarView.java:[11,26] cannot access javafx.scene.input.ClipboardContent
+[ERROR]   bad class file: C:\Users\Admin\.m2\repository\org\openjfx\javafx-graphics\25.0.1\javafx-graphics-25.0.1-win.jar(/javafx/scene/input/ClipboardContent.class)
+[ERROR]     class file has wrong version 67.0, should be 65.0
+[ERROR]     Please remove or make sure it appears in the correct subdirectory of the classpath.
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/ToolbarView.java:[12,26] cannot access javafx.scene.input.DragEvent
+[ERROR]   bad class file: C:\Users\Admin\.m2\repository\org\openjfx\javafx-graphics\25.0.1\javafx-graphics-25.0.1-win.jar(/javafx/scene/input/DragEvent.class)
+[ERROR]     class file has wrong version 67.0, should be 65.0
+[ERROR]     Please remove or make sure it appears in the correct subdirectory of the classpath.
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/ToolbarView.java:[13,26] cannot access javafx.scene.input.Dragboard
+[ERROR]   bad class file: C:\Users\Admin\.m2\repository\org\openjfx\javafx-graphics\25.0.1\javafx-graphics-25.0.1-win.jar(/javafx/scene/input/Dragboard.class)
+[ERROR]     class file has wrong version 67.0, should be 65.0
+[ERROR]     Please remove or make sure it appears in the correct subdirectory of the classpath.
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/ToolbarView.java:[14,26] cannot access javafx.scene.input.TransferMode
+[ERROR]   bad class file: C:\Users\Admin\.m2\repository\org\openjfx\javafx-graphics\25.0.1\javafx-graphics-25.0.1-win.jar(/javafx/scene/input/TransferMode.class)
+[ERROR]     class file has wrong version 67.0, should be 65.0
+[ERROR]     Please remove or make sure it appears in the correct subdirectory of the classpath.
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/ToolbarView.java:[15,27] cannot access javafx.scene.layout.HBox
+[ERROR]   bad class file: C:\Users\Admin\.m2\repository\org\openjfx\javafx-graphics\25.0.1\javafx-graphics-25.0.1-win.jar(/javafx/scene/layout/HBox.class)
+[ERROR]     class file has wrong version 67.0, should be 65.0
+[ERROR]     Please remove or make sure it appears in the correct subdirectory of the classpath.
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/ToolbarView.java:[16,27] cannot access javafx.scene.layout.StackPane
+[ERROR]   bad class file: C:\Users\Admin\.m2\repository\org\openjfx\javafx-graphics\25.0.1\javafx-graphics-25.0.1-win.jar(/javafx/scene/layout/StackPane.class)
+[ERROR]     class file has wrong version 67.0, should be 65.0
+[ERROR]     Please remove or make sure it appears in the correct subdirectory of the classpath.
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/ToolbarView.java:[22,34] cannot find symbol
+[ERROR]   symbol: class HBox
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/InventoryView.java:[10,23] cannot access javafx.geometry.Insets
+[ERROR]   bad class file: C:\Users\Admin\.m2\repository\org\openjfx\javafx-graphics\25.0.1\javafx-graphics-25.0.1-win.jar(/javafx/geometry/Insets.class)
+[ERROR]     class file has wrong version 67.0, should be 65.0
+[ERROR]     Please remove or make sure it appears in the correct subdirectory of the classpath.
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/InventoryView.java:[16,27] cannot access javafx.scene.layout.GridPane
+[ERROR]   bad class file: C:\Users\Admin\.m2\repository\org\openjfx\javafx-graphics\25.0.1\javafx-graphics-25.0.1-win.jar(/javafx/scene/layout/GridPane.class)
+[ERROR]     class file has wrong version 67.0, should be 65.0
+[ERROR]     Please remove or make sure it appears in the correct subdirectory of the classpath.
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/InventoryView.java:[18,27] cannot access javafx.scene.layout.VBox
+[ERROR]   bad class file: C:\Users\Admin\.m2\repository\org\openjfx\javafx-graphics\25.0.1\javafx-graphics-25.0.1-win.jar(/javafx/scene/layout/VBox.class)
+[ERROR]     class file has wrong version 67.0, should be 65.0
+[ERROR]     Please remove or make sure it appears in the correct subdirectory of the classpath.
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/InventoryView.java:[24,36] cannot find symbol
+[ERROR]   symbol: class VBox
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/StatusBarsView.java:[5,29] cannot access javafx.beans.property.DoubleProperty
+[ERROR]   bad class file: C:\Users\Admin\.m2\repository\org\openjfx\javafx-base\25.0.1\javafx-base-25.0.1-win.jar(/javafx/beans/property/DoubleProperty.class)
+[ERROR]     class file has wrong version 67.0, should be 65.0
+[ERROR]     Please remove or make sure it appears in the correct subdirectory of the classpath.
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/StatusBarsView.java:[6,29] cannot access javafx.beans.property.SimpleDoubleProperty
+[ERROR]   bad class file: C:\Users\Admin\.m2\repository\org\openjfx\javafx-base\25.0.1\javafx-base-25.0.1-win.jar(/javafx/beans/property/SimpleDoubleProperty.class)
+[ERROR]     class file has wrong version 67.0, should be 65.0
+[ERROR]     Please remove or make sure it appears in the correct subdirectory of the classpath.
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/StatusBarsView.java:[7,20] cannot access javafx.scene.Parent
+[ERROR]   bad class file: C:\Users\Admin\.m2\repository\org\openjfx\javafx-graphics\25.0.1\javafx-graphics-25.0.1-win.jar(/javafx/scene/Parent.class)
+[ERROR]     class file has wrong version 67.0, should be 65.0
+[ERROR]     Please remove or make sure it appears in the correct subdirectory of the classpath.
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/StatusBarsView.java:[17,37] cannot find symbol
+[ERROR]   symbol: class Parent
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/DialogView.java:[17,33] cannot find symbol
+[ERROR]   symbol: class Parent
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/MinimapView.java:[6,27] cannot access javafx.scene.canvas.Canvas
+[ERROR]   bad class file: C:\Users\Admin\.m2\repository\org\openjfx\javafx-graphics\25.0.1\javafx-graphics-25.0.1-win.jar(/javafx/scene/canvas/Canvas.class)
+[ERROR]     class file has wrong version 67.0, should be 65.0
+[ERROR]     Please remove or make sure it appears in the correct subdirectory of the classpath.
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/MinimapView.java:[7,27] cannot access javafx.scene.canvas.GraphicsContext
+[ERROR]   bad class file: C:\Users\Admin\.m2\repository\org\openjfx\javafx-graphics\25.0.1\javafx-graphics-25.0.1-win.jar(/javafx/scene/canvas/GraphicsContext.class)
+[ERROR]     class file has wrong version 67.0, should be 65.0
+[ERROR]     Please remove or make sure it appears in the correct subdirectory of the classpath.
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/MinimapView.java:[8,27] cannot access javafx.scene.layout.Pane
+[ERROR]   bad class file: C:\Users\Admin\.m2\repository\org\openjfx\javafx-graphics\25.0.1\javafx-graphics-25.0.1-win.jar(/javafx/scene/layout/Pane.class)
+[ERROR]     class file has wrong version 67.0, should be 65.0
+[ERROR]     Please remove or make sure it appears in the correct subdirectory of the classpath.
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/MinimapView.java:[14,34] cannot find symbol
+[ERROR]   symbol: class Pane
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/Main.java:[55,13] cannot find symbol
+[ERROR]   symbol:   class Text
+[ERROR]   location: class Project1Game.Main
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/TradingView.java:[25,34] cannot find symbol
+[ERROR]   symbol: class VBox
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/Main.java:[64,13] cannot find symbol
+[ERROR]   symbol:   class Rectangle
+[ERROR]   location: class Project1Game.Main
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/Main.java:[65,13] cannot find symbol
+[ERROR]   symbol:   class Text
+[ERROR]   location: class Project1Game.Main
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/Main.java:[68,13] cannot find symbol
+[ERROR]   symbol:   class Entity
+[ERROR]   location: class Project1Game.Main
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/Main.java:[69,13] cannot find symbol
+[ERROR]   symbol:   class Entity
+[ERROR]   location: class Project1Game.Main
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/Main.java:[70,13] cannot find symbol
+[ERROR]   symbol:   class Entity
+[ERROR]   location: class Project1Game.Main
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/system/FarmingSystem.java:[46,24] cannot find symbol
+[ERROR]   symbol:   class Entity
+[ERROR]   location: class Project1Game.system.FarmingSystem
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/system/FarmingSystem.java:[69,27] cannot find symbol
+[ERROR]   symbol:   class Entity
+[ERROR]   location: class Project1Game.system.FarmingSystem
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/system/FarmingSystem.java:[84,32] cannot find symbol
+[ERROR]   symbol:   class Entity
+[ERROR]   location: class Project1Game.system.FarmingSystem
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/system/FarmingSystem.java:[95,31] cannot find symbol
+[ERROR]   symbol:   class Entity
+[ERROR]   location: class Project1Game.system.FarmingSystem
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/system/TimeSystem.java:[15,19] cannot find symbol
+[ERROR]   symbol:   class Rectangle
+[ERROR]   location: class Project1Game.system.TimeSystem
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/system/TimeSystem.java:[16,19] cannot find symbol
+[ERROR]   symbol:   class Text
+[ERROR]   location: class Project1Game.system.TimeSystem
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/system/TimeSystem.java:[31,23] cannot find symbol
+[ERROR]   symbol:   class Rectangle
+[ERROR]   location: class Project1Game.system.TimeSystem
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/system/TimeSystem.java:[31,47] cannot find symbol
+[ERROR]   symbol:   class Text
+[ERROR]   location: class Project1Game.system.TimeSystem
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/component/player/PlayerComponent.java:[4,40] cannot access com.almasb.fxgl.entity.component.Component
+[ERROR]   bad class file: C:\Users\Admin\.m2\repository\com\github\almasb\fxgl-entity\25\fxgl-entity-25.jar(/com/almasb/fxgl/entity/component/Component.class)
+[ERROR]     class file has wrong version 69.0, should be 65.0
+[ERROR]     Please remove or make sure it appears in the correct subdirectory of the classpath.
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/component/player/PlayerComponent.java:[11,19] cannot access javafx.util.Duration
+[ERROR]   bad class file: C:\Users\Admin\.m2\repository\org\openjfx\javafx-base\25.0.1\javafx-base-25.0.1-win.jar(/javafx/util/Duration.class)
+[ERROR]     class file has wrong version 67.0, should be 65.0
+[ERROR]     Please remove or make sure it appears in the correct subdirectory of the classpath.
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/component/player/PlayerComponent.java:[13,38] cannot find symbol
+[ERROR]   symbol: class Component
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/component/TraderComponent.java:[9,38] cannot find symbol
+[ERROR]   symbol: class Component
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/TradingView.java:[35,19] cannot find symbol
+[ERROR]   symbol:   class VBox
+[ERROR]   location: class Project1Game.ui.TradingView
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/TradingView.java:[36,19] cannot find symbol
+[ERROR]   symbol:   class VBox
+[ERROR]   location: class Project1Game.ui.TradingView
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/TradingView.java:[37,19] cannot find symbol
+[ERROR]   symbol:   class Text
+[ERROR]   location: class Project1Game.ui.TradingView
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/TradingView.java:[109,13] cannot find symbol
+[ERROR]   symbol:   class VBox
+[ERROR]   location: class Project1Game.ui.TradingView
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/TradingView.java:[132,13] cannot find symbol
+[ERROR]   symbol:   class VBox
+[ERROR]   location: class Project1Game.ui.TradingView
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/TradingView.java:[155,13] cannot find symbol
+[ERROR]   symbol:   class StackPane
+[ERROR]   location: class Project1Game.ui.TradingView
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/component/TraderComponent.java:[11,19] cannot find symbol
+[ERROR]   symbol:   class ObjectProperty
+[ERROR]   location: class Project1Game.component.TraderComponent
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/component/TraderComponent.java:[25,12] cannot find symbol
+[ERROR]   symbol:   class ObjectProperty
+[ERROR]   location: class Project1Game.component.TraderComponent
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/component/player/PlayerComponent.java:[23,13] cannot find symbol
+[ERROR]   symbol:   class Point2D
+[ERROR]   location: class Project1Game.component.player.PlayerComponent
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/component/player/PlayerComponent.java:[27,19] cannot find symbol
+[ERROR]   symbol:   class IntegerProperty
+[ERROR]   location: class Project1Game.component.player.PlayerComponent
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/component/player/PlayerComponent.java:[136,12] cannot find symbol
+[ERROR]   symbol:   class IntegerProperty
+[ERROR]   location: class Project1Game.component.player.PlayerComponent
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/MinimapView.java:[22,13] cannot find symbol
+[ERROR]   symbol:   class Canvas
+[ERROR]   location: class Project1Game.ui.MinimapView
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/MinimapView.java:[23,13] cannot find symbol
+[ERROR]   symbol:   class GraphicsContext
+[ERROR]   location: class Project1Game.ui.MinimapView
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/MinimapView.java:[66,48] cannot find symbol
+[ERROR]   symbol:   class Color
+[ERROR]   location: class Project1Game.ui.MinimapView
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/DialogView.java:[21,19] cannot find symbol
+[ERROR]   symbol:   class Text
+[ERROR]   location: class Project1Game.ui.DialogView
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/DialogView.java:[22,19] cannot find symbol
+[ERROR]   symbol:   class Text
+[ERROR]   location: class Project1Game.ui.DialogView
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/StatusBarsView.java:[24,19] cannot find symbol
+[ERROR]   symbol:   class DoubleProperty
+[ERROR]   location: class Project1Game.ui.StatusBarsView
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/StatusBarsView.java:[25,19] cannot find symbol
+[ERROR]   symbol:   class DoubleProperty
+[ERROR]   location: class Project1Game.ui.StatusBarsView
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/StatusBarsView.java:[26,19] cannot find symbol
+[ERROR]   symbol:   class DoubleProperty
+[ERROR]   location: class Project1Game.ui.StatusBarsView
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/StatusBarsView.java:[27,19] cannot find symbol
+[ERROR]   symbol:   class DoubleProperty
+[ERROR]   location: class Project1Game.ui.StatusBarsView
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/StatusBarsView.java:[29,19] cannot find symbol
+[ERROR]   symbol:   class HBox
+[ERROR]   location: class Project1Game.ui.StatusBarsView
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/StatusBarsView.java:[34,19] cannot find symbol
+[ERROR]   symbol:   class Rectangle
+[ERROR]   location: class Project1Game.ui.StatusBarsView
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/StatusBarsView.java:[35,19] cannot find symbol
+[ERROR]   symbol:   class Text
+[ERROR]   location: class Project1Game.ui.StatusBarsView
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/StatusBarsView.java:[135,12] cannot find symbol
+[ERROR]   symbol:   class DoubleProperty
+[ERROR]   location: class Project1Game.ui.StatusBarsView
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/StatusBarsView.java:[142,12] cannot find symbol
+[ERROR]   symbol:   class DoubleProperty
+[ERROR]   location: class Project1Game.ui.StatusBarsView
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/InventoryView.java:[73,13] cannot find symbol
+[ERROR]   symbol:   class StackPane
+[ERROR]   location: class Project1Game.ui.InventoryView
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/model/InventorySlot.java:[10,19] cannot find symbol
+[ERROR]   symbol:   class ObjectProperty
+[ERROR]   location: class Project1Game.model.InventorySlot
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/model/InventorySlot.java:[11,19] cannot find symbol
+[ERROR]   symbol:   class IntegerProperty
+[ERROR]   location: class Project1Game.model.InventorySlot
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/model/InventorySlot.java:[17,12] cannot find symbol
+[ERROR]   symbol:   class ObjectProperty
+[ERROR]   location: class Project1Game.model.InventorySlot
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/model/InventorySlot.java:[29,12] cannot find symbol
+[ERROR]   symbol:   class IntegerProperty
+[ERROR]   location: class Project1Game.model.InventorySlot
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/ToolbarView.java:[26,19] cannot find symbol
+[ERROR]   symbol:   class StackPane
+[ERROR]   location: class Project1Game.ui.ToolbarView
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/ui/ToolbarView.java:[45,13] cannot find symbol
+[ERROR]   symbol:   class StackPane
+[ERROR]   location: class Project1Game.ui.ToolbarView
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/model/Inventory.java:[96,12] cannot find symbol
+[ERROR]   symbol:   class IntegerProperty
+[ERROR]   location: class Project1Game.model.Inventory
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/component/NPCAnimationComponent.java:[9,44] cannot find symbol
+[ERROR]   symbol: class Component
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/component/NPCBehaviorComponent.java:[10,43] cannot find symbol
+[ERROR]   symbol: class Component
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/component/NPCBehaviorComponent.java:[11,13] cannot find symbol
+[ERROR]   symbol:   class PhysicsComponent
+[ERROR]   location: class Project1Game.component.NPCBehaviorComponent
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/component/NPCBehaviorComponent.java:[14,13] cannot find symbol
+[ERROR]   symbol:   class Point2D
+[ERROR]   location: class Project1Game.component.NPCBehaviorComponent
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/component/NPCBehaviorComponent.java:[15,13] cannot find symbol
+[ERROR]   symbol:   class Point2D
+[ERROR]   location: class Project1Game.component.NPCBehaviorComponent
+[ERROR] /D:/GameDevelop/Project1/src/main/java/Project1Game/component/NPCBehaviorComponent.java:[21,13] cannot find symbol
+[ERROR]   symbol:   class Point2D
+[ERROR]   location: class Project1Game.component.NPCBehaviorComponent
+[ERROR] -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException
