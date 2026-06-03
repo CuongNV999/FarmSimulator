@@ -16,8 +16,8 @@ public class MinimapView extends Pane {
     private final int MINI_H = 150;
 
     // Kích thước thực tế của Map (lấy từ thông số bạn cung cấp)
-    private final double WORLD_W = 3840;
-    private final double WORLD_H = 2176;
+    private final double WORLD_W = 3520;
+    private final double WORLD_H = 2048;
 
     private Canvas canvas;
     private GraphicsContext gc;

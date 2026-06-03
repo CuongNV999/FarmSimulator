@@ -40,8 +40,25 @@ public class SoilComponent extends Component {
         entity.getViewComponent().addChild(currentState.getTexture(entity.getX()));
     }
 
+    private javafx.event.EventHandler<Project1Game.system.DayNightEvent> dayHandler;
+
     @Override
     public void onAdded() {
         updateTexture();
+
+        dayHandler = e -> {
+            boolean isRaining = (Project1Game.system.WeatherSystem.getCurrentWeather() == Project1Game.system.WeatherSystem.Weather.RAINY);
+            if (!isRaining && !hasPlant) {
+                setWet(false);
+            }
+        };
+        com.almasb.fxgl.dsl.FXGL.getEventBus().addEventHandler(Project1Game.system.DayNightEvent.SET_DAY, dayHandler);
+    }
+
+    @Override
+    public void onRemoved() {
+        if (dayHandler != null) {
+            com.almasb.fxgl.dsl.FXGL.getEventBus().removeEventHandler(Project1Game.system.DayNightEvent.SET_DAY, dayHandler);
+        }
     }
 }

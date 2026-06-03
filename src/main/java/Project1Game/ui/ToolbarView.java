@@ -57,7 +57,7 @@ public class ToolbarView extends HBox {
         pane.getChildren().add(bg);
 
         // Icon vật phẩm
-        Texture icon = new Texture(FXGL.image("empty.png")); // Icon mặc định trống
+        Texture icon = new Texture(new javafx.scene.image.WritableImage(1, 1)); // Icon mặc định trống
         icon.setFitWidth(50);
         icon.setFitHeight(50);
         icon.setPreserveRatio(true);
@@ -68,13 +68,15 @@ public class ToolbarView extends HBox {
                 Bindings.createObjectBinding(() -> {
                     ItemType itemType = inventorySlot.getItemType();
                     if (itemType != null && itemType.getIconName() != null && !itemType.getIconName().isEmpty()) {
-                        if (itemType.getIconName().startsWith("Animal/")) {
-                            return Project1Game.component.farming.BaseAnimalComponent.extractFaceDownIdleImage(itemType.getIconName());
+                        if (itemType.getIconName().startsWith("food:")) {
+                            return ItemType.extractFoodImage(itemType.getIconName());
+                        } else if (itemType.getIconName().startsWith("Animal/")) {
+                            return Project1Game.component.farming.animal.BaseAnimalComponent.extractFaceDownIdleImage(itemType.getIconName());
                         } else {
                             return FXGL.image(itemType.getIconName());
                         }
                     }
-                    return FXGL.image("empty.png"); // Hình ảnh trống
+                    return null; // Không có texture gì
                 }, inventorySlot.itemTypeProperty())
         );
 

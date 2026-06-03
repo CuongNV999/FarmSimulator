@@ -32,6 +32,12 @@ public class NPCBehaviorComponent extends Component implements Interactable {
     // Pathfinding waypoints
     private List<Point2D> pathWaypoints = new ArrayList<>();
 
+    // Fleeing variables
+    private boolean isFleeing = false;
+    private Point2D fleeTarget = null;
+    private List<Point2D> fleePathWaypoints = new ArrayList<>();
+    private double fleeCheckTimer = 0.0;
+
     // Visibility/Active state
     private boolean isHidden = false;
 
@@ -116,6 +122,24 @@ public class NPCBehaviorComponent extends Component implements Interactable {
 
         if (isHidden) {
             return;
+        }
+
+        // Fleeing detection & update
+        fleeCheckTimer += tpf;
+        if (fleeCheckTimer >= 0.3) {
+            fleeCheckTimer = 0.0;
+            checkForMonsters();
+        }
+
+        if (isFleeing) {
+            handleFleeing(tpf);
+            return;
+        }
+
+        // Cập nhật trạng thái di chuyển cho animation
+        if (physics != null && animation != null) {
+            boolean moving = Math.abs(physics.getVelocityX()) > 1.0 || Math.abs(physics.getVelocityY()) > 1.0;
+            animation.setMoving(moving);
         }
 
         if (isMovingToHouse && target != null) {
@@ -480,6 +504,123 @@ public class NPCBehaviorComponent extends Component implements Interactable {
 
         walkToWork();
         System.out.println("NPC " + entity.getString("name") + " đã xuất hiện trở lại tại " + spawnLoc + " và đang đi bộ về nơi làm việc.");
+    }
+
+    private void checkForMonsters() {
+        boolean monsterNearby = false;
+        Point2D monsterPos = null;
+
+        List<Entity> monsters = FXGL.getGameWorld().getEntitiesByType(Project1Game.core.EntityType.MONSTER);
+        for (Entity m : monsters) {
+            Project1Game.component.farming.monster.BushMonsterComponent bmc = 
+                    m.getComponentOptional(Project1Game.component.farming.monster.BushMonsterComponent.class).orElse(null);
+            if (bmc != null && !bmc.isReturning()) {
+                double dist = entity.distance(m);
+                if (dist < 250.0) {
+                    monsterNearby = true;
+                    monsterPos = m.getPosition();
+                    break;
+                }
+            }
+        }
+
+        if (monsterNearby) {
+            if (!isFleeing) {
+                isFleeing = true;
+                chooseFleeTarget(monsterPos);
+            }
+        } else {
+            if (isFleeing) {
+                isFleeing = false;
+                fleeTarget = null;
+                fleePathWaypoints.clear();
+                walkToWork();
+            }
+        }
+    }
+
+    private void chooseFleeTarget(Point2D monsterPos) {
+        double mapW = 3520;
+        double mapH = 2048;
+        double maxW = FXGL.getGameWorld()
+                .getEntitiesByType(Project1Game.core.EntityType.FIELD, Project1Game.core.EntityType.WALL, Project1Game.core.EntityType.COLLISION)
+                .stream()
+                .mapToDouble(e -> e.getRightX()).max().orElse(3520);
+        double maxH = FXGL.getGameWorld()
+                .getEntitiesByType(Project1Game.core.EntityType.FIELD, Project1Game.core.EntityType.WALL, Project1Game.core.EntityType.COLLISION)
+                .stream()
+                .mapToDouble(e -> e.getBottomY()).max().orElse(2048);
+        mapW = Math.max(mapW, maxW);
+        mapH = Math.max(mapH, maxH);
+
+        Point2D candidate = null;
+        for (int i = 0; i < 10; i++) {
+            double rx = 100 + random.nextDouble() * (mapW - 200);
+            double ry = 100 + random.nextDouble() * (mapH - 200);
+            Point2D pt = new Point2D(rx, ry);
+            if (monsterPos == null || pt.distance(monsterPos) > 400.0) {
+                candidate = pt;
+                break;
+            }
+        }
+        if (candidate == null) {
+            candidate = new Point2D(100 + random.nextDouble() * (mapW - 200), 100 + random.nextDouble() * (mapH - 200));
+        }
+
+        fleeTarget = candidate;
+        fleePathWaypoints = Project1Game.system.AStarPathfinder.findPath(entity.getPosition(), fleeTarget, mapW, mapH);
+        if (fleePathWaypoints.isEmpty()) {
+            fleePathWaypoints = new ArrayList<>();
+            fleePathWaypoints.add(fleeTarget);
+        }
+    }
+
+    private void handleFleeing(double tpf) {
+        if (physics != null && animation != null) {
+            boolean moving = Math.abs(physics.getVelocityX()) > 1.0 || Math.abs(physics.getVelocityY()) > 1.0;
+            animation.setMoving(moving);
+        }
+
+        if (fleeTarget == null || fleePathWaypoints == null || fleePathWaypoints.isEmpty()) {
+            chooseFleeTarget(null);
+            return;
+        }
+
+        Point2D currentWaypoint = fleePathWaypoints.get(0);
+        double distToWaypoint = entity.getPosition().distance(currentWaypoint);
+
+        if (distToWaypoint < 12.0) {
+            fleePathWaypoints.remove(0);
+            if (fleePathWaypoints.isEmpty()) {
+                chooseFleeTarget(null);
+                return;
+            }
+            currentWaypoint = fleePathWaypoints.get(0);
+        }
+
+        double dx = currentWaypoint.getX() - entity.getX();
+        double dy = currentWaypoint.getY() - entity.getY();
+        double fleeSpeed = 40.0 * 15;
+
+        double targetVelX = 0;
+        double targetVelY = 0;
+        Point2D animVelocity = Point2D.ZERO;
+
+        if (Math.abs(dx) > 5) {
+            targetVelX = Math.signum(dx) * fleeSpeed;
+            animVelocity = new Point2D(Math.signum(dx) * 40.0, 0);
+        } else if (Math.abs(dy) > 5) {
+            targetVelY = Math.signum(dy) * fleeSpeed;
+            animVelocity = new Point2D(0, Math.signum(dy) * 40.0);
+        } else {
+            if (!fleePathWaypoints.isEmpty()) {
+                fleePathWaypoints.remove(0);
+            }
+        }
+
+        physics.setVelocityX(targetVelX);
+        physics.setVelocityY(targetVelY);
+        updateAnimation(animVelocity);
     }
 
     @Override

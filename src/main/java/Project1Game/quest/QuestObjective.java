@@ -31,6 +31,7 @@ public abstract class QuestObjective {
 
     public boolean isDone()   { return current >= required; }
     public int getCurrent()   { return current; }
+    public void setCurrent(int current) { this.current = current; }
     public int getRequired()  { return required; }
     public String getDescription() { return description; }
 

@@ -153,6 +153,18 @@ public class TraderComponent extends Component implements Interactable {
         return negotiationCount;
     }
 
+    public void setNegotiationCount(int count) {
+        this.negotiationCount = count;
+    }
+
+    public void setNegotiationBonusPercent(int negotiationBonusPercent) {
+        this.negotiationBonusPercent = negotiationBonusPercent;
+    }
+
+    public void setHasNegotiatedThisSession(boolean hasNegotiatedThisSession) {
+        this.hasNegotiatedThisSession = hasNegotiatedThisSession;
+    }
+
     /**
      * Hàm tính giá mới nhất (Bao gồm quan hệ + Kết quả thương lượng)
      */

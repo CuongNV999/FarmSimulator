@@ -59,7 +59,46 @@ public class SaveLoadSystem {
                     data.inventoryItems.put(t.name(), inventory.getCount(t));
                 }
             }
+
+            // Save Quests
+            data.npcQuests.clear();
+            for (Project1Game.quest.NPC npc : Project1Game.quest.QuestManager.getInstance().getAllNPCs()) {
+                SaveData.NPCSave npcSave = new SaveData.NPCSave();
+                npcSave.npcName = npc.getName();
+                for (Project1Game.quest.Quest q : npc.getQuests()) {
+                    SaveData.QuestSave questSave = new SaveData.QuestSave();
+                    questSave.questId = q.getId();
+                    questSave.status = q.getStatus().name();
+                    for (Project1Game.quest.QuestObjective obj : q.getObjectives()) {
+                        questSave.objectiveProgress.add(obj.getCurrent());
+                    }
+                    npcSave.quests.add(questSave);
+                }
+                data.npcQuests.add(npcSave);
+            }
         }
+
+        // Save Trader Relationships & Session Histories (Runs for both map transitions and global saves)
+        if (data.traderRelationship == null) data.traderRelationship = new java.util.HashMap<>();
+        if (data.traderNegotiationCount == null) data.traderNegotiationCount = new java.util.HashMap<>();
+        if (data.traderNegotiatedThisSession == null) data.traderNegotiatedThisSession = new java.util.HashMap<>();
+        if (data.traderNegotiationBonusPercent == null) data.traderNegotiationBonusPercent = new java.util.HashMap<>();
+
+        data.traderRelationship.clear();
+        data.traderNegotiationCount.clear();
+        data.traderNegotiatedThisSession.clear();
+        data.traderNegotiationBonusPercent.clear();
+
+        FXGL.getGameWorld().getEntitiesByType(EntityType.TRADER).forEach(t -> {
+            Project1Game.component.npc.TraderComponent tc = t.getComponentOptional(Project1Game.component.npc.TraderComponent.class).orElse(null);
+            if (tc != null) {
+                String name = t.getProperties().keys().contains("name") ? t.getString("name") : "Trader";
+                data.traderRelationship.put(name, tc.getRelationship().name());
+                data.traderNegotiationCount.put(name, tc.getNegotiationCount());
+                data.traderNegotiatedThisSession.put(name, tc.hasNegotiatedThisSession());
+                data.traderNegotiationBonusPercent.put(name, tc.getNegotiationBonusPercent());
+            }
+        });
 
         // Lưu Đất (Soil)
         data.soils.clear(); // Xóa dữ liệu cũ trước khi lưu mới
@@ -76,7 +115,9 @@ public class SaveLoadSystem {
         data.crops.clear(); // Xóa dữ liệu cũ trước khi lưu mới
         // Lấy tất cả các loại cây trồng đã định nghĩa trong EntityType
         EntityType[] cropTypes = {EntityType.WHEAT, EntityType.RADISH, EntityType.CABBAGE,
-                EntityType.LETTUCE, EntityType.TOMATO, EntityType.CORN};
+                EntityType.GRAPE, EntityType.CUCUMBER, EntityType.PEPPER,
+                EntityType.CAULIFLOWER, EntityType.BEAN, EntityType.PINEAPPLE,
+                EntityType.SUNFLOWER, EntityType.COCONUT, EntityType.APPLE};
 
         for (EntityType cropType : cropTypes) {
             FXGL.getGameWorld().getEntitiesByType(cropType).forEach(c -> {
@@ -92,9 +133,9 @@ public class SaveLoadSystem {
         // Lưu Động vật (Animals)
         data.animals.clear();
         FXGL.getGameWorld().getEntitiesByType(EntityType.ANIMAL).forEach(a -> {
-            Project1Game.component.farming.BaseAnimalComponent bac = a.getComponents().stream()
-                    .filter(c -> c instanceof Project1Game.component.farming.BaseAnimalComponent)
-                    .map(c -> (Project1Game.component.farming.BaseAnimalComponent) c)
+            Project1Game.component.farming.animal.BaseAnimalComponent bac = a.getComponents().stream()
+                    .filter(c -> c instanceof Project1Game.component.farming.animal.BaseAnimalComponent)
+                    .map(c -> (Project1Game.component.farming.animal.BaseAnimalComponent) c)
                     .findFirst()
                     .orElse(null);
             if (bac != null) {
@@ -104,6 +145,19 @@ public class SaveLoadSystem {
                 asd.type = bac.getType().name();
                 asd.daysGrown = bac.getDaysGrown();
                 data.animals.add(asd);
+            }
+        });
+
+        // Lưu Quái vật (Monsters)
+        data.monsters.clear();
+        FXGL.getGameWorld().getEntitiesByType(EntityType.MONSTER).forEach(m -> {
+            String spawnName = m.getString("monsterType");
+            if (spawnName != null && !spawnName.isEmpty()) {
+                SaveData.MonsterSaveData msd = new SaveData.MonsterSaveData();
+                msd.x = m.getX();
+                msd.y = m.getY();
+                msd.type = spawnName;
+                data.monsters.add(msd);
             }
         });
     }
@@ -137,16 +191,64 @@ public class SaveLoadSystem {
                 WeatherSystem.getInstance().changeWeather(WeatherSystem.Weather.valueOf(data.weather));
             }
 
+            // Reset and initialize QuestManager before loading quests to avoid corruption
+            Project1Game.quest.QuestManager.getInstance().reset();
+            Project1Game.quest.QuestManager.getInstance().init();
+
+            // Load Quests
+            if (data.npcQuests != null) {
+                for (SaveData.NPCSave npcSave : data.npcQuests) {
+                    Project1Game.quest.NPC npc = Project1Game.quest.QuestManager.getInstance().getNPC(npcSave.npcName);
+                    if (npc != null) {
+                        for (SaveData.QuestSave questSave : npcSave.quests) {
+                            Project1Game.quest.Quest q = npc.getQuests().stream()
+                                    .filter(quest -> quest.getId().equals(questSave.questId))
+                                    .findFirst()
+                                    .orElse(null);
+                            if (q != null) {
+                                q.setStatus(Project1Game.quest.QuestStatus.valueOf(questSave.status));
+                                var objectives = q.getObjectives();
+                                for (int i = 0; i < Math.min(objectives.size(), questSave.objectiveProgress.size()); i++) {
+                                    objectives.get(i).setCurrent(questSave.objectiveProgress.get(i));
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
             System.out.println(String.format("NẠP GAME: Bản đồ: %s, Vị trí: (%.1f, %.1f), Tiền: %d G, Thời gian: %.1f, Thời tiết: %s", 
                 data.currentMap, data.playerX, data.playerY, data.playerMoney, data.gameTime, data.weather));
         }
 
-        // Xóa tất cả thực thể động cũ (đất, cây, động vật)
-        EntityType[] allDynamicEntities = {EntityType.SOIL, EntityType.WHEAT, EntityType.CORN,
-                EntityType.RADISH, EntityType.CABBAGE, EntityType.LETTUCE, EntityType.TOMATO, EntityType.ANIMAL};
+        // Load Trader Relationships & Histories (Runs for both map transitions and global saves)
+        FXGL.getGameWorld().getEntitiesByType(EntityType.TRADER).forEach(t -> {
+            Project1Game.component.npc.TraderComponent tc = t.getComponentOptional(Project1Game.component.npc.TraderComponent.class).orElse(null);
+            if (tc != null) {
+                String name = t.getProperties().keys().contains("name") ? t.getString("name") : "Trader";
+                if (data.traderRelationship != null && data.traderRelationship.containsKey(name)) {
+                    tc.setRelationship(Project1Game.component.npc.RelationshipLevel.valueOf(data.traderRelationship.get(name)));
+                }
+                if (data.traderNegotiationCount != null && data.traderNegotiationCount.containsKey(name)) {
+                    tc.setNegotiationCount(data.traderNegotiationCount.get(name));
+                }
+                if (data.traderNegotiatedThisSession != null && data.traderNegotiatedThisSession.containsKey(name)) {
+                    tc.setHasNegotiatedThisSession(data.traderNegotiatedThisSession.get(name));
+                }
+                if (data.traderNegotiationBonusPercent != null && data.traderNegotiationBonusPercent.containsKey(name)) {
+                    tc.setNegotiationBonusPercent(data.traderNegotiationBonusPercent.get(name));
+                }
+            }
+        });
+
+        EntityType[] allDynamicEntities = {EntityType.SOIL, EntityType.WHEAT,
+                EntityType.RADISH, EntityType.CABBAGE,
+                EntityType.GRAPE, EntityType.CUCUMBER, EntityType.PEPPER,
+                EntityType.CAULIFLOWER, EntityType.BEAN, EntityType.PINEAPPLE,
+                EntityType.SUNFLOWER, EntityType.COCONUT, EntityType.APPLE,
+                EntityType.ANIMAL, EntityType.MONSTER};
         FXGL.getGameWorld().getEntitiesFiltered(e -> Arrays.asList(allDynamicEntities).contains(e.getType()))
                 .forEach(Entity::removeFromWorld);
-
 
         // Tái tạo ô đất
         for (SaveData.SoilData sd : data.soils) {
@@ -178,10 +280,10 @@ public class SaveLoadSystem {
                 else if (typeName.equals("TURKEY")) spawnName = "Turkey";
 
                 if (!spawnName.isEmpty()) {
-                    Entity a = FXGL.getGameWorld().spawn(spawnName, asd.x, asd.y);
-                    Project1Game.component.farming.BaseAnimalComponent bac = a.getComponents().stream()
-                            .filter(c -> c instanceof Project1Game.component.farming.BaseAnimalComponent)
-                            .map(c -> (Project1Game.component.farming.BaseAnimalComponent) c)
+                    Entity a = FXGL.getGameWorld().spawn(spawnName, new com.almasb.fxgl.entity.SpawnData(asd.x, asd.y).put("fromSave", true));
+                    Project1Game.component.farming.animal.BaseAnimalComponent bac = a.getComponents().stream()
+                            .filter(c -> c instanceof Project1Game.component.farming.animal.BaseAnimalComponent)
+                            .map(c -> (Project1Game.component.farming.animal.BaseAnimalComponent) c)
                             .findFirst()
                             .orElse(null);
                     if (bac != null) {
@@ -189,6 +291,13 @@ public class SaveLoadSystem {
                         bac.initAnimation();
                     }
                 }
+            }
+        }
+
+        // Tái tạo quái vật
+        if (data.monsters != null) {
+            for (SaveData.MonsterSaveData msd : data.monsters) {
+                FXGL.getGameWorld().spawn(msd.type, msd.x, msd.y);
             }
         }
     }
@@ -202,13 +311,17 @@ public class SaveLoadSystem {
     }
 
     public void loadGameFromFile() {
-        FXGL.getFileSystemService().<SaveData>readDataTask("save_game.dat").onSuccess(data -> {
-            Main app = FXGL.getAppCast();
-            if (data.currentMap != null) {
-                app.updateLevelFromSave(data.currentMap, data.playerX, data.playerY);
-            }
-            load(data); // Tải dữ liệu từ file vào game
-            System.out.println("Đã tải game từ file thành công!");
-        }).run();
+        var task = FXGL.getFileSystemService().<SaveData>readDataTask("save_game.dat")
+                .onSuccess(data -> {
+                    FXGL.getExecutor().startAsyncFX(() -> {
+                        Main app = FXGL.getAppCast();
+                        if (data.currentMap != null) {
+                            app.updateLevelFromSave(data.currentMap, data.playerX, data.playerY);
+                        }
+                        load(data); // Tải dữ liệu từ file vào game
+                        System.out.println("Đã tải game từ file thành công!");
+                    });
+                });
+        FXGL.getExecutor().execute(() -> task.run());
     }
 }

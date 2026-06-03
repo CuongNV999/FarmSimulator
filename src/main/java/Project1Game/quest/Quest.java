@@ -70,6 +70,7 @@ public class Quest {
     public String getDescription()      { return description; }
     public String getCompletionText()   { return completionText; }
     public QuestStatus getStatus()      { return status; }
+    public void setStatus(QuestStatus status) { this.status = status; }
     public QuestReward getReward()      { return reward; }
 
     public List<QuestObjective> getObjectives() {

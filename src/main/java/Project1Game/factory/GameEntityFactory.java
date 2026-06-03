@@ -1,8 +1,9 @@
 package Project1Game.factory;
 
-import Project1Game.component.farming.BaseAnimalComponent;
+import Project1Game.component.farming.animal.BaseAnimalComponent;
 import Project1Game.component.farming.CropComponent;
 import Project1Game.component.farming.SoilComponent;
+import Project1Game.component.farming.monster.*;
 import Project1Game.component.player.PlayerComponent;
 import Project1Game.component.npc.NPCAnimationComponent;
 import Project1Game.component.npc.NPCBehaviorComponent;
@@ -82,11 +83,17 @@ public class GameEntityFactory implements EntityFactory {
     }
 
     @Spawns("Wheat") public Entity spawnWheat(SpawnData d) { return createCrop(d, CropData.WHEAT); }
-    @Spawns("Corn") public Entity spawnCorn(SpawnData d) { return createCrop(d, CropData.CORN); }
     @Spawns("Radish") public Entity spawnRadish(SpawnData d) { return createCrop(d, CropData.RADISH); }
     @Spawns("Cabbage") public Entity spawnCabbage(SpawnData d) { return createCrop(d, CropData.CABBAGE); }
-    @Spawns("Lettuce") public Entity spawnLettuce(SpawnData d) { return createCrop(d, CropData.LETTUCE); }
-    @Spawns("Tomato") public Entity spawnTomato(SpawnData d) { return createCrop(d, CropData.TOMATO); }
+    @Spawns("Grape") public Entity spawnGrape(SpawnData d) { return createCrop(d, CropData.GRAPE); }
+    @Spawns("Cucumber") public Entity spawnCucumber(SpawnData d) { return createCrop(d, CropData.CUCUMBER); }
+    @Spawns("Pepper") public Entity spawnPepper(SpawnData d) { return createCrop(d, CropData.PEPPER); }
+    @Spawns("Cauliflower") public Entity spawnCauliflower(SpawnData d) { return createCrop(d, CropData.CAULIFLOWER); }
+    @Spawns("Bean") public Entity spawnBean(SpawnData d) { return createCrop(d, CropData.BEAN); }
+    @Spawns("Pineapple") public Entity spawnPineapple(SpawnData d) { return createCrop(d, CropData.PINEAPPLE); }
+    @Spawns("Sunflower") public Entity spawnSunflower(SpawnData d) { return createCrop(d, CropData.SUNFLOWER); }
+    @Spawns("Coconut") public Entity spawnCoconut(SpawnData d) { return createCrop(d, CropData.COCONUT); }
+    @Spawns("Apple") public Entity spawnApple(SpawnData d) { return createCrop(d, CropData.APPLE); }
 
     // ================= MÔI TRƯỜNG & VẬT CẢN (SỬ DỤNG NUMBER CASTING) =================
 
@@ -193,7 +200,12 @@ public class GameEntityFactory implements EntityFactory {
 
     @Spawns("House_out")
     public Entity spawnHouseOut(SpawnData data) {
-        return spawnDoor(data);
+        Entity door = spawnDoor(data);
+        if (door.getBoundingBoxComponent() != null) {
+            door.getBoundingBoxComponent().clearHitBoxes();
+            door.getBoundingBoxComponent().addHitBox(new HitBox(com.almasb.fxgl.physics.BoundingShape.box(64, 48)));
+        }
+        return door;
     }
 
     @Spawns("Sleep")
@@ -234,7 +246,7 @@ public class GameEntityFactory implements EntityFactory {
         });
         
         return FXGL.entityBuilder(data).type(EntityType.GUIDER)
-                .bbox(new HitBox(BoundingShape.box(32, 64)))
+                .bbox(new HitBox(new javafx.geometry.Point2D(4, 40), BoundingShape.box(24, 24)))
                 .with(physics)
                 .with(new NPCAnimationComponent())
                 .with(new NPCBehaviorComponent())
@@ -269,7 +281,7 @@ public class GameEntityFactory implements EntityFactory {
 
         return FXGL.entityBuilder(data)
                 .type(EntityType.TRADER)
-                .bbox(new HitBox(BoundingShape.box(32, 64)))
+                .bbox(new HitBox(new javafx.geometry.Point2D(4, 40), BoundingShape.box(24, 24)))
                 .with(physics)
                 .with(new NPCAnimationComponent("NPC/Trader/Trader.png")) // Gắn animation component cho Trader
                 .with(new NPCBehaviorComponent()) // Thêm component điều khiển hành vi
@@ -289,17 +301,27 @@ public class GameEntityFactory implements EntityFactory {
         return FXGL.entityBuilder(data).type(EntityType.GUIDER_IN).build();
     }
 
+    private static int animalSpawnOffset = 0;
+
     private Entity createAnimal(SpawnData data, String animalType, double w, double h) {
         PhysicsComponent physics = new PhysicsComponent();
         physics.setFixtureDef(new FixtureDef().friction(0f).density(0.1f));
-        physics.setBodyType(BodyType.KINEMATIC);
+        physics.setBodyType(BodyType.DYNAMIC);
         physics.setOnPhysicsInitialized(() -> {
             if (physics.getBody() != null) {
+                physics.getBody().setGravityScale(0f);
                 physics.getBody().setFixedRotation(true);
             }
         });
 
-        return FXGL.entityBuilder(data)
+        double x = data.getX();
+        if (!data.hasKey("fromSave")) {
+            x += animalSpawnOffset;
+            animalSpawnOffset = (animalSpawnOffset + 32) % 128;
+            data = new SpawnData(x, data.getY()).put("fromSave", false);
+        }
+
+        Entity entity = FXGL.entityBuilder(data)
                 .type(EntityType.ANIMAL)
                 .bbox(new HitBox(BoundingShape.box(w, h)))
                 .zIndex(7)
@@ -307,6 +329,8 @@ public class GameEntityFactory implements EntityFactory {
                 .with(BaseAnimalComponent.create(animalType))
                 .collidable()
                 .build();
+
+        return entity;
     }
 
     @Spawns("Chick")
@@ -332,5 +356,87 @@ public class GameEntityFactory implements EntityFactory {
     @Spawns("Turkey")
     public Entity spawnTurkey(SpawnData data) {
         return createAnimal(data, "turkey", 32, 32);
+    }
+
+    private Entity createMonster(SpawnData data, String monsterType, String runTexturePath, String idleTexturePath) {
+        PhysicsComponent physics = new PhysicsComponent();
+        physics.setFixtureDef(new FixtureDef().friction(0f).density(0.1f));
+        physics.setBodyType(BodyType.DYNAMIC);
+        physics.setOnPhysicsInitialized(() -> {
+            if (physics.getBody() != null) {
+                physics.getBody().setGravityScale(0f);
+                physics.getBody().setFixedRotation(true);
+            }
+        });
+
+        BaseMonsterComponent bmc;
+        if ("Boar".equalsIgnoreCase(monsterType)) {
+            bmc = new BoarComponent();
+        } else if ("Fox".equalsIgnoreCase(monsterType)) {
+            bmc = new FoxComponent();
+        } else if ("Deer".equalsIgnoreCase(monsterType)) {
+            bmc = new DeerComponent();
+        } else if ("Hare".equalsIgnoreCase(monsterType)) {
+            bmc = new HareComponent();
+        } else {
+            bmc = new BoarComponent();
+        }
+
+        if (data.hasKey("tempBushMonster")) {
+            bmc.setTemporary(10.0);
+        }
+
+        return FXGL.entityBuilder(data)
+                .type(EntityType.MONSTER)
+                .bbox(new HitBox(BoundingShape.box(32, 32)))
+                .zIndex(8)
+                .with(physics)
+                .with(bmc)
+                .with(new MonsterAnimationComponent(monsterType, runTexturePath, idleTexturePath))
+                .with("monsterType", monsterType)
+                .collidable()
+                .build();
+    }
+
+    @Spawns("Boar")
+    public Entity spawnBoar(SpawnData data) {
+        return createMonster(data, "Boar", "monster/Boar/Boar_Run_with_shadow.png", "monster/Boar/Boar_Idle_with_shadow.png");
+    }
+
+    @Spawns("Fox")
+    public Entity spawnFox(SpawnData data) {
+        return createMonster(data, "Fox", "monster/Fox/Fox_Run_with_shadow.png", "monster/Fox/Fox_Idle_with_shadow.png");
+    }
+
+    @Spawns("Deer")
+    public Entity spawnDeer(SpawnData data) {
+        return createMonster(data, "Deer", "monster/Deer/Deer_Run_with_shadow.png", "monster/Deer/Deer_Idle_with_shadow.png");
+    }
+
+    @Spawns("Hare")
+    public Entity spawnHare(SpawnData data) {
+        return createMonster(data, "Hare", "monster/Hare/Hare_Run_with_shadow.png", "monster/Hare/Hare_Idle_with_shadow.png");
+    }
+
+    @Spawns("Bush")
+    public Entity spawnBush(SpawnData data) {
+        double w = data.hasKey("width") ? ((Number) data.get("width")).doubleValue() : 32.0;
+        double h = data.hasKey("height") ? ((Number) data.get("height")).doubleValue() : 32.0;
+        return FXGL.entityBuilder(data)
+                .type(EntityType.BUSH)
+                .bbox(new HitBox(BoundingShape.box(w, h)))
+                .build();
+    }
+
+    @Spawns("BushMonster")
+    public Entity spawnBushMonster(SpawnData data) {
+        java.util.Random rand = new java.util.Random();
+        SpawnData copy = new SpawnData(data.getX(), data.getY());
+        copy.put("tempBushMonster", true);
+        if (rand.nextBoolean()) {
+            return createMonster(copy, "Boar", "monster/Boar/Boar_Run_with_shadow.png", "monster/Boar/Boar_Idle_with_shadow.png");
+        } else {
+            return createMonster(copy, "Fox", "monster/Fox/Fox_Run_with_shadow.png", "monster/Fox/Fox_Idle_with_shadow.png");
+        }
     }
 }

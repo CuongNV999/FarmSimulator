@@ -204,7 +204,30 @@ public class AdminView extends VBox {
             timeSpeedButtons.getChildren().add(btnTime);
         }
 
-        statsCol.getChildren().addAll(statsTitle, goldRow, quickGoldRow, skinTitle, skinGrid, timeTitle, timeSpeedButtons);
+        // Cheat button
+        Text cheatsTitle = new Text("Cheats:");
+        cheatsTitle.setFill(Color.WHITE);
+        cheatsTitle.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+
+        Button btnMatureAll = new Button("Instant Mature All");
+        btnMatureAll.setPrefWidth(160);
+        btnMatureAll.setStyle("-fx-background-color: #eccb58; -fx-text-fill: #12121c; -fx-cursor: hand; -fx-font-weight: bold; -fx-font-size: 13px;");
+        btnMatureAll.setOnAction(e -> {
+            if (Project1Game.Main.getInstance() != null) {
+                Project1Game.Main.getInstance().matureAllCropsAndAnimals();
+            }
+        });
+
+        Button btnSpawnBushMonster = new Button("Spawn Bush Monster");
+        btnSpawnBushMonster.setPrefWidth(160);
+        btnSpawnBushMonster.setStyle("-fx-background-color: #d9383a; -fx-text-fill: white; -fx-cursor: hand; -fx-font-weight: bold; -fx-font-size: 13px;");
+        btnSpawnBushMonster.setOnAction(e -> {
+            if (Project1Game.Main.getInstance() != null) {
+                Project1Game.Main.getInstance().spawnBushMonsterAdmin();
+            }
+        });
+
+        statsCol.getChildren().addAll(statsTitle, goldRow, quickGoldRow, skinTitle, skinGrid, timeTitle, timeSpeedButtons, cheatsTitle, btnMatureAll, btnSpawnBushMonster);
 
         // --- SECTION 2: Crop & inventory Adjusters scrollpane ---
         VBox itemsCol = new VBox(10);
@@ -228,10 +251,20 @@ public class AdminView extends VBox {
         itemGrid.setStyle("-fx-background-color: rgba(20, 20, 30, 0.6); -fx-background-radius: 10;");
 
         List<ItemType> items = Arrays.asList(
-                ItemType.WHEAT_SEED, ItemType.CORN_SEED, ItemType.RADISH_SEED,
-                ItemType.CABBAGE_SEED, ItemType.LETTUCE_SEED, ItemType.TOMATO_SEED,
-                ItemType.WHEAT, ItemType.CORN, ItemType.RADISH,
-                ItemType.CABBAGE, ItemType.LETTUCE, ItemType.TOMATO,
+                ItemType.WHEAT_SEED, ItemType.RADISH_SEED,
+                ItemType.CABBAGE_SEED,
+                ItemType.GRAPE_SEED, ItemType.CUCUMBER_SEED, ItemType.PEPPER_SEED,
+                ItemType.CAULIFLOWER_SEED, ItemType.BEAN_SEED, ItemType.PINEAPPLE_SEED,
+                ItemType.SUNFLOWER_SEED, ItemType.COCONUT_SEED, ItemType.APPLE_SEED,
+                ItemType.WHEAT, ItemType.RADISH,
+                ItemType.CABBAGE,
+                ItemType.GRAPE, ItemType.CUCUMBER, ItemType.PEPPER,
+                ItemType.CAULIFLOWER, ItemType.BEAN, ItemType.PINEAPPLE,
+                ItemType.SUNFLOWER, ItemType.COCONUT, ItemType.APPLE,
+                ItemType.BREAD_SLICE, ItemType.BAGUETTE, ItemType.BREAD_LOAF, ItemType.BREAD_BUN,
+                ItemType.CROISSANT, ItemType.PRETZEL, ItemType.DONUT, ItemType.PANCAKE,
+                ItemType.COOKED_DRUMSTICK, ItemType.COOKED_CHICKEN,
+                ItemType.COOKED_MEAT, ItemType.SAUSAGE,
                 ItemType.CHICK, ItemType.CALF, ItemType.LAMB, ItemType.PIGLET, ItemType.TURKEY,
                 ItemType.ROOSTER, ItemType.BULL, ItemType.SHEEP, ItemType.PIG
         );
@@ -265,8 +298,10 @@ public class AdminView extends VBox {
 
         // Icon
         Texture icon;
-        if (type.getIconName() != null && type.getIconName().startsWith("Animal/")) {
-            icon = new Texture(Project1Game.component.farming.BaseAnimalComponent.extractFaceDownIdleImage(type.getIconName()));
+        if (type.getIconName() != null && type.getIconName().startsWith("food:")) {
+            icon = new Texture(ItemType.extractFoodImage(type.getIconName()));
+        } else if (type.getIconName() != null && type.getIconName().startsWith("Animal/")) {
+            icon = new Texture(Project1Game.component.farming.animal.BaseAnimalComponent.extractFaceDownIdleImage(type.getIconName()));
         } else if (type.getIconName() != null && !type.getIconName().isEmpty()) {
             icon = FXGL.texture(type.getIconName());
         } else {

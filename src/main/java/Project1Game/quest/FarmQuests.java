@@ -33,7 +33,7 @@ public final class FarmQuests {
             new QuestReward.Builder()
                 .gold(20)
                 .item(ItemType.RADISH_SEED, 5)
-                .item(ItemType.CORN_SEED, 3)
+                .item(ItemType.CABBAGE_SEED, 3)
                 .build()
         );
     }
@@ -57,7 +57,7 @@ public final class FarmQuests {
             new QuestReward.Builder()
                 .gold(50)
                 .item(ItemType.WHEAT_SEED, 10)
-                .item(ItemType.TOMATO_SEED, 5)
+                .item(ItemType.GRAPE_SEED, 5)
                 .build()
         );
     }
@@ -71,20 +71,20 @@ public final class FarmQuests {
             "quest_summer_feast",
             "Bữa Tiệc Mùa Hè",
             "Cuối tuần này làng mình tổ chức tiệc mùa hè! " +
-            "Bác cần cà chua, ngô và xà lách để nấu salad lớn. " +
+            "Bác cần bắp cải, củ cải và nho để nấu một bữa tiệc lớn. " +
             "Cháu thu hoạch giúp bác 5 cái mỗi loại được không?",
             "Tuyệt vời! Bữa tiệc sẽ rất thịnh soạn nhờ cháu. " +
             "Bác tặng cháu bộ hạt giống mới nhất vừa nhập về!",
             Arrays.asList(
-                new Objectives.HarvestObjective(ItemType.TOMATO,  5),
-                new Objectives.HarvestObjective(ItemType.CORN,    5),
-                new Objectives.HarvestObjective(ItemType.LETTUCE, 5)
+                new Objectives.HarvestObjective(ItemType.CABBAGE, 5),
+                new Objectives.HarvestObjective(ItemType.RADISH,  5),
+                new Objectives.HarvestObjective(ItemType.GRAPE,   5)
             ),
             new QuestReward.Builder()
                 .gold(120)
                 .item(ItemType.CABBAGE_SEED, 8)
-                .item(ItemType.LETTUCE_SEED, 8)
-                .item(ItemType.TOMATO_SEED,  8)
+                .item(ItemType.RADISH_SEED,  8)
+                .item(ItemType.GRAPE_SEED,   8)
                 .build()
         );
     }
@@ -112,7 +112,7 @@ public final class FarmQuests {
                 .item(ItemType.WHEAT_SEED,   5)
                 .item(ItemType.RADISH_SEED,  5)
                 .item(ItemType.CABBAGE_SEED, 5)
-                .item(ItemType.CORN_SEED,    5)
+                .item(ItemType.PEPPER_SEED,  5)
                 .build()
         );
     }
@@ -139,9 +139,9 @@ public final class FarmQuests {
             new QuestReward.Builder()
                 .gold(200)
                 .item(ItemType.WHEAT_SEED,   15)
-                .item(ItemType.TOMATO_SEED,  10)
-                .item(ItemType.CORN_SEED,    10)
-                .item(ItemType.LETTUCE_SEED, 10)
+                .item(ItemType.GRAPE_SEED,  10)
+                .item(ItemType.PEPPER_SEED,    10)
+                .item(ItemType.CUCUMBER_SEED, 10)
                 .build()
         );
     }
