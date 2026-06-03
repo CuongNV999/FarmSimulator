@@ -20,6 +20,10 @@ public class QuestManager {
         return instance;
     }
 
+    public void reset() {
+        npcs.clear();
+    }
+
     /**
      * Khởi tạo toàn bộ NPC và đăng ký quest cho họ.
      * Gọi một lần duy nhất trong {@code initGame()} của Main.

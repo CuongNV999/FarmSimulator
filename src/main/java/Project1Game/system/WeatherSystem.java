@@ -213,7 +213,11 @@ public class WeatherSystem {
                 FXGL.getGameWorld().getEntitiesByType(EntityType.SOIL).forEach(s -> {
                     SoilComponent sc = s.getComponent(SoilComponent.class);
                     if (sc != null) {
-                        sc.updateTexture();
+                        if (newWeather == Weather.RAINY) {
+                            sc.setWet(true);
+                        } else {
+                            sc.updateTexture();
+                        }
                     }
                 });
             }

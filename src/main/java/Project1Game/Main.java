@@ -160,6 +160,7 @@ public class Main extends GameApplication {
         if (timeSystem != null) {
             timeSystem.advanceToNextDay();
             statusBarsView.setHealth(statusBarsView.getMaxHealth());
+            statusBarsView.setHunger(statusBarsView.getMaxHunger());
             
             // Cache the guider and trader reappearance at 6:00 AM morning
             if (currentMap.equals("Main_house.tmx")) {
@@ -180,6 +181,11 @@ public class Main extends GameApplication {
     private Entity player;
     private Entity selector;
     private Inventory inventory;
+    private javafx.beans.property.IntegerProperty boundMoneyProperty = null;
+    private javafx.beans.value.ChangeListener<Number> moneyListener = null;
+    private final java.util.Random rng = new java.util.Random();
+    private static boolean shiftHeld = false;
+    private javafx.event.EventHandler<DayNightEvent> dayNightHandler = null;
 
     // --- Các lớp giao diện (UI) ---
     private ToolbarView toolbarView;
@@ -305,10 +311,14 @@ public class Main extends GameApplication {
         farmingSystem = new FarmingSystem(inventory);
 
         // 2. Khởi tạo Quest
+        QuestManager.getInstance().reset();
         QuestManager.getInstance().init();
 
         // Listen to DayNightEvent.SET_DAY to grow animals in inactive maps
-        FXGL.getEventBus().addEventHandler(DayNightEvent.SET_DAY, e -> {
+        if (dayNightHandler != null) {
+            FXGL.getEventBus().removeEventHandler(DayNightEvent.SET_DAY, dayNightHandler);
+        }
+        dayNightHandler = e -> {
             for (SaveData state : mapStates.values()) {
                 if (state.animals != null) {
                     for (SaveData.AnimalSaveData asd : state.animals) {
@@ -340,7 +350,8 @@ public class Main extends GameApplication {
                     }
                 }
             }
-        });
+        };
+        FXGL.getEventBus().addEventHandler(DayNightEvent.SET_DAY, dayNightHandler);
 
         // 3. Nạp Map và Factory
         FXGL.getGameWorld().addEntityFactory(new GameEntityFactory());
@@ -532,6 +543,7 @@ public class Main extends GameApplication {
         FXGL.getGameScene().getViewport().setLazy(true);
 
         // Tạo biên bản đồ (Wall) bao quanh map để chặn người chơi đi ra ngoài
+        FXGL.getGameWorld().getEntitiesByType(EntityType.WALL).forEach(Entity::removeFromWorld);
         spawnBoundaries((int) mapW, (int) mapH);
 
         // 5. TẢI TRẠNG THÁI BẢN ĐỒ MỚI (nếu có)
@@ -647,6 +659,7 @@ public class Main extends GameApplication {
                         if (ai != null && !ai.isGoingHome() && !ai.isHidden()) {
                             FXGL.getGameWorld().getEntitiesByType(EntityType.GUIDER_IN).stream().findFirst()
                                     .ifPresent(target -> {
+                                        nearbyNPC = null;
                                         ai.goHome(target);
                                     });
                         }
@@ -657,6 +670,10 @@ public class Main extends GameApplication {
                         if (ai != null && !ai.isGoingHome() && !ai.isHidden()) {
                             FXGL.getGameWorld().getEntitiesByType(EntityType.TRADER_IN).stream().findFirst()
                                     .ifPresent(target -> {
+                                        if (tradingView != null && tradingView.isOpen()) {
+                                            tradingView.toggle();
+                                        }
+                                        nearbyNPC = null;
                                         ai.goHome(target);
                                     });
                         }
@@ -708,9 +725,8 @@ public class Main extends GameApplication {
                 bushMonsterSpawnTimer = 0.0;
                 java.util.List<Entity> bushes = FXGL.getGameWorld().getEntitiesByType(EntityType.BUSH);
                 if (!bushes.isEmpty()) {
-                    java.util.Random rand = new java.util.Random();
-                    if (rand.nextDouble() < 0.15) {
-                        Entity targetBush = bushes.get(rand.nextInt(bushes.size()));
+                    if (rng.nextDouble() < 0.15) {
+                        Entity targetBush = bushes.get(rng.nextInt(bushes.size()));
                         FXGL.spawn("BushMonster", targetBush.getX() + targetBush.getWidth()/2 - 16, targetBush.getY() + targetBush.getHeight()/2 - 16);
                         FXGL.getNotificationService().pushNotification("Cảnh báo: Có quái vật xuất hiện từ bụi cây!");
                         System.out.println("Spawned BushMonster at " + targetBush.getPosition());
@@ -742,6 +758,17 @@ public class Main extends GameApplication {
     @Override
     protected void initInput() {
         Input input = FXGL.getInput();
+
+        input.addEventFilter(javafx.scene.input.KeyEvent.KEY_PRESSED, e -> {
+            if (e.getCode() == KeyCode.SHIFT) {
+                shiftHeld = true;
+            }
+        });
+        input.addEventFilter(javafx.scene.input.KeyEvent.KEY_RELEASED, e -> {
+            if (e.getCode() == KeyCode.SHIFT) {
+                shiftHeld = false;
+            }
+        });
 
         // 1. DI CHUYỂN
         input.addAction(new UserAction("Move Right") {
@@ -1051,9 +1078,14 @@ public class Main extends GameApplication {
         if (player == null || moneyText == null)
             return;
         PlayerComponent playerComponent = player.getComponent(PlayerComponent.class);
-        playerComponent.moneyProperty().addListener((obs, old, newV) -> {
+        if (boundMoneyProperty != null && moneyListener != null) {
+            boundMoneyProperty.removeListener(moneyListener);
+        }
+        boundMoneyProperty = playerComponent.moneyProperty();
+        moneyListener = (obs, old, newV) -> {
             moneyText.setText("Tiền: " + newV + " G");
-        });
+        };
+        boundMoneyProperty.addListener(moneyListener);
         moneyText.setText("Tiền: " + playerComponent.getMoney() + " G");
     }
 
@@ -1106,6 +1138,7 @@ public class Main extends GameApplication {
         FXGL.getGameScene().getViewport().bindToEntity(player, FXGL.getAppWidth() / 2.0, FXGL.getAppHeight() / 2.0);
         FXGL.getGameScene().getViewport().setLazy(true);
 
+        FXGL.getGameWorld().getEntitiesByType(EntityType.WALL).forEach(Entity::removeFromWorld);
         spawnBoundaries((int) mapW, (int) mapH);
     }
 
@@ -1169,21 +1202,14 @@ public class Main extends GameApplication {
             return;
         }
 
-        java.util.Random rand = new java.util.Random();
-        Entity targetBush = bushes.get(rand.nextInt(bushes.size()));
+        Entity targetBush = bushes.get(rng.nextInt(bushes.size()));
         FXGL.spawn("BushMonster", targetBush.getX() + targetBush.getWidth()/2 - 16, targetBush.getY() + targetBush.getHeight()/2 - 16);
         FXGL.getNotificationService().pushNotification("Admin: Đã spawn một quái vật từ bụi cây!");
         System.out.println("Admin spawned BushMonster at " + targetBush.getPosition());
     }
 
     public static boolean isShiftHeld() {
-        try {
-            Input input = FXGL.getInput();
-            java.lang.reflect.Method method = input.getClass().getMethod("isHeldKey", KeyCode.class);
-            return (boolean) method.invoke(input, KeyCode.SHIFT);
-        } catch (Exception e) {
-            return false;
-        }
+        return shiftHeld;
     }
 
     public static boolean isDayTime() {

@@ -85,20 +85,20 @@ public class PlayerComponent extends Component {
 
     @Override
     public void onUpdate(double tpf) {
+        PhysicsComponent physics = entity.getComponent(PhysicsComponent.class);
+
         // 1. TRIỆT TIÊU HOÀN TOÀN LỰC XOAY VẬT LÝ
         if (entity != null) {
             entity.setRotation(0); // Ép cứng góc đồ họa về 0
 
             // Lấy thành phần vật lý để triệt tiêu vận tốc xoay ẩn của Box2D
-            PhysicsComponent physics = entity.getComponent(PhysicsComponent.class);
             if (physics != null && physics.getBody() != null) {
                 physics.getBody().setAngularVelocity(0); // Khóa vận tốc xoay vật lý bằng 0
             }
         }
 
         // 1. TỰ ĐỘNG LẤY VẬN TỐC TỪ HỆ THỐNG VẬT LÝ
-        PhysicsComponent physics = entity.getComponent(PhysicsComponent.class);
-        Point2D velocity = new Point2D(physics.getVelocityX(), physics.getVelocityY());
+        Point2D velocity = physics != null ? new Point2D(physics.getVelocityX(), physics.getVelocityY()) : Point2D.ZERO;
 
         // Kiểm tra xem nhân vật có đang thực sự di chuyển không (ngưỡng 5 để tránh nhiễu)
         if (velocity.magnitude() > 5) {
@@ -110,8 +110,8 @@ public class PlayerComponent extends Component {
                 lastDirectionX = velocity.getX() < 0 ? -1 : 1;
             }
 
-            // Tự động nhận diện đang chạy nếu vận tốc lớn (ví dụ > 250)
-            isRunning = velocity.magnitude() > 250;
+            // Tự động nhận diện đang chạy nếu vận tốc lớn (ví dụ > 210)
+            isRunning = velocity.magnitude() > 210;
         } else {
             isMoving = false;
         }

@@ -84,7 +84,7 @@ public class FarmingSystem {
 
     /** Logic tưới nước */
     public void useWateringCan(Entity selector) {
-        if (selector.getViewComponent().getOpacity() < 1.0) return;
+        if (inventory.getCount(ItemType.WATERING_CAN) <= 0 || selector.getViewComponent().getOpacity() < 1.0) return;
         FXGL.getGameWorld().getEntitiesByType(EntityType.SOIL).stream()
                 .filter(s -> s.getPosition().distance(selector.getPosition()) < 15)
                 .findFirst().ifPresent(soil -> {
@@ -96,7 +96,12 @@ public class FarmingSystem {
     /** Logic thu hoạch */
     public void handleHarvest(Entity selector) {
         if (selector.getViewComponent().getOpacity() < 1.0) return;
-        EntityType[] cropTypes = {EntityType.WHEAT, EntityType.RADISH, EntityType.CABBAGE};
+        EntityType[] cropTypes = {
+                EntityType.WHEAT, EntityType.RADISH, EntityType.CABBAGE,
+                EntityType.GRAPE, EntityType.CUCUMBER, EntityType.PEPPER,
+                EntityType.CAULIFLOWER, EntityType.BEAN, EntityType.PINEAPPLE,
+                EntityType.SUNFLOWER, EntityType.COCONUT, EntityType.APPLE
+        };
 
         for (EntityType t : cropTypes) {
             FXGL.getGameWorld().getEntitiesByType(t).stream()
@@ -104,7 +109,7 @@ public class FarmingSystem {
                             && c.getComponent(CropComponent.class).isRipe())
                     .findFirst().ifPresent(c -> {
                         FXGL.getGameWorld().getEntitiesByType(EntityType.SOIL).stream()
-                                .filter(s -> s.getPosition().distance(c.getPosition()) < 5)
+                                .filter(s -> s.getPosition().distance(c.getPosition()) < 20)
                                 .findFirst().ifPresent(s -> s.getComponent(SoilComponent.class).setHasPlant(false));
 
                         ItemType res = ItemType.valueOf(t.name());
