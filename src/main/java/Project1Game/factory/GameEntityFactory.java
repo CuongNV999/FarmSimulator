@@ -405,7 +405,7 @@ public class GameEntityFactory implements EntityFactory {
 
     @Spawns("Fox")
     public Entity spawnFox(SpawnData data) {
-        return createMonster(data, "Fox", "monster/Fox/Fox_Run_with_shadow.png", "monster/Fox/Fox_Idle_with_shadow.png");
+        return createMonster(data, "Fox", "monster/Fox/Fox_walk_with_shadow.png", "monster/Fox/Fox_Idle_with_shadow.png");
     }
 
     @Spawns("Deer")
@@ -436,7 +436,7 @@ public class GameEntityFactory implements EntityFactory {
         if (rand.nextBoolean()) {
             return createMonster(copy, "Boar", "monster/Boar/Boar_Run_with_shadow.png", "monster/Boar/Boar_Idle_with_shadow.png");
         } else {
-            return createMonster(copy, "Fox", "monster/Fox/Fox_Run_with_shadow.png", "monster/Fox/Fox_Idle_with_shadow.png");
+            return createMonster(copy, "Fox", "monster/Fox/Fox_walk_with_shadow.png", "monster/Fox/Fox_Idle_with_shadow.png");
         }
     }
 }

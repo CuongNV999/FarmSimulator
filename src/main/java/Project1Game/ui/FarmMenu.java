@@ -136,6 +136,11 @@ public class FarmMenu extends FXGLMenu {
         menuBox.getChildren().clear();
         titleContainer.getChildren().clear();
 
+        // Always reset to default skin for new game (only Default is unlocked)
+        if (isNewGame) {
+            Project1Game.component.player.PlayerComponent.SELECTED_SKIN = "Player";
+        }
+
         Text titleText = new Text("SELECT CHARACTER SKIN");
         titleText.setFont(Font.font("Arial", FontWeight.EXTRA_BOLD, 42));
         titleText.setFill(Color.web("#eccb58"));
@@ -157,6 +162,7 @@ public class FarmMenu extends FXGLMenu {
         for (int i = 0; i < skinNames.length; i++) {
             final String path = skinPaths[i];
             final String name = skinNames[i];
+            final boolean isLocked = i > 0; // Only Default (index 0) is unlocked
             
             VBox skinBox = new VBox(8);
             skinBox.setAlignment(Pos.CENTER);
@@ -169,50 +175,65 @@ public class FarmMenu extends FXGLMenu {
                 ? "-fx-border-color: #eccb58; -fx-border-width: 3; -fx-border-radius: 10;" 
                 : "-fx-border-color: #355c45; -fx-border-width: 1.5; -fx-border-radius: 10;";
             
-            skinBox.setStyle("-fx-background-color: rgba(10, 25, 15, 0.75); -fx-background-radius: 10; " + borderStyle);
+            String bgColor = isLocked
+                ? "rgba(5, 10, 8, 0.85)"
+                : "rgba(10, 25, 15, 0.75)";
+            skinBox.setStyle("-fx-background-color: " + bgColor + "; -fx-background-radius: 10; " + borderStyle);
 
-            // Sprite preview
+            // Sprite preview (greyed out if locked)
             com.almasb.fxgl.texture.Texture preview = FXGL.texture(path + "/player.png");
             preview.setFitWidth(48);
             preview.setFitHeight(48);
+            if (isLocked) {
+                preview.setOpacity(0.3);
+            }
 
             Text nameText = new Text(name);
             nameText.setFont(Font.font("Arial", FontWeight.BOLD, 15));
-            nameText.setFill(Color.WHITE);
+            nameText.setFill(isLocked ? Color.web("#555555") : Color.WHITE);
 
             Text descText = new Text(skinDescs[i]);
             descText.setFont(Font.font("Arial", FontWeight.NORMAL, 10));
-            descText.setFill(Color.LIGHTGRAY);
+            descText.setFill(isLocked ? Color.web("#444444") : Color.LIGHTGRAY);
 
-            Button selectBtn = new Button(isSelected ? "Selected" : "Select");
-            selectBtn.setPrefWidth(90);
-            if (isSelected) {
-                selectBtn.setStyle("-fx-background-color: #eccb58; -fx-text-fill: black; -fx-font-weight: bold; -fx-background-radius: 5;");
+            if (isLocked) {
+                // Show lock icon instead of select button
+                Text lockIcon = new Text("🔒");
+                lockIcon.setFont(Font.font("Arial", FontWeight.BOLD, 22));
+                lockIcon.setOpacity(0.7);
+
+                skinBox.getChildren().addAll(preview, nameText, descText, lockIcon);
             } else {
-                selectBtn.setStyle("-fx-background-color: #254c35; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 5; -fx-cursor: hand;");
-            }
-
-            selectBtn.setOnAction(e -> {
-                Project1Game.component.player.PlayerComponent.SELECTED_SKIN = path;
-                // Re-draw screen to update selections
-                showSkinSelectionScreen(menuBox, titleContainer, app, isNewGame);
-            });
-
-            // Hover effects for the boxes
-            skinBox.setOnMouseEntered(e -> {
-                if (!Project1Game.component.player.PlayerComponent.SELECTED_SKIN.equals(path)) {
-                    skinBox.setStyle("-fx-background-color: rgba(20, 50, 30, 0.85); -fx-background-radius: 10; -fx-border-color: #5be584; -fx-border-width: 1.5; -fx-border-radius: 10;");
+                Button selectBtn = new Button(isSelected ? "Selected" : "Select");
+                selectBtn.setPrefWidth(90);
+                if (isSelected) {
+                    selectBtn.setStyle("-fx-background-color: #eccb58; -fx-text-fill: black; -fx-font-weight: bold; -fx-background-radius: 5;");
+                } else {
+                    selectBtn.setStyle("-fx-background-color: #254c35; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 5; -fx-cursor: hand;");
                 }
-            });
-            skinBox.setOnMouseExited(e -> {
-                boolean active = Project1Game.component.player.PlayerComponent.SELECTED_SKIN.equals(path);
-                String activeB = active 
-                    ? "-fx-border-color: #eccb58; -fx-border-width: 3; -fx-border-radius: 10;" 
-                    : "-fx-border-color: #355c45; -fx-border-width: 1.5; -fx-border-radius: 10;";
-                skinBox.setStyle("-fx-background-color: rgba(10, 25, 15, 0.75); -fx-background-radius: 10; " + activeB);
-            });
 
-            skinBox.getChildren().addAll(preview, nameText, descText, selectBtn);
+                selectBtn.setOnAction(e -> {
+                    Project1Game.component.player.PlayerComponent.SELECTED_SKIN = path;
+                    // Re-draw screen to update selections
+                    showSkinSelectionScreen(menuBox, titleContainer, app, isNewGame);
+                });
+
+                // Hover effects for the boxes
+                skinBox.setOnMouseEntered(e -> {
+                    if (!Project1Game.component.player.PlayerComponent.SELECTED_SKIN.equals(path)) {
+                        skinBox.setStyle("-fx-background-color: rgba(20, 50, 30, 0.85); -fx-background-radius: 10; -fx-border-color: #5be584; -fx-border-width: 1.5; -fx-border-radius: 10;");
+                    }
+                });
+                skinBox.setOnMouseExited(e -> {
+                    boolean active = Project1Game.component.player.PlayerComponent.SELECTED_SKIN.equals(path);
+                    String activeB = active 
+                        ? "-fx-border-color: #eccb58; -fx-border-width: 3; -fx-border-radius: 10;" 
+                        : "-fx-border-color: #355c45; -fx-border-width: 1.5; -fx-border-radius: 10;";
+                    skinBox.setStyle("-fx-background-color: rgba(10, 25, 15, 0.75); -fx-background-radius: 10; " + activeB);
+                });
+
+                skinBox.getChildren().addAll(preview, nameText, descText, selectBtn);
+            }
             skinsRow.getChildren().add(skinBox);
         }
 
