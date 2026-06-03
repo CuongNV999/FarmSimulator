@@ -512,8 +512,8 @@ public class NPCBehaviorComponent extends Component implements Interactable {
 
         List<Entity> monsters = FXGL.getGameWorld().getEntitiesByType(Project1Game.core.EntityType.MONSTER);
         for (Entity m : monsters) {
-            Project1Game.component.farming.monster.BushMonsterComponent bmc = 
-                    m.getComponentOptional(Project1Game.component.farming.monster.BushMonsterComponent.class).orElse(null);
+            Project1Game.component.farming.monster.BaseMonsterComponent bmc = 
+                    m.getComponentOptional(Project1Game.component.farming.monster.BaseMonsterComponent.class).orElse(null);
             if (bmc != null && !bmc.isReturning()) {
                 double dist = entity.distance(m);
                 if (dist < 250.0) {

@@ -212,6 +212,7 @@ public class Main extends GameApplication {
     // --- Các thực thể chính ---
     private Entity player;
     private Entity selector;
+    private String lastFarmedCell = "";
     private Inventory inventory;
     private javafx.beans.property.IntegerProperty boundMoneyProperty = null;
     private javafx.beans.value.ChangeListener<Number> moneyListener = null;
@@ -341,6 +342,50 @@ public class Main extends GameApplication {
             }
         });
 
+        // Dynamic collision avoidance (push prevention) for animals and monsters
+        FXGL.getPhysicsWorld().addCollisionHandler(new CreatureAvoidanceHandler(EntityType.ANIMAL, EntityType.ANIMAL));
+        FXGL.getPhysicsWorld().addCollisionHandler(new CreatureAvoidanceHandler(EntityType.ANIMAL, EntityType.MONSTER));
+        FXGL.getPhysicsWorld().addCollisionHandler(new CreatureAvoidanceHandler(EntityType.MONSTER, EntityType.MONSTER));
+    }
+
+    private static class CreatureAvoidanceHandler extends CollisionHandler {
+        public CreatureAvoidanceHandler(EntityType a, EntityType b) {
+            super(a, b);
+        }
+
+        @Override
+        protected void onCollision(Entity entityA, Entity entityB) {
+            PhysicsComponent physA = entityA.getComponentOptional(PhysicsComponent.class).orElse(null);
+            PhysicsComponent physB = entityB.getComponentOptional(PhysicsComponent.class).orElse(null);
+            if (physA == null || physB == null) return;
+
+            Point2D velA = new Point2D(physA.getVelocityX(), physA.getVelocityY());
+            Point2D velB = new Point2D(physB.getVelocityX(), physB.getVelocityY());
+
+            double speedA = velA.magnitude();
+            double speedB = velB.magnitude();
+
+            boolean isIdleA = speedA < 5.0;
+            boolean isIdleB = speedB < 5.0;
+
+            if (isIdleA && !isIdleB) {
+                Point2D pushDir = entityA.getPosition().subtract(entityB.getPosition());
+                if (pushDir.magnitude() < 0.1) {
+                    pushDir = new Point2D(Math.random() - 0.5, Math.random() - 0.5);
+                }
+                pushDir = pushDir.normalize();
+                physA.setVelocityX(pushDir.getX() * 40.0);
+                physA.setVelocityY(pushDir.getY() * 40.0);
+            } else if (isIdleB && !isIdleA) {
+                Point2D pushDir = entityB.getPosition().subtract(entityA.getPosition());
+                if (pushDir.magnitude() < 0.1) {
+                    pushDir = new Point2D(Math.random() - 0.5, Math.random() - 0.5);
+                }
+                pushDir = pushDir.normalize();
+                physB.setVelocityX(pushDir.getX() * 40.0);
+                physB.setVelocityY(pushDir.getY() * 40.0);
+            }
+        }
     }
 
     @Override
@@ -976,7 +1021,7 @@ public class Main extends GameApplication {
             protected void onActionBegin() {
                 Entity target = null;
                 if (player != null) {
-                    double radius = 80.0;
+                    double radius = 150.0;
                     javafx.geometry.Point2D playerCenter = player.getCenter();
                     javafx.geometry.Rectangle2D range = new javafx.geometry.Rectangle2D(
                             playerCenter.getX() - radius, playerCenter.getY() - radius,
@@ -1006,7 +1051,33 @@ public class Main extends GameApplication {
         input.addAction(new UserAction("Use Tool Mouse") {
             @Override
             protected void onActionBegin() {
+                if (selector != null) {
+                    int gridX = (int) Math.round(selector.getX() / 32.0);
+                    int gridY = (int) Math.round(selector.getY() / 32.0);
+                    lastFarmedCell = gridX + "," + gridY;
+                }
                 handleUseItem();
+            }
+
+            @Override
+            protected void onAction() {
+                ItemType selected = inventory.getSelectedItem();
+                if (selected == ItemType.HOE || selected == ItemType.WATERING_CAN) {
+                    if (selector != null && selector.getViewComponent().getOpacity() >= 1.0) {
+                        int gridX = (int) Math.round(selector.getX() / 32.0);
+                        int gridY = (int) Math.round(selector.getY() / 32.0);
+                        String currentCell = gridX + "," + gridY;
+                        if (!currentCell.equals(lastFarmedCell)) {
+                            lastFarmedCell = currentCell;
+                            handleUseItem();
+                        }
+                    }
+                }
+            }
+
+            @Override
+            protected void onActionEnd() {
+                lastFarmedCell = "";
             }
         }, MouseButton.PRIMARY);
 
@@ -1173,6 +1244,14 @@ public class Main extends GameApplication {
         return currentMap;
     }
 
+    public double getCurrentMapWidth() {
+        return currentMapWidth;
+    }
+
+    public double getCurrentMapHeight() {
+        return currentMapHeight;
+    }
+
     public void setShouldLoadSaveOnStart(boolean value) {
         this.shouldLoadSaveOnStart = value;
     }
@@ -1319,16 +1398,26 @@ public class Main extends GameApplication {
             return;
         }
 
-        java.util.List<Entity> bushes = FXGL.getGameWorld().getEntitiesByType(EntityType.BUSH);
-        if (bushes.isEmpty()) {
-            pushNotification("Không tìm thấy bụi cây nào trên map để spawn!");
-            return;
+        double spawnX = 64;
+        double spawnY = 64;
+        int corner = rng.nextInt(4);
+        if (corner == 0) { // Top-Left
+            spawnX = 64;
+            spawnY = 64;
+        } else if (corner == 1) { // Top-Right
+            spawnX = currentMapWidth - 96;
+            spawnY = 64;
+        } else if (corner == 2) { // Bottom-Left
+            spawnX = 64;
+            spawnY = currentMapHeight - 96;
+        } else { // Bottom-Right
+            spawnX = currentMapWidth - 96;
+            spawnY = currentMapHeight - 96;
         }
 
-        Entity targetBush = bushes.get(rng.nextInt(bushes.size()));
-        FXGL.spawn("BushMonster", targetBush.getX() + targetBush.getWidth()/2 - 16, targetBush.getY() + targetBush.getHeight()/2 - 16);
-        pushNotification("Admin: Đã spawn một quái vật từ bụi cây!");
-        System.out.println("Admin spawned BushMonster at " + targetBush.getPosition());
+        FXGL.spawn("BushMonster", spawnX, spawnY);
+        pushNotification("Admin: Đã spawn một quái vật tại góc bản đồ!");
+        System.out.println("Admin spawned BushMonster at corner (" + spawnX + ", " + spawnY + ")");
     }
 
     public static boolean isShiftHeld() {

@@ -38,8 +38,8 @@ public class FarmingSystem {
         // (x+16, y+16) là tâm của ô 32x32
         double distance = player.getCenter().distance(x + 16, y + 16);
 
-        // 4. Thiết lập độ mờ: Gần (<= 96px) thì hiện rõ, xa thì mờ đi
-        selector.getViewComponent().setOpacity(distance <= 96 ? 1.0 : 0.3);
+        // 4. Thiết lập độ mờ: Gần (<= 250px) thì hiện rõ, xa thì mờ đi
+        selector.getViewComponent().setOpacity(distance <= 250 ? 1.0 : 0.3);
     }
 
     /** Logic sử dụng Cuốc: Cày cỏ thành đất */

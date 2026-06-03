@@ -37,7 +37,11 @@ public class SoilComponent extends Component {
     public void updateTexture() {
         if (entity == null) return;
         entity.getViewComponent().clearChildren();
-        entity.getViewComponent().addChild(currentState.getTexture(entity.getX()));
+        if (isWet()) {
+            entity.getViewComponent().addChild(new Project1Game.component.farming.state.TilledWetState().getTexture(entity.getX()));
+        } else {
+            entity.getViewComponent().addChild(currentState.getTexture(entity.getX()));
+        }
     }
 
     private javafx.event.EventHandler<Project1Game.system.DayNightEvent> dayHandler;

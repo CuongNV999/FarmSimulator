@@ -162,7 +162,7 @@ public class FarmMenu extends FXGLMenu {
         for (int i = 0; i < skinNames.length; i++) {
             final String path = skinPaths[i];
             final String name = skinNames[i];
-            final boolean isLocked = i > 0; // Only Default (index 0) is unlocked
+            final boolean isLocked = false; // All skins are unlocked by default
             
             VBox skinBox = new VBox(8);
             skinBox.setAlignment(Pos.CENTER);
@@ -246,6 +246,7 @@ public class FarmMenu extends FXGLMenu {
         if (isNewGame) {
             MenuButton btnStartGame = new MenuButton("Start Game", () -> {
                 app.setShouldLoadSaveOnStart(false);
+                Project1Game.system.TutorialSystem.getInstance().resetTutorial();
                 fireNewGame();
             });
             MenuButton btnBack = new MenuButton("Back to Menu", () -> {

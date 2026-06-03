@@ -23,16 +23,16 @@ public class MonsterAnimationComponent extends Component {
     private String monsterType;
     private boolean useFallback = false;
 
-    public MonsterAnimationComponent(String monsterType, String runTexturePath, String idleTexturePath) {
+    public MonsterAnimationComponent(String monsterType, String walkTexturePath, String idleTexturePath) {
         this.monsterType = monsterType;
-        Image runImg = null;
+        Image walkImg = null;
         Image idleImg = null;
 
         // 1. Try specific assets
         try {
-            runImg = FXGL.image(runTexturePath);
+            walkImg = FXGL.image(walkTexturePath);
         } catch (Exception e) {
-            System.err.println("Failed to load run texture " + runTexturePath + ", trying fallback...");
+            System.err.println("Failed to load walk texture " + walkTexturePath + ", trying fallback...");
         }
         try {
             idleImg = FXGL.image(idleTexturePath);
@@ -41,11 +41,11 @@ public class MonsterAnimationComponent extends Component {
         }
 
         // 2. Try falling back to Fox sheets
-        if (runImg == null) {
+        if (walkImg == null) {
             try {
-                runImg = FXGL.image("monster/Fox/Fox_Run_with_shadow.png");
+                walkImg = FXGL.image("monster/Fox/Fox_walk_with_shadow.png");
             } catch (Exception e) {
-                System.err.println("Failed to load Fox run fallback texture.");
+                System.err.println("Failed to load Fox walk fallback texture.");
             }
         }
         if (idleImg == null) {
@@ -57,11 +57,11 @@ public class MonsterAnimationComponent extends Component {
         }
 
         // 3. Try falling back to Boar sheets
-        if (runImg == null) {
+        if (walkImg == null) {
             try {
-                runImg = FXGL.image("monster/Boar/Boar_Run_with_shadow.png");
+                walkImg = FXGL.image("monster/Boar/Boar_Walk_with_shadow.png");
             } catch (Exception e) {
-                System.err.println("Failed to load Boar run fallback texture.");
+                System.err.println("Failed to load Boar walk fallback texture.");
             }
         }
         if (idleImg == null) {
@@ -72,14 +72,14 @@ public class MonsterAnimationComponent extends Component {
             }
         }
 
-        if (runImg != null && idleImg != null) {
-            int runFrameW = 32;
-            int runFrameH = 32;
+        if (walkImg != null && idleImg != null) {
+            int walkFrameW = 32;
+            int walkFrameH = 32;
             int idleFrameW = 32;
             int idleFrameH = 32;
 
-            animWalkDown  = new AnimationChannel(runImg, 5, runFrameW, runFrameH, Duration.seconds(0.8), 0, 4);
-            animWalkUp    = new AnimationChannel(runImg, 5, runFrameW, runFrameH, Duration.seconds(0.8), 5, 9);
+            animWalkDown  = new AnimationChannel(walkImg, 5, walkFrameW, walkFrameH, Duration.seconds(0.8), 0, 4);
+            animWalkUp    = new AnimationChannel(walkImg, 5, walkFrameW, walkFrameH, Duration.seconds(0.8), 5, 9);
             
             animIdleDown  = new AnimationChannel(idleImg, 4, idleFrameW, idleFrameH, Duration.seconds(1.0), 0, 3);
             animIdleUp    = new AnimationChannel(idleImg, 4, idleFrameW, idleFrameH, Duration.seconds(1.0), 4, 7);
@@ -88,14 +88,14 @@ public class MonsterAnimationComponent extends Component {
             // Right triggers true Right channel (Row 4, frames 15-19 for Walk, 12-15 for Idle)
             if ("Fox".equalsIgnoreCase(monsterType)) {
                 // Fox animations are reversed in the sprite sheet relative to expectations
-                animWalkLeft  = new AnimationChannel(runImg, 5, runFrameW, runFrameH, Duration.seconds(0.8), 15, 19); // Row 4
-                animWalkRight = new AnimationChannel(runImg, 5, runFrameW, runFrameH, Duration.seconds(0.8), 10, 14); // Row 3
+                animWalkLeft  = new AnimationChannel(walkImg, 5, walkFrameW, walkFrameH, Duration.seconds(0.8), 15, 19); // Row 4
+                animWalkRight = new AnimationChannel(walkImg, 5, walkFrameW, walkFrameH, Duration.seconds(0.8), 10, 14); // Row 3
                 
                 animIdleLeft  = new AnimationChannel(idleImg, 4, idleFrameW, idleFrameH, Duration.seconds(1.0), 12, 15); // Row 4
                 animIdleRight = new AnimationChannel(idleImg, 4, idleFrameW, idleFrameH, Duration.seconds(1.0), 8, 11); // Row 3
             } else {
-                animWalkLeft  = new AnimationChannel(runImg, 5, runFrameW, runFrameH, Duration.seconds(0.8), 10, 14); // Row 3
-                animWalkRight = new AnimationChannel(runImg, 5, runFrameW, runFrameH, Duration.seconds(0.8), 15, 19); // Row 4
+                animWalkLeft  = new AnimationChannel(walkImg, 5, walkFrameW, walkFrameH, Duration.seconds(0.8), 10, 14); // Row 3
+                animWalkRight = new AnimationChannel(walkImg, 5, walkFrameW, walkFrameH, Duration.seconds(0.8), 15, 19); // Row 4
                 
                 animIdleLeft  = new AnimationChannel(idleImg, 4, idleFrameW, idleFrameH, Duration.seconds(1.0), 8, 11); // Row 3
                 animIdleRight = new AnimationChannel(idleImg, 4, idleFrameW, idleFrameH, Duration.seconds(1.0), 12, 15); // Row 4
