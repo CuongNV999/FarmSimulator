@@ -20,7 +20,6 @@ public class DialogView extends Parent {
 
     private final Text nameText;
     private final Text contentText;
-    private boolean visible2 = false;
 
     public DialogView(double screenW, double screenH) {
         Rectangle bg = new Rectangle(WIDTH, HEIGHT);
@@ -63,18 +62,16 @@ public class DialogView extends Parent {
     }
 
     public void show() {
-        visible2 = true;
         setVisible(true);
     }
 
     public void hide() {
-        visible2 = false;
         setVisible(false);
     }
 
     public void toggle() {
-        if (visible2) hide(); else show();
+        if (isVisible()) hide(); else show();
     }
 
-    public boolean isOpen() { return visible2; }
+    public boolean isOpen() { return isVisible(); }
 }

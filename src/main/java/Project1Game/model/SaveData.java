@@ -31,8 +31,6 @@ public class SaveData implements Serializable {
     // Lưu danh sách các cây trồng
     public List<CropDataSave> crops = new ArrayList<>();
 
-    // Lưu mức quan hệ với các Trader
-    public Map<String, RelationshipLevel> traderRelationships = new HashMap<>();
 
     public static class SoilData implements Serializable {
         public double x, y;

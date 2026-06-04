@@ -1474,7 +1474,15 @@ public class Main extends GameApplication {
             spawnY = currentMapHeight - 96;
         }
 
-        FXGL.spawn("BushMonster", spawnX, spawnY);
+        Entity monster = FXGL.spawn("BushMonster", spawnX, spawnY);
+        BaseMonsterComponent bmc = monster.getComponentOptional(BaseMonsterComponent.class).orElse(null);
+        if (bmc != null) {
+            bmc.setTemporary(10.0);
+            System.out.println("[Main] Configured spawned Admin BushMonster as temporary with 10.0s lifeTimer.");
+        } else {
+            System.out.println("[Main] Warning: Spawned Admin BushMonster does not have BaseMonsterComponent!");
+        }
+
         pushNotification("Admin: Đã spawn một quái vật tại góc bản đồ!");
         System.out.println("Admin spawned BushMonster at corner (" + spawnX + ", " + spawnY + ")");
     }

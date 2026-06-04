@@ -22,11 +22,7 @@ public class NPCBehaviorComponent extends Component implements Interactable {
     private boolean isMovingToWork = false;
     private double speed = 15; // NPC moves slightly slower for natural look
 
-    // Roaming variables
-    private boolean isRoaming = false;
-    private Point2D roamTarget = null;
-    private double roamTimer = 0.0;
-    private double roamCooldown = 0.0;
+
     private final Random random = new Random();
 
     // Pathfinding waypoints
@@ -78,7 +74,6 @@ public class NPCBehaviorComponent extends Component implements Interactable {
         if (spawnPosition == null) {
             spawnPosition = entity.getPosition();
         }
-        roamCooldown = 2.0 + random.nextDouble() * 3.0; // Initial delay before roaming
 
         // Ensure name properties are set correctly after map loader initialization
         if (entity.isType(Project1Game.core.EntityType.GUIDER)) {
@@ -385,8 +380,6 @@ public class NPCBehaviorComponent extends Component implements Interactable {
         this.homeDoorEntity = doorEntity;
         this.target = doorEntity.getPosition();
         this.isMovingToHouse = true;
-        this.isRoaming = false;
-        this.roamTarget = null;
         this.totalHomeTimer = 0.0;
         this.stuckTimer = 0.0;
         recalculatePath();
@@ -397,8 +390,6 @@ public class NPCBehaviorComponent extends Component implements Interactable {
         this.homeDoorEntity = null;
         this.target = doorPosition;
         this.isMovingToHouse = true;
-        this.isRoaming = false;
-        this.roamTarget = null;
         this.totalHomeTimer = 0.0;
         this.stuckTimer = 0.0;
         recalculatePath();
@@ -436,8 +427,6 @@ public class NPCBehaviorComponent extends Component implements Interactable {
     public void stopMoving() {
         isMovingToHouse = false;
         isMovingToWork = false;
-        isRoaming = false;
-        roamTarget = null;
         physics.setVelocityX(0);
         physics.setVelocityY(0);
         pathWaypoints.clear();
@@ -450,8 +439,6 @@ public class NPCBehaviorComponent extends Component implements Interactable {
         this.target = spawnPosition;
         this.isMovingToWork = true;
         this.isMovingToHouse = false;
-        this.isRoaming = false;
-        this.roamTarget = null;
         this.stuckTimer = 0.0;
         recalculatePath();
         physics.setLinearVelocity(Point2D.ZERO);
@@ -497,10 +484,6 @@ public class NPCBehaviorComponent extends Component implements Interactable {
 
         // Reset movement states & trigger walk to work
         isMovingToHouse = false;
-        isRoaming = false;
-        roamTarget = null;
-        roamTimer = 0;
-        roamCooldown = 2.0 + random.nextDouble() * 3.0;
 
         walkToWork();
         System.out.println("NPC " + entity.getString("name") + " đã xuất hiện trở lại tại " + spawnLoc + " và đang đi bộ về nơi làm việc.");

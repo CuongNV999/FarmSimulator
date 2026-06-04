@@ -42,45 +42,7 @@ public class FarmingSystem {
         selector.getViewComponent().setOpacity(distance <= 250 ? 1.0 : 0.3);
     }
 
-    /** Logic sử dụng Cuốc: Cày cỏ thành đất */
-    public void useHoe(Entity selector) {
-        if (selector.getViewComponent().getOpacity() < 1.0) return;
 
-        double selX = selector.getX();
-        double selY = selector.getY();
-
-        // O(1) single-pass lookup of entities at the cuock coordinates
-        java.util.List<Entity> localEntities = FXGL.getGameWorld().getEntitiesAt(new Point2D(selX + 16, selY + 16));
-        boolean inField = false;
-        boolean hasSoil = false;
-        for (Entity e : localEntities) {
-            if (e.isType(EntityType.FIELD)) {
-                inField = true;
-            } else if (e.isType(EntityType.SOIL)) {
-                hasSoil = true;
-            }
-        }
-
-        if (inField && !hasSoil) {
-            Entity s = FXGL.spawn("Soil", selX, selY);
-            s.getComponent(SoilComponent.class).updateTexture();
-        }
-    }
-
-    /** Logic gieo hạt */
-    public void plantCrop(Entity selector, ItemType seed) {
-        if (inventory.getCount(seed) <= 0 || selector.getViewComponent().getOpacity() < 1.0) return;
-
-        FXGL.getGameWorld().getEntitiesByType(EntityType.SOIL).stream()
-                .filter(s -> s.getPosition().distance(selector.getPosition()) < 10
-                        && s.getComponent(SoilComponent.class).canPlant())
-                .findFirst().ifPresent(soil -> {
-                    FXGL.spawn(seed.getSpawnName(), soil.getX(), soil.getY());
-                    soil.getComponent(SoilComponent.class).setHasPlant(true);
-                    inventory.removeItem(seed, 1);
-                    QuestManager.getInstance().broadcast(new QuestContext(QuestContext.EventType.PLANT, seed));
-                });
-    }
 
     /** Logic tưới nước */
     public void useWateringCan(Entity selector) {
@@ -96,22 +58,12 @@ public class FarmingSystem {
     /** Logic thu hoạch */
     public void handleHarvest(Entity selector) {
         if (selector.getViewComponent().getOpacity() < 1.0) return;
-        EntityType[] cropTypes = {
-                EntityType.WHEAT, EntityType.RADISH, EntityType.CABBAGE,
-                EntityType.GRAPE, EntityType.CUCUMBER, EntityType.PEPPER,
-                EntityType.CAULIFLOWER, EntityType.BEAN, EntityType.PINEAPPLE,
-                EntityType.SUNFLOWER, EntityType.COCONUT, EntityType.APPLE
-        };
 
-        for (EntityType t : cropTypes) {
+        for (EntityType t : Project1Game.core.CropRegistry.getInstance().getSupportedCrops()) {
             FXGL.getGameWorld().getEntitiesByType(t).stream()
                     .filter(c -> c.getPosition().distance(selector.getPosition()) < 10
                             && c.getComponent(CropComponent.class).isRipe())
                     .findFirst().ifPresent(c -> {
-                        FXGL.getGameWorld().getEntitiesByType(EntityType.SOIL).stream()
-                                .filter(s -> s.getPosition().distance(c.getPosition()) < 20)
-                                .findFirst().ifPresent(s -> s.getComponent(SoilComponent.class).setHasPlant(false));
-
                         ItemType res = ItemType.valueOf(t.name());
                         CropData cropData = c.getComponent(CropComponent.class).getData(); // Lấy CropData từ CropComponent
 

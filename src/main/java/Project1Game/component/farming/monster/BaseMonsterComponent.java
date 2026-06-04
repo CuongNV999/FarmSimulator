@@ -26,13 +26,7 @@ public abstract class BaseMonsterComponent extends Component {
         CARNIVORE, HERBIVORE
     }
 
-    // Tối ưu hóa tốc độ kiểm tra cây trồng từ O(N) về O(1) bằng EnumSet
-    private static final Set<EntityType> CROP_TYPES = EnumSet.of(
-            EntityType.WHEAT, EntityType.RADISH, EntityType.CABBAGE,
-            EntityType.GRAPE, EntityType.CUCUMBER, EntityType.PEPPER,
-            EntityType.CAULIFLOWER, EntityType.BEAN, EntityType.PINEAPPLE,
-            EntityType.SUNFLOWER, EntityType.COCONUT, EntityType.APPLE
-    );
+
 
     protected double fleeRadius;
     protected final MonsterClassification classification;
@@ -57,7 +51,7 @@ public abstract class BaseMonsterComponent extends Component {
     protected double wanderDuration = 0.0;
     protected Point2D wanderDir = Point2D.ZERO;
     protected Random random = new Random();
-    protected double spawnProtectionTimer = 30.0;
+    protected double spawnProtectionTimer = 5.0;
 
     protected boolean isReturning = false;
 
@@ -101,6 +95,9 @@ public abstract class BaseMonsterComponent extends Component {
 
         targetEntity = findClosestTarget();
         recalculatePath();
+
+        System.out.println("[BaseMonsterComponent] Added monster " + getClass().getSimpleName() + " at " + initialSpawnPos
+                + " | isTemporary=" + isTemporary + ", lifeTimer=" + lifeTimer + ", spawnProtectionTimer=" + spawnProtectionTimer);
     }
 
     @Override
@@ -109,11 +106,14 @@ public abstract class BaseMonsterComponent extends Component {
             return;
         }
 
-        if (damageCooldown > 0) damageCooldown -= tpf;
-        if (spawnProtectionTimer > 0) spawnProtectionTimer -= tpf;
+        // Cap tpf to avoid extreme jumps (pause, lag spikes, admin panel init)
+        double dt = Math.min(tpf, 0.1);
+
+        if (damageCooldown > 0) damageCooldown -= dt;
+        if (spawnProtectionTimer > 0) spawnProtectionTimer -= dt;
 
         if (collisionCooldown > 0) {
-            collisionCooldown -= tpf;
+            collisionCooldown -= dt;
             if (physics != null && physics.getBody() != null) {
                 physics.setVelocityX(0);
                 physics.setVelocityY(0);
@@ -122,11 +122,13 @@ public abstract class BaseMonsterComponent extends Component {
         }
 
         if (isTemporary && !isReturning) {
-            lifeTimer -= tpf;
+            lifeTimer -= dt;
             if (lifeTimer <= 0) {
                 isReturning = true;
                 targetEntity = findClosestBush();
                 recalculatePath();
+                System.out.println("[BaseMonsterComponent] Monster " + getClass().getSimpleName() + " life expired. Returning to closest bush: " 
+                        + (targetEntity != null ? targetEntity.getPosition() : "none") + " | spawnProtectionTimer=" + spawnProtectionTimer);
             }
         }
 
@@ -154,11 +156,11 @@ public abstract class BaseMonsterComponent extends Component {
         }
 
         if (isReturning) {
-            handleReturningState(tpf);
+            handleReturningState(dt);
         } else if (isAlerted && player != null) {
-            handleAlertedState(tpf, player);
+            handleAlertedState(dt, player);
         } else {
-            handleNormalSeekingState(tpf);
+            handleNormalSeekingState(dt);
         }
 
         // CHỐNG VĂNG MAP: Đồng bộ hóa toàn bộ tham số biên một cách nhất quán
@@ -193,6 +195,7 @@ public abstract class BaseMonsterComponent extends Component {
         }
 
         if (targetEntity == null) {
+            System.out.println("[BaseMonsterComponent] Removed monster " + getClass().getSimpleName() + " at " + entity.getPosition() + ": closest bush target is null.");
             entity.removeFromWorld();
             return;
         }
@@ -207,6 +210,8 @@ public abstract class BaseMonsterComponent extends Component {
 
         if (entity.distance(targetEntity) < 8.0) {
             if (spawnProtectionTimer <= 0) {
+                System.out.println("[BaseMonsterComponent] Removed monster " + getClass().getSimpleName() + " at " + entity.getPosition() 
+                        + ": returned to bush " + targetEntity.getPosition() + " | spawnProtectionTimer=" + spawnProtectionTimer);
                 entity.removeFromWorld();
             }
         }
@@ -241,19 +246,19 @@ public abstract class BaseMonsterComponent extends Component {
         }
 
         Point2D velocity = fleeDir.multiply(currentSpeed);
-        if (isMovementBlocked(velocity)) {
+        if (isMovementBlocked(velocity, tpf)) {
             Point2D alt1 = rotateVector(fleeDir, 45).multiply(currentSpeed);
             Point2D alt2 = rotateVector(fleeDir, -45).multiply(currentSpeed);
-            if (!isMovementBlocked(alt1)) {
+            if (!isMovementBlocked(alt1, tpf)) {
                 velocity = alt1;
-            } else if (!isMovementBlocked(alt2)) {
+            } else if (!isMovementBlocked(alt2, tpf)) {
                 velocity = alt2;
             } else {
                 velocity = Point2D.ZERO;
             }
         }
 
-        move(velocity);
+        move(velocity, tpf);
     }
 
     private void handleNormalSeekingState(double tpf) {
@@ -310,15 +315,15 @@ public abstract class BaseMonsterComponent extends Component {
                     outOfBounds = true;
                 }
             }
-            if (outOfBounds || isMovementBlocked(wanderDir)) {
+            if (outOfBounds || isMovementBlocked(wanderDir, tpf)) {
                 wanderDir = Point2D.ZERO;
                 wanderTimer = wanderDuration;
-                move(Point2D.ZERO);
+                move(Point2D.ZERO, tpf);
             } else {
-                move(wanderDir);
+                move(wanderDir, tpf);
             }
         } else {
-            move(Point2D.ZERO);
+            move(Point2D.ZERO, tpf);
         }
     }
 
@@ -327,9 +332,9 @@ public abstract class BaseMonsterComponent extends Component {
             if (targetEntity != null) {
                 Point2D dir = targetEntity.getPosition().subtract(entity.getPosition());
                 if (dir.magnitude() > 0.01) dir = dir.normalize();
-                move(dir.multiply(speedToUse));
+                move(dir.multiply(speedToUse), tpf);
             } else {
-                move(Point2D.ZERO);
+                move(Point2D.ZERO, tpf);
             }
             return;
         }
@@ -340,7 +345,7 @@ public abstract class BaseMonsterComponent extends Component {
         if (distToWaypoint < 12.0) {
             pathWaypoints.remove(0);
             if (pathWaypoints.isEmpty()) {
-                move(Point2D.ZERO);
+                move(Point2D.ZERO, tpf);
                 return;
             }
             currentWaypoint = pathWaypoints.get(0);
@@ -348,15 +353,19 @@ public abstract class BaseMonsterComponent extends Component {
 
         Point2D dir = currentWaypoint.subtract(entity.getPosition());
         if (dir.magnitude() > 0.01) dir = dir.normalize();
-        move(dir.multiply(speedToUse));
+        move(dir.multiply(speedToUse), tpf);
     }
 
     protected void move(Point2D velocity) {
+        move(velocity, FXGL.tpf());
+    }
+
+    protected void move(Point2D velocity, double dt) {
         if (physics != null && physics.getBody() != null) {
             physics.setVelocityX(velocity.getX());
             physics.setVelocityY(velocity.getY());
         } else {
-            entity.translate(velocity.multiply(FXGL.tpf()));
+            entity.translate(velocity.multiply(dt));
         }
     }
 
@@ -369,11 +378,13 @@ public abstract class BaseMonsterComponent extends Component {
         if (dist < 48.0) {
             BaseAnimalComponent bac = targetEntity.getComponentOptional(BaseAnimalComponent.class).orElse(null);
             if (classification == MonsterClassification.CARNIVORE && targetEntity.isType(EntityType.ANIMAL) && (bac == null || !bac.isFollowing())) {
+                System.out.println("[BaseMonsterComponent] CARNIVORE " + getClass().getSimpleName() + " ate animal " + targetEntity + " at " + targetEntity.getPosition());
                 targetEntity.removeFromWorld();
                 Project1Game.Main.pushNotification("Quái vật đã ăn thịt động vật của bạn!");
                 targetEntity = null;
                 damageCooldown = 2.0;
             } else if (classification == MonsterClassification.HERBIVORE && targetEntity.getType() instanceof EntityType && isCrop((EntityType) targetEntity.getType())) {
+                System.out.println("[BaseMonsterComponent] HERBIVORE " + getClass().getSimpleName() + " destroyed crop " + targetEntity.getType() + " at " + targetEntity.getPosition());
                 targetEntity.removeFromWorld();
                 Project1Game.Main.pushNotification("Quái vật đã phá hoại mùa màng của bạn!");
                 targetEntity = null;
@@ -413,7 +424,7 @@ public abstract class BaseMonsterComponent extends Component {
             }
         } else if (classification == MonsterClassification.HERBIVORE) {
             // TỐI ƯU HÓA TỐC ĐỘ: Duyệt trực thế giới một lần rồi lọc bằng bộ hash-set chuẩn O(1)
-            for (EntityType cropType : CROP_TYPES) {
+            for (EntityType cropType : Project1Game.core.CropRegistry.getInstance().getSupportedCrops()) {
                 List<Entity> crops = FXGL.getGameWorld().getEntitiesByType(cropType);
                 for (Entity crop : crops) {
                     double dist = entity.distance(crop);
@@ -443,16 +454,20 @@ public abstract class BaseMonsterComponent extends Component {
     }
 
     private boolean isCrop(EntityType type) {
-        return CROP_TYPES.contains(type);
+        return Project1Game.core.CropRegistry.getInstance().isCrop(type);
     }
 
     private boolean isMovementBlocked(Point2D velocity) {
+        return isMovementBlocked(velocity, FXGL.tpf());
+    }
+
+    private boolean isMovementBlocked(Point2D velocity, double dt) {
         if (velocity.getX() == 0 && velocity.getY() == 0) {
             return false;
         }
 
-        double nextX = entity.getX() + velocity.getX() * FXGL.tpf();
-        double nextY = entity.getY() + velocity.getY() * FXGL.tpf();
+        double nextX = entity.getX() + velocity.getX() * dt;
+        double nextY = entity.getY() + velocity.getY() * dt;
 
         // Đồng bộ hóa nghiêm ngặt khoảng đệm với SAFETY_MARGIN để chống Jittering
         if (nextX < SAFETY_MARGIN || nextX > cachedMapWidth - SAFETY_MARGIN || nextY < SAFETY_MARGIN || nextY > cachedMapHeight - SAFETY_MARGIN) {

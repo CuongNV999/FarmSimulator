@@ -54,21 +54,8 @@ public class TradingView extends VBox {
     // Shopping Cart list
     private final List<CartItem> cartItems = new ArrayList<>();
 
-    private final List<ItemType> buyableItems = Arrays.asList(
-            ItemType.WHEAT_SEED, ItemType.RADISH_SEED,
-            ItemType.CABBAGE_SEED,
-            ItemType.GRAPE_SEED, ItemType.CUCUMBER_SEED, ItemType.PEPPER_SEED,
-            ItemType.CAULIFLOWER_SEED, ItemType.BEAN_SEED, ItemType.PINEAPPLE_SEED,
-            ItemType.SUNFLOWER_SEED, ItemType.COCONUT_SEED, ItemType.APPLE_SEED
-    );
- 
-    private final List<ItemType> sellableItems = Arrays.asList(
-            ItemType.WHEAT, ItemType.RADISH,
-            ItemType.CABBAGE,
-            ItemType.GRAPE, ItemType.CUCUMBER, ItemType.PEPPER,
-            ItemType.CAULIFLOWER, ItemType.BEAN, ItemType.PINEAPPLE,
-            ItemType.SUNFLOWER, ItemType.COCONUT, ItemType.APPLE
-    );
+    private final List<ItemType> buyableItems = new ArrayList<>();
+    private final List<ItemType> sellableItems = new ArrayList<>();
 
     // Danh sách các vật phẩm có thể mua (thực phẩm ăn được)
     private final List<ItemType> buyableFood = Arrays.asList(
@@ -122,6 +109,20 @@ public class TradingView extends VBox {
     public TradingView(Inventory inventory, PlayerComponent playerComponent) {
         this.inventory = inventory;
         this.playerComponent = playerComponent;
+
+        // Khởi tạo danh sách cây từ CropRegistry để tránh vi phạm Open/Closed Principle
+        for (Project1Game.core.EntityType cropType : Project1Game.core.CropRegistry.getInstance().getSupportedCrops()) {
+            try {
+                buyableItems.add(ItemType.valueOf(cropType.name() + "_SEED"));
+            } catch (IllegalArgumentException e) {
+                System.err.println("[TradingView] Warning: seed not found for crop " + cropType);
+            }
+            try {
+                sellableItems.add(ItemType.valueOf(cropType.name()));
+            } catch (IllegalArgumentException e) {
+                System.err.println("[TradingView] Warning: harvest item not found for crop " + cropType);
+            }
+        }
 
         // Cấu hình nền và viền cho TradingView - Mở rộng chiều ngang
         setPrefSize(FXGL.getAppWidth() * 0.9, FXGL.getAppHeight() * 0.85);

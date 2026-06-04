@@ -46,12 +46,6 @@ public class PhysicsSystem {
             }
         });
 
-        // Va chạm Quái vật (MONSTER) và Bụi cây (BUSH) -> Quái vật biến mất
-        FXGL.getPhysicsWorld().addCollisionHandler(new CollisionHandler(EntityType.MONSTER, EntityType.BUSH) {
-            @Override
-            protected void onCollisionBegin(Entity monster, Entity bush) {
-                monster.removeFromWorld();
-            }
-        });
+
     }
 }
