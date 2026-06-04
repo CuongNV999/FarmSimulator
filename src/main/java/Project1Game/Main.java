@@ -595,7 +595,7 @@ public class Main extends GameApplication {
      */
     private void updateLevel(String newMapName, double x, double y) {
         int tempMoney = 1000;
-        String tempSkin = "Player";
+        String tempSkin = PlayerComponent.SELECTED_SKIN;
         if (player != null && player.isActive() && player.hasComponent(PlayerComponent.class)) {
             PlayerComponent pc = player.getComponent(PlayerComponent.class);
             tempMoney = pc.getMoney();

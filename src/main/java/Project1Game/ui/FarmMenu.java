@@ -99,6 +99,7 @@ public class FarmMenu extends FXGLMenu {
         titleContainer.getChildren().addAll(titleText, subtitleText);
 
         MenuButton btnNewGame = new MenuButton("New Game", () -> {
+            Project1Game.component.player.PlayerComponent.SELECTED_SKIN = "Player";
             showSkinSelectionScreen(menuBox, titleContainer, app, true);
         });
 
@@ -222,15 +223,9 @@ public class FarmMenu extends FXGLMenu {
 
         menuBox.getChildren().addAll(btnHpDepletion[0], btnMusic[0], btnSound[0], btnFullscreen[0], btnBack);
     }
-
     private void showSkinSelectionScreen(VBox menuBox, VBox titleContainer, Main app, boolean isNewGame) {
         menuBox.getChildren().clear();
         titleContainer.getChildren().clear();
-
-        // Always reset to default skin for new game (only Default is unlocked)
-        if (isNewGame) {
-            Project1Game.component.player.PlayerComponent.SELECTED_SKIN = "Player";
-        }
 
         Text titleText = new Text("SELECT CHARACTER SKIN");
         titleText.setFont(GameFont.font(FontWeight.EXTRA_BOLD, 42));
@@ -246,9 +241,9 @@ public class FarmMenu extends FXGLMenu {
         javafx.scene.layout.HBox skinsRow = new javafx.scene.layout.HBox(15);
         skinsRow.setAlignment(Pos.CENTER);
 
-        String[] skinNames = {"Default", "HUST", "Farmer", "Cowboy", "Knight", "Witch"};
-        String[] skinPaths = {"Player", "Player_HUST", "Player_Farmer", "Player_Cowboy", "Player_Knight", "Player_Witch"};
-        String[] skinDescs = {"Classic farmer", "BK Student", "Plaid & overalls", "West outlaw", "Iron warrior", "Wizard robe"};
+        String[] skinNames = {"Default", "Skeleton", "Male"};
+        String[] skinPaths = {"Player", "Player_Skeleton", "Player_Male"};
+        String[] skinDescs = {"Classic farmer", "Undead skeleton", "Classic male"};
 
         for (int i = 0; i < skinNames.length; i++) {
             final String path = skinPaths[i];
@@ -272,9 +267,17 @@ public class FarmMenu extends FXGLMenu {
             skinBox.setStyle("-fx-background-color: " + bgColor + "; -fx-background-radius: 10; " + borderStyle);
 
             // Sprite preview (greyed out if locked)
-            com.almasb.fxgl.texture.Texture preview = FXGL.texture(path + "/player.png");
-            preview.setFitWidth(48);
-            preview.setFitHeight(48);
+            com.almasb.fxgl.texture.Texture preview;
+            if (path.equals("Player_Skeleton") || path.equals("Player_Male")) {
+                String imageName = path + "/" + (path.equals("Player_Skeleton") ? "BODY_skeleton.png" : "BODY_male.png");
+                preview = FXGL.texture(imageName).subTexture(new javafx.geometry.Rectangle2D(0, 128, 64, 64));
+                preview.setFitWidth(48);
+                preview.setFitHeight(48);
+            } else {
+                preview = FXGL.texture(path + "/Carry_Idle/Carry_Idle_Down-Sheet.png").subTexture(new javafx.geometry.Rectangle2D(14, 8, 36, 48));
+                preview.setFitWidth(36);
+                preview.setFitHeight(48);
+            }
             if (isLocked) {
                 preview.setOpacity(0.3);
             }
@@ -352,7 +355,6 @@ public class FarmMenu extends FXGLMenu {
             });
             buttonsBox.getChildren().add(btnBack);
         }
-
         menuBox.getChildren().addAll(skinsRow, buttonsBox);
     }
 

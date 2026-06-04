@@ -166,8 +166,8 @@ public class AdminView extends VBox {
         skinGrid.setHgap(8);
         skinGrid.setVgap(8);
 
-        String[] skinNames = {"Default", "HUST", "Farmer", "Cowboy", "Knight", "Witch"};
-        String[] skinPaths = {"Player", "Player_HUST", "Player_Farmer", "Player_Cowboy", "Player_Knight", "Player_Witch"};
+        String[] skinNames = {"Default", "Skeleton", "Male"};
+        String[] skinPaths = {"Player", "Player_Skeleton", "Player_Male"};
 
         for (int i = 0; i < skinNames.length; i++) {
             final String path = skinPaths[i];

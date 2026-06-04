@@ -377,20 +377,20 @@
   <object id="2459" type="Player" x="1792" y="1024" width="32" height="32"/>
  </objectgroup>
  <objectgroup id="34" name="Bush">
-  <object id="7285" type="Bush" x="1984" y="2001" width="1565" height="41"/>
+  <object id="7285" type="Bush" x="1970" y="1985" width="1579" height="57"/>
   <object id="7308" type="Bush" x="29" y="1" width="3462" height="66"/>
-  <object id="7309" type="Bush" x="-32" y="0" width="89" height="2037"/>
-  <object id="7310" type="Bush" x="30" y="1999" width="1665" height="44"/>
-  <object id="7311" type="Bush" x="438" y="1147" width="430" height="71"/>
-  <object id="7312" type="Bush" x="437" y="1219" width="84" height="780"/>
-  <object id="7313" type="Bush" x="444" y="916" width="430" height="71"/>
+  <object id="7309" type="Bush" x="-32" y="0" width="98" height="2037"/>
+  <object id="7310" type="Bush" x="30" y="1983" width="1698" height="60"/>
+  <object id="7311" type="Bush" x="438" y="1142" width="430" height="82"/>
+  <object id="7312" type="Bush" x="428" y="1219" width="101" height="780"/>
+  <object id="7313" type="Bush" x="444" y="910" width="430" height="87"/>
   <object id="7315" type="Bush" x="3030" y="1244" width="84" height="752"/>
   <object id="7316" type="Bush" x="2750" y="1242" width="286" height="71"/>
   <object id="7317" type="Bush" x="2754" y="1012" width="291" height="76"/>
   <object id="7318" type="Bush" x="3034" y="592" width="75" height="495"/>
-  <object id="7319" type="Bush" x="794" y="681" width="75" height="235"/>
+  <object id="7319" type="Bush" x="788" y="681" width="84" height="235"/>
   <object id="7320" type="Bush" x="867" y="684" width="355" height="59"/>
-  <object id="7321" type="Bush" x="1145" y="405" width="75" height="278"/>
+  <object id="7321" type="Bush" x="1145" y="399" width="75" height="284"/>
   <object id="7322" type="Bush" x="1221" y="392" width="355" height="59"/>
   <object id="7323" type="Bush" x="1501" y="272" width="75" height="117"/>
   <object id="7324" type="Bush" x="1579" y="269" width="731" height="59"/>
