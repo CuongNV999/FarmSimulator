@@ -11,10 +11,25 @@ public class WateringCanAction implements Usable {
     @Override
     public void use(Entity player, Entity target) {
         if (target == null || target.getViewComponent().getOpacity() < 1.0) return;
+        
+        System.out.println("WateringCan used at target position: " + target.getPosition());
+        
         FXGL.getGameWorld().getEntitiesByType(EntityType.SOIL).stream()
-                .filter(s -> s.getPosition().distance(target.getPosition()) < 15)
+                .filter(s -> {
+                    double distance = s.getPosition().distance(target.getPosition());
+                    System.out.println("Soil at " + s.getPosition() + ", distance: " + distance);
+                    return distance < 15;
+                })
                 .findFirst().ifPresent(soil -> {
-                    soil.getComponent(SoilComponent.class).setWet(true);
+                    System.out.println("Found soil to water at: " + soil.getPosition());
+                    SoilComponent soilComp = soil.getComponent(SoilComponent.class);
+                    if (soilComp != null) {
+                        System.out.println("Before watering - isWet: " + soilComp.isWet());
+                        soilComp.setWet(true);
+                        System.out.println("After watering - isWet: " + soilComp.isWet());
+                    } else {
+                        System.out.println("ERROR: Soil entity has no SoilComponent!");
+                    }
                     QuestManager.getInstance().broadcast(new QuestContext(QuestContext.EventType.WATER, null));
                     if (Project1Game.Main.getInstance() != null) {
                         Project1Game.Main.getInstance().drainHungerForWork(1.0);

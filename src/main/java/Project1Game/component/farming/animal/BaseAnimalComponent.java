@@ -53,6 +53,8 @@ public class BaseAnimalComponent extends Component implements Interactable {
     private double wanderDuration = 0;
     private Point2D moveDir = Point2D.ZERO;
     private final Random random = new Random();
+    
+    private double collisionCooldown = 0.0; // Cooldown after collision
 
     private EventHandler<DayNightEvent> dayHandler;
 
@@ -118,6 +120,37 @@ public class BaseAnimalComponent extends Component implements Interactable {
 
     public void setFollowing(boolean following) {
         this.isFollowing = following;
+    }
+
+    /**
+     * Force the animal to stop and choose a new random direction.
+     * Called when colliding with another creature.
+     */
+    public void forceNewDirection() {
+        if (isFollowing || isFleeing) {
+            return; // Don't interrupt following or fleeing behavior
+        }
+        
+        // Set collision cooldown to prevent immediate movement
+        collisionCooldown = 0.5; // 0.5 second pause
+        
+        // Stop movement
+        moveDir = Point2D.ZERO;
+        if (physics != null && physics.getBody() != null) {
+            physics.setVelocityX(0);
+            physics.setVelocityY(0);
+        }
+        
+        // Set to idle animation (random direction)
+        int dir = random.nextInt(4);
+        if (dir == 0) texture.loopAnimationChannel(animIdleDown);
+        else if (dir == 1) texture.loopAnimationChannel(animIdleUp);
+        else if (dir == 2) texture.loopAnimationChannel(animIdleLeft);
+        else texture.loopAnimationChannel(animIdleRight);
+        
+        // Force immediate recalculation of new direction after cooldown
+        wanderTimer = 0;
+        wanderDuration = collisionCooldown;
     }
 
     private void setAnimationChannel(AnimationChannel channel) {
@@ -321,6 +354,16 @@ public class BaseAnimalComponent extends Component implements Interactable {
 
     @Override
     public void onUpdate(double tpf) {
+        // Handle collision cooldown
+        if (collisionCooldown > 0) {
+            collisionCooldown -= tpf;
+            if (physics != null && physics.getBody() != null) {
+                physics.setVelocityX(0);
+                physics.setVelocityY(0);
+            }
+            return; // Skip all other updates during cooldown
+        }
+        
         if (isFollowing) {
             // Auto-tilling logic for mature Bull in Field zone
             if (adultItem == ItemType.BULL && isReadyToHarvest()) {

@@ -6,16 +6,19 @@ import com.almasb.fxgl.entity.component.Component;
 import com.almasb.fxgl.physics.PhysicsComponent;
 import Project1Game.core.EntityType;
 import Project1Game.component.farming.animal.BaseAnimalComponent;
-import Project1Game.component.farming.CropComponent;
 import javafx.geometry.Point2D;
+import javafx.geometry.Rectangle2D;
 
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Random;
+import java.util.Set;
+import java.util.EnumSet;
 
 /**
  * Base AI logic for monsters with steering, food hunting, anti-jitter hysteresis,
  * player intimidation, and pathfinding.
+ * * Optimized for O(1) boundary updates, cached lookups, and memory efficiency.
  */
 public abstract class BaseMonsterComponent extends Component {
 
@@ -23,9 +26,17 @@ public abstract class BaseMonsterComponent extends Component {
         CARNIVORE, HERBIVORE
     }
 
+    // Tối ưu hóa tốc độ kiểm tra cây trồng từ O(N) về O(1) bằng EnumSet
+    private static final Set<EntityType> CROP_TYPES = EnumSet.of(
+            EntityType.WHEAT, EntityType.RADISH, EntityType.CABBAGE,
+            EntityType.GRAPE, EntityType.CUCUMBER, EntityType.PEPPER,
+            EntityType.CAULIFLOWER, EntityType.BEAN, EntityType.PINEAPPLE,
+            EntityType.SUNFLOWER, EntityType.COCONUT, EntityType.APPLE
+    );
+
     protected double fleeRadius;
     protected final MonsterClassification classification;
-    
+
     protected boolean isAlerted = false;
     protected boolean isTemporary = false;
     protected double lifeTimer = -1.0;
@@ -33,6 +44,7 @@ public abstract class BaseMonsterComponent extends Component {
     protected double pathTimer = 0.0;
     protected double damageCooldown = 0.0;
     protected double targetScanTimer = 0.0;
+    protected double collisionCooldown = 0.0;
 
     protected Entity targetEntity = null;
     protected List<Point2D> pathWaypoints = new ArrayList<>();
@@ -45,9 +57,14 @@ public abstract class BaseMonsterComponent extends Component {
     protected double wanderDuration = 0.0;
     protected Point2D wanderDir = Point2D.ZERO;
     protected Random random = new Random();
+    protected double spawnProtectionTimer = 30.0;
 
-    // Returning to bush state for temporary monsters
     protected boolean isReturning = false;
+
+    // Bộ đệm kích thước bản đồ tránh tính toán lại O(N) liên tục
+    private double cachedMapWidth = 3520;
+    private double cachedMapHeight = 2048;
+    private static final double SAFETY_MARGIN = 64.0;
 
     protected BaseMonsterComponent(double fleeRadius, MonsterClassification classification) {
         this.fleeRadius = fleeRadius;
@@ -63,41 +80,67 @@ public abstract class BaseMonsterComponent extends Component {
     public void onAdded() {
         physics = entity.getComponentOptional(PhysicsComponent.class).orElse(null);
         initialSpawnPos = entity.getPosition();
+
+        // Cache lại kích thước bản đồ một lần duy nhất khi quái xuất hiện
+        if (Project1Game.Main.getInstance() != null) {
+            cachedMapWidth = Project1Game.Main.getInstance().getCurrentMapWidth();
+            cachedMapHeight = Project1Game.Main.getInstance().getCurrentMapHeight();
+        } else {
+            // Fallback an toàn nếu không lấy được từ Main instance
+            double maxW = FXGL.getGameWorld()
+                    .getEntitiesByType(EntityType.FIELD, EntityType.WALL, EntityType.COLLISION)
+                    .stream()
+                    .mapToDouble(e -> e.getRightX()).max().orElse(3520);
+            double maxH = FXGL.getGameWorld()
+                    .getEntitiesByType(EntityType.FIELD, EntityType.WALL, EntityType.COLLISION)
+                    .stream()
+                    .mapToDouble(e -> e.getBottomY()).max().orElse(2048);
+            cachedMapWidth = Math.max(3520, maxW);
+            cachedMapHeight = Math.max(2048, maxH);
+        }
+
         targetEntity = findClosestTarget();
         recalculatePath();
     }
 
     @Override
     public void onUpdate(double tpf) {
-        if (damageCooldown > 0) {
-            damageCooldown -= tpf;
+        if (entity == null || !entity.isActive()) {
+            return;
         }
 
-        // Handle temporary monster life limit (returns to bush after limit)
+        if (damageCooldown > 0) damageCooldown -= tpf;
+        if (spawnProtectionTimer > 0) spawnProtectionTimer -= tpf;
+
+        if (collisionCooldown > 0) {
+            collisionCooldown -= tpf;
+            if (physics != null && physics.getBody() != null) {
+                physics.setVelocityX(0);
+                physics.setVelocityY(0);
+            }
+            return;
+        }
+
         if (isTemporary && !isReturning) {
             lifeTimer -= tpf;
             if (lifeTimer <= 0) {
                 isReturning = true;
                 targetEntity = findClosestBush();
                 recalculatePath();
-                // FXGL.getNotificationService().pushNotification("Quái vật đang quay trở lại bụi cây!");
             }
         }
 
-        // Retrieve player entity safely
         Entity player = null;
         List<Entity> players = FXGL.getGameWorld().getEntitiesByType(EntityType.PLAYER);
         if (!players.isEmpty()) {
             player = players.get(0);
         }
 
-        // Hysteresis player alert logic
         if (player != null) {
             double distToPlayer = entity.getPosition().distance(player.getPosition());
             if (!isAlerted) {
                 if (distToPlayer < fleeRadius) {
                     isAlerted = true;
-                    // Reset targeting when alerted
                     targetEntity = null;
                     pathWaypoints.clear();
                 }
@@ -110,13 +153,36 @@ public abstract class BaseMonsterComponent extends Component {
             isAlerted = false;
         }
 
-        // AI behavior state branch
         if (isReturning) {
             handleReturningState(tpf);
         } else if (isAlerted && player != null) {
             handleAlertedState(tpf, player);
         } else {
             handleNormalSeekingState(tpf);
+        }
+
+        // CHỐNG VĂNG MAP: Đồng bộ hóa toàn bộ tham số biên một cách nhất quán
+        double w = entity.getWidth() > 0 ? entity.getWidth() : 32.0;
+        double h = entity.getHeight() > 0 ? entity.getHeight() : 32.0;
+
+        double maxLegalX = cachedMapWidth - w - SAFETY_MARGIN;
+        double maxLegalY = cachedMapHeight - h - SAFETY_MARGIN;
+
+        if (entity.getX() < SAFETY_MARGIN) {
+            entity.setX(SAFETY_MARGIN);
+            if (physics != null) physics.setVelocityX(Math.abs(physics.getVelocityX()));
+        }
+        if (entity.getX() > maxLegalX) {
+            entity.setX(maxLegalX);
+            if (physics != null) physics.setVelocityX(-Math.abs(physics.getVelocityX()));
+        }
+        if (entity.getY() < SAFETY_MARGIN) {
+            entity.setY(SAFETY_MARGIN);
+            if (physics != null) physics.setVelocityY(Math.abs(physics.getVelocityY()));
+        }
+        if (entity.getY() > maxLegalY) {
+            entity.setY(maxLegalY);
+            if (physics != null) physics.setVelocityY(-Math.abs(physics.getVelocityY()));
         }
     }
 
@@ -139,14 +205,14 @@ public abstract class BaseMonsterComponent extends Component {
 
         followPath(tpf, baseSpeed);
 
-        if (entity.distance(targetEntity) < 32.0) {
-            entity.removeFromWorld();
-            System.out.println("Monster returned to bush and vanished.");
+        if (entity.distance(targetEntity) < 8.0) {
+            if (spawnProtectionTimer <= 0) {
+                entity.removeFromWorld();
+            }
         }
     }
 
     private void handleAlertedState(double tpf, Entity player) {
-        // Player intimidation / chasing away
         boolean playerMovingTowards = false;
         PhysicsComponent playerPhys = player.getComponentOptional(PhysicsComponent.class).orElse(null);
         if (playerPhys != null) {
@@ -164,19 +230,18 @@ public abstract class BaseMonsterComponent extends Component {
 
         double currentSpeed = escapeSpeed;
         if (playerMovingTowards) {
-            currentSpeed *= 1.5; // 1.5x panic speed multiplier
+            currentSpeed *= 1.5;
         }
 
         Point2D fleeDir = entity.getPosition().subtract(player.getPosition());
         if (fleeDir.magnitude() > 0.01) {
             fleeDir = fleeDir.normalize();
         } else {
-            fleeDir = new Point2D(1, 0); // fallback
+            fleeDir = new Point2D(1, 0);
         }
 
         Point2D velocity = fleeDir.multiply(currentSpeed);
         if (isMovementBlocked(velocity)) {
-            // Try sliding angles
             Point2D alt1 = rotateVector(fleeDir, 45).multiply(currentSpeed);
             Point2D alt2 = rotateVector(fleeDir, -45).multiply(currentSpeed);
             if (!isMovementBlocked(alt1)) {
@@ -184,7 +249,7 @@ public abstract class BaseMonsterComponent extends Component {
             } else if (!isMovementBlocked(alt2)) {
                 velocity = alt2;
             } else {
-                velocity = Point2D.ZERO; // Vigilant Idle (Stay Still)
+                velocity = Point2D.ZERO;
             }
         }
 
@@ -216,7 +281,6 @@ public abstract class BaseMonsterComponent extends Component {
             followPath(tpf, baseSpeed);
             checkAttack();
         } else {
-            // No targets left in world, wander around initial spawn point
             handleWandering(tpf);
         }
     }
@@ -236,18 +300,18 @@ public abstract class BaseMonsterComponent extends Component {
         }
 
         if (wanderDir.magnitude() > 0) {
-            // Keep wandering within 300px around initialSpawnPos
             double nextX = entity.getX() + wanderDir.getX() * tpf;
             double nextY = entity.getY() + wanderDir.getY() * tpf;
             boolean outOfBounds = false;
+
             if (initialSpawnPos != null) {
-                if (Math.abs(nextX - initialSpawnPos.getX()) > 300.0 || Math.abs(nextY - initialSpawnPos.getY()) > 300.0) {
+                if (Math.abs(nextX - initialSpawnPos.getX()) > 800.0 || Math.abs(nextY - initialSpawnPos.getY()) > 800.0) {
                     outOfBounds = true;
                 }
             }
             if (outOfBounds || isMovementBlocked(wanderDir)) {
                 wanderDir = Point2D.ZERO;
-                wanderTimer = wanderDuration; // Force recalculation
+                wanderTimer = wanderDuration;
                 move(Point2D.ZERO);
             } else {
                 move(wanderDir);
@@ -323,21 +387,9 @@ public abstract class BaseMonsterComponent extends Component {
             return;
         }
 
-        double mapW = 3520;
-        double mapH = 2048;
-        double maxW = FXGL.getGameWorld()
-                .getEntitiesByType(EntityType.FIELD, EntityType.WALL, EntityType.COLLISION)
-                .stream()
-                .mapToDouble(e -> e.getRightX()).max().orElse(3520);
-        double maxH = FXGL.getGameWorld()
-                .getEntitiesByType(EntityType.FIELD, EntityType.WALL, EntityType.COLLISION)
-                .stream()
-                .mapToDouble(e -> e.getBottomY()).max().orElse(2048);
-        mapW = Math.max(mapW, maxW);
-        mapH = Math.max(mapH, maxH);
-
+        // TỐI ƯU HÓA TỐC ĐỘ: Sử dụng kích thước bản đồ đã được lưu trong bộ đệm (O(1))
         this.pathWaypoints = Project1Game.system.AStarPathfinder.findPath(entity.getPosition(),
-                targetEntity.getPosition(), mapW, mapH);
+                targetEntity.getPosition(), cachedMapWidth, cachedMapHeight);
 
         if (this.pathWaypoints.isEmpty()) {
             this.pathWaypoints = new ArrayList<>();
@@ -363,15 +415,14 @@ public abstract class BaseMonsterComponent extends Component {
                 }
             }
         } else if (classification == MonsterClassification.HERBIVORE) {
-            for (EntityType type : EntityType.values()) {
-                if (isCrop(type)) {
-                    List<Entity> crops = FXGL.getGameWorld().getEntitiesByType(type);
-                    for (Entity crop : crops) {
-                        double dist = entity.distance(crop);
-                        if (dist < minDist) {
-                            minDist = dist;
-                            closest = crop;
-                        }
+            // TỐI ƯU HÓA TỐC ĐỘ: Duyệt trực thế giới một lần rồi lọc bằng bộ hash-set chuẩn O(1)
+            for (EntityType cropType : CROP_TYPES) {
+                List<Entity> crops = FXGL.getGameWorld().getEntitiesByType(cropType);
+                for (Entity crop : crops) {
+                    double dist = entity.distance(crop);
+                    if (dist < minDist) {
+                        minDist = dist;
+                        closest = crop;
                     }
                 }
             }
@@ -395,10 +446,7 @@ public abstract class BaseMonsterComponent extends Component {
     }
 
     private boolean isCrop(EntityType type) {
-        return type == EntityType.WHEAT || type == EntityType.RADISH || type == EntityType.CABBAGE
-                || type == EntityType.GRAPE || type == EntityType.CUCUMBER || type == EntityType.PEPPER
-                || type == EntityType.CAULIFLOWER || type == EntityType.BEAN || type == EntityType.PINEAPPLE
-                || type == EntityType.SUNFLOWER || type == EntityType.COCONUT || type == EntityType.APPLE;
+        return CROP_TYPES.contains(type);
     }
 
     private boolean isMovementBlocked(Point2D velocity) {
@@ -409,24 +457,25 @@ public abstract class BaseMonsterComponent extends Component {
         double nextX = entity.getX() + velocity.getX() * FXGL.tpf();
         double nextY = entity.getY() + velocity.getY() * FXGL.tpf();
 
-        double mapW = 3520;
-        double mapH = 2048;
-        if (Project1Game.Main.getInstance() != null) {
-            mapW = Project1Game.Main.getInstance().getCurrentMapWidth();
-            mapH = Project1Game.Main.getInstance().getCurrentMapHeight();
-        }
-        if (nextX < 32 || nextX > mapW - 64 || nextY < 32 || nextY > mapH - 64) {
+        // Đồng bộ hóa nghiêm ngặt khoảng đệm với SAFETY_MARGIN để chống Jittering
+        if (nextX < SAFETY_MARGIN || nextX > cachedMapWidth - SAFETY_MARGIN || nextY < SAFETY_MARGIN || nextY > cachedMapHeight - SAFETY_MARGIN) {
             return true;
         }
 
         double w = entity.getWidth() > 0 ? entity.getWidth() : 32;
         double h = entity.getHeight() > 0 ? entity.getHeight() : 32;
-        Point2D probePos = entity.getPosition().add(velocity.normalize().multiply(16.0));
-        javafx.geometry.Rectangle2D nextBox = new javafx.geometry.Rectangle2D(probePos.getX(), probePos.getY(), w, h);
+
+        // Đo đạc va chạm thông minh
+        Point2D direction = velocity.normalize();
+        double probeX = entity.getX() + direction.getX() * 16.0;
+        double probeY = entity.getY() + direction.getY() * 16.0;
+
+        Rectangle2D nextBox = new Rectangle2D(probeX, probeY, w, h);
 
         List<Entity> obstacles = FXGL.getGameWorld().getEntitiesInRange(nextBox);
         for (Entity obs : obstacles) {
-            if (obs.getType() == EntityType.WALL || obs.getType() == EntityType.COLLISION) {
+            Object type = obs.getType();
+            if (type == EntityType.WALL || type == EntityType.COLLISION) {
                 return true;
             }
         }
@@ -447,5 +496,21 @@ public abstract class BaseMonsterComponent extends Component {
 
     public boolean isAlerted() {
         return isAlerted;
+    }
+
+    public void forceNewDirection() {
+        if (isAlerted || isReturning) {
+            return;
+        }
+
+        collisionCooldown = 0.5;
+        wanderDir = Point2D.ZERO;
+        if (physics != null && physics.getBody() != null) {
+            physics.setVelocityX(0);
+            physics.setVelocityY(0);
+        }
+
+        wanderTimer = 0;
+        wanderDuration = collisionCooldown;
     }
 }
