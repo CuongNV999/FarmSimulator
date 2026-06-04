@@ -48,7 +48,7 @@ public class FarmingSystem {
     public void useWateringCan(Entity selector) {
         if (inventory.getCount(ItemType.WATERING_CAN) <= 0 || selector.getViewComponent().getOpacity() < 1.0) return;
         FXGL.getGameWorld().getEntitiesByType(EntityType.SOIL).stream()
-                .filter(s -> s.getPosition().distance(selector.getPosition()) < 15)
+                .filter(s -> s.getPosition().distance(selector.getPosition()) < 25)
                 .findFirst().ifPresent(soil -> {
                     soil.getComponent(SoilComponent.class).setWet(true);
                     QuestManager.getInstance().broadcast(new QuestContext(QuestContext.EventType.WATER, null));

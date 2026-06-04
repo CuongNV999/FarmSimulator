@@ -18,7 +18,7 @@ public class WateringCanAction implements Usable {
                 .filter(s -> {
                     double distance = s.getPosition().distance(target.getPosition());
                     System.out.println("Soil at " + s.getPosition() + ", distance: " + distance);
-                    return distance < 15;
+                    return distance < 25;
                 })
                 .findFirst().ifPresent(soil -> {
                     System.out.println("Found soil to water at: " + soil.getPosition());
