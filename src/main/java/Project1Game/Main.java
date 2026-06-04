@@ -4,6 +4,7 @@ package Project1Game;
 import Project1Game.component.farming.CropComponent;
 import Project1Game.component.farming.SoilComponent;
 import Project1Game.component.farming.animal.BaseAnimalComponent;
+import Project1Game.component.farming.monster.BaseMonsterComponent;
 import Project1Game.component.player.PlayerComponent;
 import Project1Game.core.EntityType;
 import Project1Game.core.ItemType;
@@ -368,22 +369,35 @@ public class Main extends GameApplication {
             boolean isIdleA = speedA < 5.0;
             boolean isIdleB = speedB < 5.0;
 
-            if (isIdleA && !isIdleB) {
-                Point2D pushDir = entityA.getPosition().subtract(entityB.getPosition());
-                if (pushDir.magnitude() < 0.1) {
-                    pushDir = new Point2D(Math.random() - 0.5, Math.random() - 0.5);
+            // Stop both creatures when they collide
+            physA.setVelocityX(0);
+            physA.setVelocityY(0);
+            physB.setVelocityX(0);
+            physB.setVelocityY(0);
+
+            // Force both creatures to choose new random directions
+            if (entityA.isType(EntityType.ANIMAL)) {
+                BaseAnimalComponent animalA = entityA.getComponentOptional(BaseAnimalComponent.class).orElse(null);
+                if (animalA != null) {
+                    animalA.forceNewDirection();
                 }
-                pushDir = pushDir.normalize();
-                physA.setVelocityX(pushDir.getX() * 40.0);
-                physA.setVelocityY(pushDir.getY() * 40.0);
-            } else if (isIdleB && !isIdleA) {
-                Point2D pushDir = entityB.getPosition().subtract(entityA.getPosition());
-                if (pushDir.magnitude() < 0.1) {
-                    pushDir = new Point2D(Math.random() - 0.5, Math.random() - 0.5);
+            } else if (entityA.isType(EntityType.MONSTER)) {
+                BaseMonsterComponent monsterA = entityA.getComponentOptional(BaseMonsterComponent.class).orElse(null);
+                if (monsterA != null) {
+                    monsterA.forceNewDirection();
                 }
-                pushDir = pushDir.normalize();
-                physB.setVelocityX(pushDir.getX() * 40.0);
-                physB.setVelocityY(pushDir.getY() * 40.0);
+            }
+
+            if (entityB.isType(EntityType.ANIMAL)) {
+                BaseAnimalComponent animalB = entityB.getComponentOptional(BaseAnimalComponent.class).orElse(null);
+                if (animalB != null) {
+                    animalB.forceNewDirection();
+                }
+            } else if (entityB.isType(EntityType.MONSTER)) {
+                BaseMonsterComponent monsterB = entityB.getComponentOptional(BaseMonsterComponent.class).orElse(null);
+                if (monsterB != null) {
+                    monsterB.forceNewDirection();
+                }
             }
         }
     }

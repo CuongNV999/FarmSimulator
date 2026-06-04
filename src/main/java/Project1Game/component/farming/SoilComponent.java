@@ -27,7 +27,11 @@ public class SoilComponent extends Component {
 
     public void setWet(boolean wet) {
         if (wet) {
-            currentState = currentState.water();
+            SoilState newState = currentState.water();
+            if (newState != null) {
+                currentState = newState;
+                System.out.println("Soil watered: State changed to " + currentState.getClass().getSimpleName());
+            }
         } else {
             currentState = new TilledDryState();
         }
