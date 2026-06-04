@@ -376,30 +376,6 @@
  <objectgroup id="4" name="Player" class="Player" visible="0">
   <object id="2459" type="Player" x="1792" y="1024" width="32" height="32"/>
  </objectgroup>
- <objectgroup id="34" name="Bush">
-  <object id="7285" type="Bush" x="1984" y="2001" width="1565" height="41"/>
-  <object id="7307" type="Bush" x="3480" y="1" width="70" height="2008"/>
-  <object id="7308" type="Bush" x="29" y="1" width="3462" height="39"/>
-  <object id="7309" type="Bush" x="-32" y="0" width="84" height="2037"/>
-  <object id="7310" type="Bush" x="30" y="1999" width="1665" height="44"/>
-  <object id="7311" type="Bush" x="438" y="1147" width="430" height="71"/>
-  <object id="7312" type="Bush" x="437" y="1219" width="84" height="780"/>
-  <object id="7313" type="Bush" x="444" y="916" width="430" height="71"/>
-  <object id="7315" type="Bush" x="3030" y="1244" width="84" height="752"/>
-  <object id="7316" type="Bush" x="2750" y="1242" width="286" height="71"/>
-  <object id="7317" type="Bush" x="2754" y="1012" width="291" height="76"/>
-  <object id="7318" type="Bush" x="3034" y="592" width="75" height="495"/>
-  <object id="7319" type="Bush" x="794" y="681" width="75" height="235"/>
-  <object id="7320" type="Bush" x="867" y="684" width="355" height="59"/>
-  <object id="7321" type="Bush" x="1145" y="405" width="75" height="278"/>
-  <object id="7322" type="Bush" x="1221" y="392" width="355" height="59"/>
-  <object id="7323" type="Bush" x="1501" y="272" width="75" height="117"/>
-  <object id="7324" type="Bush" x="1579" y="269" width="731" height="59"/>
-  <object id="7325" type="Bush" x="2238" y="329" width="75" height="152"/>
-  <object id="7326" type="Bush" x="2315" y="435" width="540" height="47"/>
-  <object id="7327" type="Bush" x="2780" y="483" width="75" height="159"/>
-  <object id="7328" type="Bush" x="2858" y="597" width="176" height="46"/>
- </objectgroup>
  <layer id="3" name="OverheadLayer" width="110" height="64">
   <data encoding="csv">
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -917,7 +893,7 @@
    <object id="7244" type="Guider" x="1951" y="862" width="34" height="34"/>
   </objectgroup>
  </group>
- <objectgroup id="26" name="Field" visible="0">
+ <objectgroup id="26" name="Field">
   <object id="7211" type="Field" x="34" y="32" width="413" height="1986"/>
   <object id="7212" type="Field" x="3104" y="35" width="384" height="1979"/>
   <object id="7217" type="Field" x="444" y="34" width="2660" height="254"/>

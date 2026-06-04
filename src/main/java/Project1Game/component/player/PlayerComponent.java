@@ -100,25 +100,38 @@ public class PlayerComponent extends Component {
         // 1. TỰ ĐỘNG LẤY VẬN TỐC TỪ HỆ THỐNG VẬT LÝ
         Point2D velocity = physics != null ? new Point2D(physics.getVelocityX(), physics.getVelocityY()) : Point2D.ZERO;
 
+        // BUG-001 Fix: Manual clamping when no input keys are pressed
+        boolean keysPressed = Project1Game.Main.isKeyPressed(javafx.scene.input.KeyCode.W) ||
+                              Project1Game.Main.isKeyPressed(javafx.scene.input.KeyCode.S) ||
+                              Project1Game.Main.isKeyPressed(javafx.scene.input.KeyCode.A) ||
+                              Project1Game.Main.isKeyPressed(javafx.scene.input.KeyCode.D);
+        if (!keysPressed && physics != null) {
+            if (velocity.magnitude() < 50) {
+                physics.setVelocityX(0);
+                physics.setVelocityY(0);
+                velocity = Point2D.ZERO;
+            }
+        }
+
         // Kiểm tra xem nhân vật có đang thực sự di chuyển không (ngưỡng 5 để tránh nhiễu)
         if (velocity.magnitude() > 5) {
             isMoving = true;
             direction = velocity; // Cập nhật hướng theo vận tốc
-
+ 
             // Cập nhật lật hình ảnh trái/phải dựa trên vận tốc X
             if (Math.abs(velocity.getX()) > 2) {
                 lastDirectionX = velocity.getX() < 0 ? -1 : 1;
             }
-
+ 
             // Tự động nhận diện đang chạy nếu vận tốc lớn (ví dụ > 210)
             isRunning = velocity.magnitude() > 210;
         } else {
             isMoving = false;
         }
-
+ 
         // 2. CHỌN ANIMATION PHÙ HỢP
         AnimationChannel next;
-
+ 
         if (isMoving) {
             if (isRunning) {
                 // Ưu tiên hướng Y nếu di chuyển dọc mạnh hơn ngang
@@ -142,38 +155,38 @@ public class PlayerComponent extends Component {
                 next = idleSide;
             }
         }
-
+ 
         // 3. CẬP NHẬT ĐỒ HỌA
         texture.setScaleX(lastDirectionX); // Lật ảnh
         if (texture.getAnimationChannel() != next) {
             texture.loopAnimationChannel(next);
         }
     }
-
+ 
     // Bạn có thể giữ lại hàm này nếu muốn cưỡng ép hướng từ bên ngoài,
     // nhưng onUpdate ở trên đã tự động hóa việc này.
     public void setRunning(boolean running) {
         this.isRunning = running;
     }
-
+ 
     // --- Các phương thức quản lý tiền tệ ---
     public int getMoney() {
         return money.get();
     }
-
+ 
     public Point2D getDirection() {
         return direction;
     }
-
+ 
     public IntegerProperty moneyProperty() {
         return money;
     }
-
+ 
     public void addMoney(int amount) {
         money.set(money.get() + amount);
         System.out.println("Tiền: " + money.get());
     }
-
+ 
     public boolean removeMoney(int amount) {
         if (money.get() >= amount) {
             money.set(money.get() - amount);
@@ -183,8 +196,8 @@ public class PlayerComponent extends Component {
         System.out.println("Không đủ tiền! Hiện có: " + money.get());
         return false;
     }
-
+ 
     public void setMoney(int money) {
-        this.money.set(money);
+        this.money.set(Math.max(0, money));
     }
 }

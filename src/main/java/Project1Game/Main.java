@@ -88,6 +88,10 @@ public class Main extends GameApplication {
         return timeSystem;
     }
 
+    public FarmingSystem getFarmingSystem() {
+        return farmingSystem;
+    }
+
     public Inventory getInventory() {
         return inventory;
     }
@@ -213,11 +217,21 @@ public class Main extends GameApplication {
     private Entity player;
     private Entity selector;
     private String lastFarmedCell = "";
+    private double lastToolUseTime = 0;
+    private boolean wasUnderOverhead = false;
+    private double overheadTransitionTimer = 0.0;
     private Inventory inventory;
     private javafx.beans.property.IntegerProperty boundMoneyProperty = null;
     private javafx.beans.value.ChangeListener<Number> moneyListener = null;
     private final java.util.Random rng = new java.util.Random();
     private static boolean shiftHeld = false;
+    private static final java.util.Set<KeyCode> activeKeys = new java.util.HashSet<>();
+
+    public static boolean isKeyPressed(KeyCode code) {
+        synchronized (activeKeys) {
+            return activeKeys.contains(code);
+        }
+    }
     private javafx.event.EventHandler<DayNightEvent> dayNightHandler = null;
 
     // --- Các lớp giao diện (UI) ---
@@ -384,6 +398,16 @@ public class Main extends GameApplication {
                 pushDir = pushDir.normalize();
                 physB.setVelocityX(pushDir.getX() * 40.0);
                 physB.setVelocityY(pushDir.getY() * 40.0);
+            } else if (isIdleA && isIdleB) {
+                Point2D pushDir = entityA.getPosition().subtract(entityB.getPosition());
+                if (pushDir.magnitude() < 0.1) {
+                    pushDir = new Point2D(Math.random() - 0.5, Math.random() - 0.5);
+                }
+                pushDir = pushDir.normalize();
+                physA.setVelocityX(pushDir.getX() * 20.0);
+                physA.setVelocityY(pushDir.getY() * 20.0);
+                physB.setVelocityX(-pushDir.getX() * 20.0);
+                physB.setVelocityY(-pushDir.getY() * 20.0);
             }
         }
     }
@@ -402,6 +426,7 @@ public class Main extends GameApplication {
         mapStates.clear();
         pendingNPCSpawns.clear();
         Project1Game.component.npc.NPCBehaviorComponent.clearHiddenNPCs();
+        Project1Game.factory.GameEntityFactory.animalSpawnOffset = 0; // BUG-013
 
         // 1. Khởi tạo dữ liệu và System nông nghiệp
         inventory = new Inventory();
@@ -642,10 +667,10 @@ public class Main extends GameApplication {
             mapH = 1024;
         } else {
             // Tự động tính toán dựa trên các thực thể có sẵn
-            double maxW = FXGL.getGameWorld().getEntitiesByType(EntityType.FIELD, EntityType.WALL, EntityType.COLLISION)
+            double maxW = new java.util.ArrayList<>(FXGL.getGameWorld().getEntitiesByType(EntityType.FIELD, EntityType.WALL, EntityType.COLLISION))
                     .stream()
                     .mapToDouble(e -> e.getRightX()).max().orElse(3520);
-            double maxH = FXGL.getGameWorld().getEntitiesByType(EntityType.FIELD, EntityType.WALL, EntityType.COLLISION)
+            double maxH = new java.util.ArrayList<>(FXGL.getGameWorld().getEntitiesByType(EntityType.FIELD, EntityType.WALL, EntityType.COLLISION))
                     .stream()
                     .mapToDouble(e -> e.getBottomY()).max().orElse(2048);
             mapW = Math.max(mapW, maxW);
@@ -657,10 +682,10 @@ public class Main extends GameApplication {
 
         FXGL.getGameScene().getViewport().setBounds(0, 0, (int) mapW, (int) mapH);
         FXGL.getGameScene().getViewport().bindToEntity(player, FXGL.getAppWidth() / 2.0, FXGL.getAppHeight() / 2.0);
-        FXGL.getGameScene().getViewport().setLazy(true);
+        FXGL.getGameScene().getViewport().setLazy(false); // BUG-002: Disable lazy viewport to prevent lag-offset.
 
         // Tạo biên bản đồ (Wall) bao quanh map để chặn người chơi đi ra ngoài
-        FXGL.getGameWorld().getEntitiesByType(EntityType.WALL).forEach(Entity::removeFromWorld);
+        new java.util.ArrayList<>(FXGL.getGameWorld().getEntitiesByType(EntityType.WALL)).forEach(Entity::removeFromWorld);
         spawnBoundaries((int) mapW, (int) mapH);
 
         // 5. TẢI TRẠNG THÁI BẢN ĐỒ MỚI (nếu có)
@@ -672,7 +697,7 @@ public class Main extends GameApplication {
         } else {
             // Nếu chưa có trạng thái lưu, đây là lần đầu tiên tải bản đồ này
             // Đảm bảo các thực thể SOIL được cập nhật texture
-            FXGL.getGameWorld().getEntitiesByType(EntityType.SOIL)
+            new java.util.ArrayList<>(FXGL.getGameWorld().getEntitiesByType(EntityType.SOIL))
                     .forEach(s -> s.getComponent(SoilComponent.class).updateTexture());
             System.out.println("Tải bản đồ mới lần đầu: " + newMapName);
             if (newMapName.equals("Main_level.tmx")) {
@@ -685,7 +710,7 @@ public class Main extends GameApplication {
             System.out.println("[NPC Cache] Applying cached spawn configs...");
             for (NPCSpawnConfig config : pendingNPCSpawns) {
                 EntityType type = config.type.equalsIgnoreCase("Guider") ? EntityType.GUIDER : EntityType.TRADER;
-                FXGL.getGameWorld().getEntitiesByType(type).forEach(npc -> {
+                new java.util.ArrayList<>(FXGL.getGameWorld().getEntitiesByType(type)).forEach(npc -> {
                     NPCBehaviorComponent ai = npc.getComponentOptional(NPCBehaviorComponent.class).orElse(null);
                     if (ai != null) {
                         if (config.isHidden) {
@@ -771,30 +796,30 @@ public class Main extends GameApplication {
             if (currentMap.equals("Main_level.tmx")) {
                 // 8:00 PM: đi vào nhà
                 if (timeSystem.getHour() >= 20 || timeSystem.getHour() < 6) {
-                    FXGL.getGameWorld().getEntitiesByType(EntityType.GUIDER).forEach(npc -> {
-                        NPCBehaviorComponent ai = npc.getComponentOptional(NPCBehaviorComponent.class).orElse(null);
-                        if (ai != null && !ai.isGoingHome() && !ai.isHidden()) {
-                            FXGL.getGameWorld().getEntitiesByType(EntityType.GUIDER_IN).stream().findFirst()
-                                    .ifPresent(target -> {
-                                        nearbyNPC = null;
-                                        ai.goHome(target);
-                                    });
-                        }
-                    });
+                    Entity guiderTarget = FXGL.getGameWorld().getEntitiesByType(EntityType.GUIDER_IN).stream().findFirst().orElse(null);
+                    if (guiderTarget != null) {
+                        FXGL.getGameWorld().getEntitiesByType(EntityType.GUIDER).forEach(npc -> {
+                            NPCBehaviorComponent ai = npc.getComponentOptional(NPCBehaviorComponent.class).orElse(null);
+                            if (ai != null && !ai.isGoingHome() && !ai.isHidden()) {
+                                nearbyNPC = null;
+                                ai.goHome(guiderTarget);
+                            }
+                        });
+                    }
 
-                    FXGL.getGameWorld().getEntitiesByType(EntityType.TRADER).forEach(npc -> {
-                        NPCBehaviorComponent ai = npc.getComponentOptional(NPCBehaviorComponent.class).orElse(null);
-                        if (ai != null && !ai.isGoingHome() && !ai.isHidden()) {
-                            FXGL.getGameWorld().getEntitiesByType(EntityType.TRADER_IN).stream().findFirst()
-                                    .ifPresent(target -> {
-                                        if (tradingView != null && tradingView.isOpen()) {
-                                            tradingView.toggle();
-                                        }
-                                        nearbyNPC = null;
-                                        ai.goHome(target);
-                                    });
-                        }
-                    });
+                    Entity traderTarget = FXGL.getGameWorld().getEntitiesByType(EntityType.TRADER_IN).stream().findFirst().orElse(null);
+                    if (traderTarget != null) {
+                        FXGL.getGameWorld().getEntitiesByType(EntityType.TRADER).forEach(npc -> {
+                            NPCBehaviorComponent ai = npc.getComponentOptional(NPCBehaviorComponent.class).orElse(null);
+                            if (ai != null && !ai.isGoingHome() && !ai.isHidden()) {
+                                if (tradingView != null && tradingView.isOpen()) {
+                                    tradingView.toggle();
+                                }
+                                nearbyNPC = null;
+                                ai.goHome(traderTarget);
+                            }
+                        });
+                    }
                 }
                 // 6:00 AM: xuất hiện trở lại
                 if (timeSystem.getHour() >= 6 && timeSystem.getHour() < 20) {
@@ -875,7 +900,7 @@ public class Main extends GameApplication {
 
         if (overheadLayerData != null && player != null && player.isActive()) {
             if (overheadLayerEntity == null || !overheadLayerEntity.isActive()) {
-                overheadLayerEntity = FXGL.getGameWorld().getEntities().stream()
+                overheadLayerEntity = new java.util.ArrayList<>(FXGL.getGameWorld().getEntities()).stream()
                         .filter(e -> {
                             if (e.getProperties().keys().contains("layer")) {
                                 Object layerObj = e.getProperties().getValue("layer");
@@ -895,10 +920,20 @@ public class Main extends GameApplication {
                 }
             }
             if (overheadLayerEntity != null && overheadLayerEntity.getViewComponent() != null) {
-                // Check if player (head/chest) is under any overhead tile
-                boolean underOverhead = isUnderOverhead(player.getCenter().getX(), player.getY() + 16.0);
+                // Check if player (head/chest) is under any overhead tile with hysteresis debouncing
+                boolean currentlyUnder = isUnderOverhead(player.getCenter().getX(), player.getY() + 16.0);
+                if (currentlyUnder != wasUnderOverhead) {
+                    overheadTransitionTimer += tpf;
+                    if (overheadTransitionTimer > 0.15) { // 150ms delay to commit
+                        wasUnderOverhead = currentlyUnder;
+                        overheadTransitionTimer = 0.0;
+                    }
+                } else {
+                    overheadTransitionTimer = 0.0;
+                }
+
                 double currentOpacity = overheadLayerEntity.getViewComponent().getOpacity();
-                double targetOpacity = underOverhead ? 0.45 : 1.0;
+                double targetOpacity = wasUnderOverhead ? 0.45 : 1.0;
                 if (Math.abs(currentOpacity - targetOpacity) > 0.01) {
                     overheadLayerEntity.getViewComponent().setOpacity(targetOpacity);
                 }
@@ -928,13 +963,57 @@ public class Main extends GameApplication {
         Input input = FXGL.getInput();
 
         input.addEventFilter(javafx.scene.input.KeyEvent.KEY_PRESSED, e -> {
+            synchronized (activeKeys) {
+                activeKeys.add(e.getCode());
+            }
             if (e.getCode() == KeyCode.SHIFT) {
                 shiftHeld = true;
             }
         });
         input.addEventFilter(javafx.scene.input.KeyEvent.KEY_RELEASED, e -> {
+            synchronized (activeKeys) {
+                activeKeys.remove(e.getCode());
+            }
             if (e.getCode() == KeyCode.SHIFT) {
                 shiftHeld = false;
+            }
+        });
+
+        // Continuous drag-farming handler with grid-cell tracking
+        input.addEventFilter(javafx.scene.input.MouseEvent.MOUSE_DRAGGED, e -> {
+            // Only process if PRIMARY button is held during drag
+            if (!e.isPrimaryButtonDown()) return;
+            
+            ItemType selected = inventory.getSelectedItem();
+            if (selected == ItemType.HOE || selected == ItemType.WATERING_CAN) {
+                Point2D worldPos = input.getMousePositionWorld();
+                
+                // Snap to grid cell (same logic as selector)
+                double x = Math.floor(worldPos.getX() / 32) * 32;
+                double y = Math.floor(worldPos.getY() / 32) * 32;
+                int gridX = (int) (x / 32);
+                int gridY = (int) (y / 32);
+                String currentCell = gridX + "," + gridY;
+                
+                // Only trigger if we've entered a NEW cell
+                if (!currentCell.equals(lastFarmedCell)) {
+                    if (player != null) {
+                        double distance = player.getCenter().distance(x + 16, y + 16);
+                        if (distance <= 250.0) { // Reach radius expanded to 250px
+                            double now = FXGL.getGameTimer().getNow();
+                            // Reduced cooldown to 0.15s for smoother drag-farming
+                            if (now - lastToolUseTime > 0.15) {
+                                lastToolUseTime = now;
+                                lastFarmedCell = currentCell;
+                                if (selected == ItemType.HOE) {
+                                    farmingSystem.useHoe(new Point2D(x, y));
+                                } else {
+                                    farmingSystem.useWateringCan(new Point2D(x, y));
+                                }
+                            }
+                        }
+                    }
+                }
             }
         });
 
@@ -1019,23 +1098,44 @@ public class Main extends GameApplication {
         input.addAction(new UserAction("Interact Action Key") {
             @Override
             protected void onActionBegin() {
-                Entity target = null;
-                if (player != null) {
-                    double radius = 150.0;
-                    javafx.geometry.Point2D playerCenter = player.getCenter();
-                    javafx.geometry.Rectangle2D range = new javafx.geometry.Rectangle2D(
-                            playerCenter.getX() - radius, playerCenter.getY() - radius,
-                            radius * 2, radius * 2);
-                    target = FXGL.getGameWorld().getEntitiesInRange(range).stream()
-                            .filter(e -> e.hasComponent(Project1Game.interaction.InteractableComponent.class))
-                            .findFirst()
-                            .orElse(null);
+                boolean hasRipeCrop = false;
+                if (selector != null && selector.getViewComponent().getOpacity() >= 1.0) {
+                    EntityType[] cropTypes = {
+                            EntityType.WHEAT, EntityType.RADISH, EntityType.CABBAGE,
+                            EntityType.GRAPE, EntityType.CUCUMBER, EntityType.PEPPER,
+                            EntityType.CAULIFLOWER, EntityType.BEAN, EntityType.PINEAPPLE,
+                            EntityType.SUNFLOWER, EntityType.COCONUT, EntityType.APPLE
+                    };
+                    for (EntityType t : cropTypes) {
+                        boolean match = FXGL.getGameWorld().getEntitiesByType(t).stream()
+                                .anyMatch(c -> c.getPosition().distance(selector.getPosition()) < 10
+                                        && c.getComponent(Project1Game.component.farming.CropComponent.class).isRipe());
+                        if (match) {
+                            hasRipeCrop = true;
+                            break;
+                        }
+                    }
                 }
 
-                if (target != null) {
-                    target.getComponent(Project1Game.interaction.InteractableComponent.class).interact(player);
-                } else {
+                if (hasRipeCrop) {
                     farmingSystem.handleHarvest(selector);
+                } else {
+                    Entity target = null;
+                    if (player != null) {
+                        double radius = 150.0;
+                        javafx.geometry.Point2D playerCenter = player.getCenter();
+                        javafx.geometry.Rectangle2D range = new javafx.geometry.Rectangle2D(
+                                playerCenter.getX() - radius, playerCenter.getY() - radius,
+                                radius * 2, radius * 2);
+                        target = FXGL.getGameWorld().getEntitiesInRange(range).stream()
+                                .filter(e -> e.hasComponent(Project1Game.interaction.InteractableComponent.class))
+                                .findFirst()
+                                .orElse(null);
+                    }
+
+                    if (target != null) {
+                        target.getComponent(Project1Game.interaction.InteractableComponent.class).interact(player);
+                    }
                 }
             }
         }, KeyCode.E);
@@ -1056,7 +1156,11 @@ public class Main extends GameApplication {
                     int gridY = (int) Math.round(selector.getY() / 32.0);
                     lastFarmedCell = gridX + "," + gridY;
                 }
-                handleUseItem();
+                double now = FXGL.getGameTimer().getNow();
+                if (now - lastToolUseTime > 0.25) {
+                    lastToolUseTime = now;
+                    handleUseItem();
+                }
             }
 
             @Override
@@ -1068,8 +1172,12 @@ public class Main extends GameApplication {
                         int gridY = (int) Math.round(selector.getY() / 32.0);
                         String currentCell = gridX + "," + gridY;
                         if (!currentCell.equals(lastFarmedCell)) {
-                            lastFarmedCell = currentCell;
-                            handleUseItem();
+                            double now = FXGL.getGameTimer().getNow();
+                            if (now - lastToolUseTime > 0.25) {
+                                lastToolUseTime = now;
+                                lastFarmedCell = currentCell;
+                                handleUseItem();
+                            }
                         }
                     }
                 }
@@ -1085,7 +1193,9 @@ public class Main extends GameApplication {
             @Override
             protected void onActionBegin() { // Đã sửa lỗi "void void"
                 System.out.println("Test: Ép tưới cây bằng phím Q!");
-                farmingSystem.useWateringCan(selector);
+                if (selector != null) {
+                    farmingSystem.useWateringCan(selector.getPosition());
+                }
             }
         }, KeyCode.Q);
 
@@ -1398,26 +1508,53 @@ public class Main extends GameApplication {
             return;
         }
 
-        double spawnX = 64;
-        double spawnY = 64;
+        double safetyOffset = 128.0;
+        double spawnX = safetyOffset;
+        double spawnY = safetyOffset;
         int corner = rng.nextInt(4);
         if (corner == 0) { // Top-Left
-            spawnX = 64;
-            spawnY = 64;
+            spawnX = safetyOffset;
+            spawnY = safetyOffset;
         } else if (corner == 1) { // Top-Right
-            spawnX = currentMapWidth - 96;
-            spawnY = 64;
+            spawnX = currentMapWidth - safetyOffset;
+            spawnY = safetyOffset;
         } else if (corner == 2) { // Bottom-Left
-            spawnX = 64;
-            spawnY = currentMapHeight - 96;
+            Point2D safeBottomLeft = new Point2D(safetyOffset, currentMapHeight - safetyOffset);
+            spawnX = safeBottomLeft.getX();
+            spawnY = safeBottomLeft.getY();
         } else { // Bottom-Right
-            spawnX = currentMapWidth - 96;
-            spawnY = currentMapHeight - 96;
+            spawnX = currentMapWidth - safetyOffset;
+            spawnY = currentMapHeight - safetyOffset;
         }
 
-        FXGL.spawn("BushMonster", spawnX, spawnY);
-        pushNotification("Admin: Đã spawn một quái vật tại góc bản đồ!");
-        System.out.println("Admin spawned BushMonster at corner (" + spawnX + ", " + spawnY + ")");
+        // Collision Overlap Detection
+        boolean isBlocked = FXGL.getGameWorld().getEntitiesAt(new Point2D(spawnX, spawnY)).stream()
+                .anyMatch(e -> {
+                    if (e.getType() == EntityType.WALL || e.getType() == EntityType.COLLISION) {
+                        return true;
+                    }
+                    String typeStr = String.valueOf(e.getType()).toUpperCase();
+                    return typeStr.contains("WALL") || typeStr.contains("ROCK") || typeStr.contains("COLLISION");
+                });
+
+        if (isBlocked) {
+            double fallbackX = player != null ? player.getX() + 64.0 : safetyOffset;
+            double fallbackY = player != null ? player.getY() : safetyOffset;
+
+            // Clamp safely within map boundaries (with a buffer)
+            if (fallbackX < 32.0) fallbackX = 32.0;
+            if (fallbackX > currentMapWidth - 64.0) fallbackX = currentMapWidth - 64.0;
+            if (fallbackY < 32.0) fallbackY = 32.0;
+            if (fallbackY > currentMapHeight - 64.0) fallbackY = currentMapHeight - 64.0;
+
+            FXGL.spawn("BushMonster", fallbackX, fallbackY);
+            pushNotification("Admin: Phát hiện vật cản tại góc! Spawn quái vật gần người chơi.");
+            System.out.println("Blocked at corner " + corner + ", fallback spawned near player at (" + fallbackX + ", " + fallbackY + ")");
+        } else {
+            FXGL.spawn("BushMonster", spawnX, spawnY);
+            pushNotification("Admin: Đã spawn một quái vật tại góc bản đồ!");
+            System.out.println("Admin spawned BushMonster at corner (" + spawnX + ", " + spawnY + ")");
+        }
     }
 
     public static boolean isShiftHeld() {

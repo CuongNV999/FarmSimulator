@@ -91,14 +91,19 @@ public class NPCBehaviorComponent extends Component implements Interactable {
 
     private boolean firstFrame = true;
 
-    private boolean movingX = true;
     private double stuckTimer = 0.0;
-    private double escapeTimer = 0.0;
-    private Point2D escapeVelocity = Point2D.ZERO;
     private double totalHomeTimer = 0.0;
+
+    // BUG-005 Path Caching & stuck teleportation
+    private List<Point2D> lastCalculatedPath = new ArrayList<>();
+    private Point2D lastTargetPosition = null;
+    private double pathRecalcCooldown = 0.0;
+    private double stuckAccumulator = 0.0;
+    private Point2D escapeVelocity = Point2D.ZERO;
 
     @Override
     public void onUpdate(double tpf) {
+        pathRecalcCooldown += tpf;
         if (firstFrame) {
             firstFrame = false;
             if (entity.isType(Project1Game.core.EntityType.GUIDER)) {
@@ -243,15 +248,22 @@ public class NPCBehaviorComponent extends Component implements Interactable {
                             || (targetVelY != 0 && Math.abs(physics.getVelocityY()) < 5);
                     if (isStuck) {
                         stuckTimer += tpf;
+                        stuckAccumulator += tpf;
                         if (stuckTimer > 1.0) {
                             recalculatePath();
                             stuckTimer = 0;
                         }
+                        if (stuckAccumulator > 2.0) {
+                            teleportForward();
+                            stuckAccumulator = 0;
+                        }
                     } else {
                         stuckTimer = 0;
+                        stuckAccumulator = 0;
                     }
                 } else {
                     stuckTimer = 0;
+                    stuckAccumulator = 0;
                 }
             } else {
                 // Đã đến cửa, cho NPC biến mất (đi vào nhà)
@@ -334,15 +346,22 @@ public class NPCBehaviorComponent extends Component implements Interactable {
                             || (targetVelY != 0 && Math.abs(physics.getVelocityY()) < 5);
                     if (isStuck) {
                         stuckTimer += tpf;
+                        stuckAccumulator += tpf;
                         if (stuckTimer > 1.0) {
                             recalculatePath();
                             stuckTimer = 0;
                         }
+                        if (stuckAccumulator > 2.0) {
+                            teleportForward();
+                            stuckAccumulator = 0;
+                        }
                     } else {
                         stuckTimer = 0;
+                        stuckAccumulator = 0;
                     }
                 } else {
                     stuckTimer = 0;
+                    stuckAccumulator = 0;
                 }
             } else {
                 // Đã đến nơi làm việc, dừng di chuyển và bật lại va chạm
@@ -405,25 +424,56 @@ public class NPCBehaviorComponent extends Component implements Interactable {
         physics.setLinearVelocity(Point2D.ZERO);
     }
 
+    private void teleportForward() {
+        if (pathWaypoints != null && !pathWaypoints.isEmpty()) {
+            Point2D tpTarget = pathWaypoints.get(0);
+            for (int i = 0; i < Math.min(3, pathWaypoints.size()); i++) {
+                tpTarget = pathWaypoints.get(i);
+            }
+            if (physics != null) {
+                physics.overwritePosition(tpTarget);
+            } else {
+                entity.setPosition(tpTarget);
+            }
+            System.out.println("NPC " + entity.getString("name") + " stuck! Teleported forward to " + tpTarget);
+        }
+    }
+
     private void recalculatePath() {
         if (target == null)
             return;
-        double mapW = 3520;
-        double mapH = 2048;
-        double maxW = FXGL.getGameWorld()
-                .getEntitiesByType(Project1Game.core.EntityType.FIELD, Project1Game.core.EntityType.WALL,
-                        Project1Game.core.EntityType.COLLISION)
-                .stream()
-                .mapToDouble(e -> e.getRightX()).max().orElse(3520);
-        double maxH = FXGL.getGameWorld()
-                .getEntitiesByType(Project1Game.core.EntityType.FIELD, Project1Game.core.EntityType.WALL,
-                        Project1Game.core.EntityType.COLLISION)
-                .stream()
-                .mapToDouble(e -> e.getBottomY()).max().orElse(2048);
-        mapW = Math.max(mapW, maxW);
-        mapH = Math.max(mapH, maxH);
 
-        this.pathWaypoints = Project1Game.system.AStarPathfinder.findPath(entity.getPosition(), target, mapW, mapH);
+        boolean targetMoved = lastTargetPosition == null || target.distance(lastTargetPosition) > 32;
+        boolean cooldownElapsed = pathRecalcCooldown > 3.0;
+
+        if (targetMoved || cooldownElapsed || lastCalculatedPath.isEmpty()) {
+            double mapW = 3520;
+            double mapH = 2048;
+            if (Project1Game.Main.getInstance() != null) {
+                mapW = Project1Game.Main.getInstance().getCurrentMapWidth();
+                mapH = Project1Game.Main.getInstance().getCurrentMapHeight();
+            } else {
+                // BUG-015: Copy list to prevent ConcurrentModificationException
+                double maxW = new ArrayList<>(FXGL.getGameWorld()
+                        .getEntitiesByType(Project1Game.core.EntityType.FIELD, Project1Game.core.EntityType.WALL,
+                                Project1Game.core.EntityType.COLLISION))
+                        .stream()
+                        .mapToDouble(e -> e.getRightX()).max().orElse(3520);
+                double maxH = new ArrayList<>(FXGL.getGameWorld()
+                        .getEntitiesByType(Project1Game.core.EntityType.FIELD, Project1Game.core.EntityType.WALL,
+                                Project1Game.core.EntityType.COLLISION))
+                        .stream()
+                        .mapToDouble(e -> e.getBottomY()).max().orElse(2048);
+                mapW = Math.max(mapW, maxW);
+                mapH = Math.max(mapH, maxH);
+            }
+
+            this.lastCalculatedPath = Project1Game.system.AStarPathfinder.findPath(entity.getPosition(), target, mapW, mapH);
+            this.lastTargetPosition = target;
+            this.pathRecalcCooldown = 0;
+        }
+
+        this.pathWaypoints = new ArrayList<>(this.lastCalculatedPath);
 
         if (this.pathWaypoints.isEmpty()) {
             System.out.println("Warning: A* pathfinding failed for NPC " + entity.getString("name")

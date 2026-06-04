@@ -301,7 +301,7 @@ public class GameEntityFactory implements EntityFactory {
         return FXGL.entityBuilder(data).type(EntityType.GUIDER_IN).build();
     }
 
-    private static int animalSpawnOffset = 0;
+    public static int animalSpawnOffset = 0;
 
     private Entity createAnimal(SpawnData data, String animalType, double w, double h) {
         PhysicsComponent physics = new PhysicsComponent();
@@ -442,8 +442,22 @@ public class GameEntityFactory implements EntityFactory {
 
     @Spawns("BushMonster")
     public Entity spawnBushMonster(SpawnData data) {
+        double spawnX = data.getX();
+        double spawnY = data.getY();
+        try {
+            Entity player = FXGL.getGameWorld().getSingleton(EntityType.PLAYER);
+            if (player != null && player.getPosition().distance(spawnX, spawnY) < 64) {
+                // Offset spawn position by 96 pixels away from player
+                double angle = Math.random() * 2 * Math.PI;
+                spawnX = player.getX() + Math.cos(angle) * 96;
+                spawnY = player.getY() + Math.sin(angle) * 96;
+            }
+        } catch (Exception e) {
+            // Ignore if player is not found
+        }
+
         java.util.Random rand = new java.util.Random();
-        SpawnData copy = new SpawnData(data.getX(), data.getY());
+        SpawnData copy = new SpawnData(spawnX, spawnY);
         copy.put("tempBushMonster", true);
         if (rand.nextBoolean()) {
             return createMonster(copy, "Boar", "monster/Boar/Boar_Walk_with_shadow.png", "monster/Boar/Boar_Idle_with_shadow.png");

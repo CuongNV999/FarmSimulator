@@ -6,6 +6,7 @@ import Project1Game.core.EntityType;
 import Project1Game.system.DayNightEvent;
 import com.almasb.fxgl.dsl.FXGL;
 import com.almasb.fxgl.entity.component.Component;
+import com.almasb.fxgl.entity.Entity;
 import com.almasb.fxgl.texture.Texture;
 import com.almasb.fxgl.time.TimerAction;
 
@@ -51,33 +52,45 @@ public class CropComponent extends Component {
 
     public void grow() {
         if (!canGrow) return;
-        // Đã chín hoặc đã thu hoạch thì không lớn thêm
         if (stage >= CropData.STAGE_RIPE) return;
+
+        Entity soil = FXGL.getGameWorld().getEntitiesByType(EntityType.SOIL).stream()
+                .filter(s -> s.getPosition().distance(entity.getPosition()) < 5)
+                .findFirst()
+                .orElse(null);
+        if (soil == null) return;
+        SoilComponent sc = soil.getComponent(SoilComponent.class);
+        if (!sc.isWet()) return;
 
         if (Project1Game.system.WeatherSystem.getCurrentWeather()
                 == Project1Game.system.WeatherSystem.Weather.DROUGHT) {
-            if (Math.random() < 0.5) return;
+            if (Math.random() < 0.3) return; // Reduced from 50% to 30%
         }
 
-        FXGL.getGameWorld().getEntitiesByType(EntityType.SOIL).stream()
-                .filter(s -> s.getPosition().distance(entity.getPosition()) < 5)
-                .findFirst()
-                .ifPresent(soil -> {
-                    SoilComponent sc = soil.getComponent(SoilComponent.class);
-                    boolean isRaining = (Project1Game.system.WeatherSystem.getCurrentWeather()
-                            == Project1Game.system.WeatherSystem.Weather.RAINY);
-                    if (sc.isWet()) {
-                        stage++;
-                        updateView();
-                        if (!isRaining) sc.setWet(false);
-                    }
-                });
+        stage++;
+        updateView();
+        boolean isRaining = (Project1Game.system.WeatherSystem.getCurrentWeather()
+                == Project1Game.system.WeatherSystem.Weather.RAINY);
+        if (!isRaining) sc.setWet(false);
     }
 
     /** Thu hoạch: trả về nông sản và chuyển cây sang trạng thái đã hái (harvest.png) */
     public void harvest() {
+        if (stage == CropData.STAGE_HARVESTED) return;
         stage = CropData.STAGE_HARVESTED;
         updateView();
+
+        // Notify soil it's empty
+        FXGL.getGameWorld().getEntitiesByType(EntityType.SOIL).stream()
+                .filter(s -> s.getPosition().distance(entity.getPosition()) < 10)
+                .forEach(s -> s.getComponent(SoilComponent.class).setHasPlant(false));
+
+        // Immediately remove entity to prevent re-clicking
+        FXGL.runOnce(() -> {
+            if (entity != null && entity.isActive()) {
+                entity.removeFromWorld();
+            }
+        }, javafx.util.Duration.seconds(0.5));
     }
 
     public int getStage()           { return stage; }

@@ -151,9 +151,9 @@ public class TimeSystem {
      * Tiến thời gian đến sáng hôm sau (ví dụ: 6:00 AM).
      */
     public void advanceToNextDay() {
-        // Case A (Early Morning Sleep): If went to bed after midnight but before morning (00:00 - 05:59), keep same calendar day.
-        // Case B (Standard Night Sleep): If between 6:00 AM and 11:59 PM, advance calendar day count by +1.
-        if (hour >= 0 && hour < 6) {
+        // Case A (Early Morning Sleep): If went to bed after midnight but before dawn (00:00 - 04:59), keep same calendar day.
+        // Case B (Standard Night/Day Sleep): If between 5:00 AM and 11:59 PM, advance calendar day count by +1.
+        if (hour >= 0 && hour < 5) {
             System.out.println("[TimeSystem] Early morning sleep: keeping same calendar day " + dayCount);
         } else {
             dayCount++;

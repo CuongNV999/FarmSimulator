@@ -118,6 +118,55 @@ public abstract class BaseMonsterComponent extends Component {
         } else {
             handleNormalSeekingState(tpf);
         }
+
+        // Entity Height/Width Padding on ALL 4 Boundary Edges
+        double mapW = 3520;
+        double mapH = 2048;
+        if (Project1Game.Main.getInstance() != null) {
+            mapW = Project1Game.Main.getInstance().getCurrentMapWidth();
+            mapH = Project1Game.Main.getInstance().getCurrentMapHeight();
+        }
+        
+        double w = entity.getWidth() > 0 ? entity.getWidth() : 32.0;
+        double h = entity.getHeight() > 0 ? entity.getHeight() : 32.0;
+        
+        // Define safe boundaries WITH 64px buffer zone to prevent edge glitches
+        double minLegalX = 64.0;
+        double minLegalY = 64.0;
+        double maxLegalX = mapW - w - 64.0;
+        double maxLegalY = mapH - h - 64.0;
+
+        // Clamp X position (LEFT edge)
+        if (entity.getX() < minLegalX) {
+            entity.setX(minLegalX);
+            if (physics != null) {
+                physics.setVelocityX(Math.abs(physics.getVelocityX()));
+            }
+        }
+        
+        // Clamp X position (RIGHT edge)
+        if (entity.getX() > maxLegalX) {
+            entity.setX(maxLegalX);
+            if (physics != null) {
+                physics.setVelocityX(-Math.abs(physics.getVelocityX()));
+            }
+        }
+        
+        // Clamp Y position (TOP edge)
+        if (entity.getY() < minLegalY) {
+            entity.setY(minLegalY);
+            if (physics != null) {
+                physics.setVelocityY(Math.abs(physics.getVelocityY()));
+            }
+        }
+        
+        // Clamp Y position (BOTTOM edge)
+        if (entity.getY() > maxLegalY) {
+            entity.setY(maxLegalY);
+            if (physics != null) {
+                physics.setVelocityY(-Math.abs(physics.getVelocityY()));
+            }
+        }
     }
 
     private void handleReturningState(double tpf) {
@@ -415,12 +464,13 @@ public abstract class BaseMonsterComponent extends Component {
             mapW = Project1Game.Main.getInstance().getCurrentMapWidth();
             mapH = Project1Game.Main.getInstance().getCurrentMapHeight();
         }
-        if (nextX < 32 || nextX > mapW - 64 || nextY < 32 || nextY > mapH - 64) {
+        double h = entity.getHeight() > 0 ? entity.getHeight() : 32.0;
+        double maxLegalY = mapH - h;
+        if (nextX < 32 || nextX > mapW - 64 || nextY < 32 || nextY > maxLegalY) {
             return true;
         }
 
         double w = entity.getWidth() > 0 ? entity.getWidth() : 32;
-        double h = entity.getHeight() > 0 ? entity.getHeight() : 32;
         Point2D probePos = entity.getPosition().add(velocity.normalize().multiply(16.0));
         javafx.geometry.Rectangle2D nextBox = new javafx.geometry.Rectangle2D(probePos.getX(), probePos.getY(), w, h);
 

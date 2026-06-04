@@ -52,7 +52,7 @@ public class TradingView extends VBox {
     private Text negotiationHistoryText;
 
     // Shopping Cart list
-    private final List<CartItem> cartItems = new ArrayList<>();
+    private final List<CartItem> cartItems = new java.util.concurrent.CopyOnWriteArrayList<>();
 
     private final List<ItemType> buyableItems = Arrays.asList(
             ItemType.WHEAT_SEED, ItemType.RADISH_SEED,
@@ -204,15 +204,18 @@ public class TradingView extends VBox {
         sliderValueText.setFont(Font.font("Arial", FontWeight.BOLD, 18));
         sliderValueText.setFill(Color.LIMEGREEN);
 
-        // Cập nhật text khi kéo slider
+        // Cập nhật text khi kéo slider - Throttled by checking if integer value changed
         negotiationSlider.valueProperty().addListener((obs, oldVal, newVal) -> {
-            int pct = newVal.intValue();
-            sliderValueText.setText(pct + "%");
+            int oldPct = oldVal.intValue();
+            int newPct = newVal.intValue();
+            if (oldPct == newPct) return;
+
+            sliderValueText.setText(newPct + "%");
 
             // Đổi màu theo mức rủi ro
-            if (pct <= 15) {
+            if (newPct <= 15) {
                 sliderValueText.setFill(Color.LIMEGREEN);
-            } else if (pct <= 22) {
+            } else if (newPct <= 22) {
                 sliderValueText.setFill(Color.YELLOW);
             } else {
                 sliderValueText.setFill(Color.TOMATO);
@@ -576,6 +579,10 @@ public class TradingView extends VBox {
         // Kiểm tra xem đã có trong giỏ hàng chưa
         for (CartItem ci : cartItems) {
             if (ci.itemType == itemType && ci.isBuying == isBuying) {
+                if (ci.quantity >= 999) {
+                    Project1Game.Main.pushNotification("Số lượng tối đa trong giỏ: 999");
+                    return;
+                }
                 if (!isBuying) {
                     int inventoryCount = inventory.getCount(itemType);
                     if (ci.quantity >= inventoryCount) {
@@ -614,8 +621,8 @@ public class TradingView extends VBox {
         VBox itemsBox = new VBox(5);
         itemsBox.setMinWidth(330);
 
-        int totalBuyCost = 0;
-        int totalSellIncome = 0;
+        long totalBuyCost = 0;
+        long totalSellIncome = 0;
 
         if (cartItems.isEmpty()) {
             Text emptyText = new Text("Giỏ hàng trống");
@@ -630,7 +637,7 @@ public class TradingView extends VBox {
                     adjustedPrice = currentTrader.getAdjustedPrice(basePrice, ci.isBuying);
                 }
 
-                int totalItemPrice = adjustedPrice * ci.quantity;
+                long totalItemPrice = (long) adjustedPrice * ci.quantity;
                 if (ci.isBuying) {
                     totalBuyCost += totalItemPrice;
                 } else {
@@ -661,7 +668,7 @@ public class TradingView extends VBox {
         sellIncomeText.setFont(Font.font("Arial", 12));
         sellIncomeText.setFill(Color.ORANGE);
 
-        int netCost = totalBuyCost - totalSellIncome;
+        long netCost = totalBuyCost - totalSellIncome;
         Text netText = new Text();
         netText.setFont(Font.font("Arial", FontWeight.BOLD, 14));
         if (netCost > 0) {
@@ -682,7 +689,7 @@ public class TradingView extends VBox {
         HBox actionButtons = new HBox(10);
         actionButtons.setAlignment(Pos.CENTER);
 
-        final int finalNetCost = netCost;
+        final long finalNetCost = netCost;
         StackPane checkoutBtn = createStyledButton("THANH TOÁN", Color.GREEN, Color.WHITE, () -> {
             handleCheckout(finalNetCost);
         });
@@ -821,7 +828,7 @@ public class TradingView extends VBox {
         return btn;
     }
 
-    private void handleCheckout(int netCost) {
+    private void handleCheckout(long netCost) {
         if (cartItems.isEmpty()) {
             Project1Game.Main.pushNotification("Giỏ hàng của bạn đang trống!");
             return;
@@ -923,9 +930,9 @@ public class TradingView extends VBox {
 
         // Cộng/Trừ tiền
         if (netCost > 0) {
-            playerComponent.removeMoney(netCost);
+            playerComponent.removeMoney((int) netCost);
         } else if (netCost < 0) {
-            playerComponent.addMoney(-netCost);
+            playerComponent.addMoney((int) -netCost);
         }
 
         // 4. Hoàn tất & cập nhật mối quan hệ

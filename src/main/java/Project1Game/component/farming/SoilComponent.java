@@ -22,7 +22,9 @@ public class SoilComponent extends Component {
     }
 
     public boolean isWet() {
-        return currentState.isWet() || (Project1Game.system.WeatherSystem.getCurrentWeather() == Project1Game.system.WeatherSystem.Weather.RAINY);
+        // Manual watering takes precedence over weather
+        if (currentState instanceof Project1Game.component.farming.state.TilledWetState) return true;
+        return (Project1Game.system.WeatherSystem.getCurrentWeather() == Project1Game.system.WeatherSystem.Weather.RAINY);
     }
 
     public void setWet(boolean wet) {

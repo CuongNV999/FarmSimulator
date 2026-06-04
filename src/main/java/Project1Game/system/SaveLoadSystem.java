@@ -40,6 +40,7 @@ public class SaveLoadSystem {
             PlayerComponent playerComponent = player.getComponent(PlayerComponent.class);
             data.playerMoney = playerComponent.getMoney(); // Lưu tiền của người chơi
             data.playerSkin = playerComponent.getCurrentSkin();
+            data.animalSpawnOffset = Project1Game.factory.GameEntityFactory.animalSpawnOffset; // BUG-013
 
             // Lưu bản đồ và vị trí người chơi
             data.currentMap = ((Main) FXGL.getApp()).getCurrentMap();
@@ -89,7 +90,7 @@ public class SaveLoadSystem {
         data.traderNegotiatedThisSession.clear();
         data.traderNegotiationBonusPercent.clear();
 
-        FXGL.getGameWorld().getEntitiesByType(EntityType.TRADER).forEach(t -> {
+        new java.util.ArrayList<>(FXGL.getGameWorld().getEntitiesByType(EntityType.TRADER)).forEach(t -> {
             Project1Game.component.npc.TraderComponent tc = t.getComponentOptional(Project1Game.component.npc.TraderComponent.class).orElse(null);
             if (tc != null) {
                 String name = t.getProperties().keys().contains("name") ? t.getString("name") : "Trader";
@@ -102,7 +103,7 @@ public class SaveLoadSystem {
 
         // Lưu Đất (Soil)
         data.soils.clear(); // Xóa dữ liệu cũ trước khi lưu mới
-        FXGL.getGameWorld().getEntitiesByType(EntityType.SOIL).forEach(s -> {
+        new java.util.ArrayList<>(FXGL.getGameWorld().getEntitiesByType(EntityType.SOIL)).forEach(s -> {
             SaveData.SoilData sd = new SaveData.SoilData();
             sd.x = s.getX();
             sd.y = s.getY();
@@ -120,7 +121,7 @@ public class SaveLoadSystem {
                 EntityType.SUNFLOWER, EntityType.COCONUT, EntityType.APPLE};
 
         for (EntityType cropType : cropTypes) {
-            FXGL.getGameWorld().getEntitiesByType(cropType).forEach(c -> {
+            new java.util.ArrayList<>(FXGL.getGameWorld().getEntitiesByType(cropType)).forEach(c -> {
                 SaveData.CropDataSave cd = new SaveData.CropDataSave();
                 cd.x = c.getX();
                 cd.y = c.getY();
@@ -132,7 +133,7 @@ public class SaveLoadSystem {
 
         // Lưu Động vật (Animals)
         data.animals.clear();
-        FXGL.getGameWorld().getEntitiesByType(EntityType.ANIMAL).forEach(a -> {
+        new java.util.ArrayList<>(FXGL.getGameWorld().getEntitiesByType(EntityType.ANIMAL)).forEach(a -> {
             Project1Game.component.farming.animal.BaseAnimalComponent bac = a.getComponents().stream()
                     .filter(c -> c instanceof Project1Game.component.farming.animal.BaseAnimalComponent)
                     .map(c -> (Project1Game.component.farming.animal.BaseAnimalComponent) c)
@@ -150,7 +151,7 @@ public class SaveLoadSystem {
 
         // Lưu Quái vật (Monsters)
         data.monsters.clear();
-        FXGL.getGameWorld().getEntitiesByType(EntityType.MONSTER).forEach(m -> {
+        new java.util.ArrayList<>(FXGL.getGameWorld().getEntitiesByType(EntityType.MONSTER)).forEach(m -> {
             String spawnName = m.getString("monsterType");
             if (spawnName != null && !spawnName.isEmpty()) {
                 SaveData.MonsterSaveData msd = new SaveData.MonsterSaveData();
@@ -191,6 +192,24 @@ public class SaveLoadSystem {
                 WeatherSystem.getInstance().changeWeather(WeatherSystem.Weather.valueOf(data.weather));
             }
 
+            // BUG-019 Weather Hour Group Load Sync
+            WeatherSystem.getInstance().setLastWeatherHourGroup((int) (data.gameTime / 240));
+
+            // BUG-013 animal spawn offset load
+            Project1Game.factory.GameEntityFactory.animalSpawnOffset = data.animalSpawnOffset;
+
+            // BUG-014: Backup quest progress before reset
+            java.util.Map<String, Project1Game.quest.QuestStatus> statusBackup = new java.util.HashMap<>();
+            java.util.Map<String, java.util.List<Integer>> progressBackup = new java.util.HashMap<>();
+            if (data.npcQuests != null) {
+                for (SaveData.NPCSave npcSave : data.npcQuests) {
+                    for (SaveData.QuestSave questSave : npcSave.quests) {
+                        statusBackup.put(questSave.questId, Project1Game.quest.QuestStatus.valueOf(questSave.status));
+                        progressBackup.put(questSave.questId, questSave.objectiveProgress);
+                    }
+                }
+            }
+
             // Reset and initialize QuestManager before loading quests to avoid corruption
             Project1Game.quest.QuestManager.getInstance().reset();
             Project1Game.quest.QuestManager.getInstance().init();
@@ -200,11 +219,20 @@ public class SaveLoadSystem {
                 for (SaveData.NPCSave npcSave : data.npcQuests) {
                     Project1Game.quest.NPC npc = Project1Game.quest.QuestManager.getInstance().getNPC(npcSave.npcName);
                     if (npc != null) {
+                        int questIndex = 0;
                         for (SaveData.QuestSave questSave : npcSave.quests) {
+                            // Try matching by ID first
                             Project1Game.quest.Quest q = npc.getQuests().stream()
                                     .filter(quest -> quest.getId().equals(questSave.questId))
                                     .findFirst()
                                     .orElse(null);
+
+                            // Fallback to matching by index if ID matching fails
+                            if (q == null && questIndex < npc.getQuests().size()) {
+                                q = npc.getQuests().get(questIndex);
+                                System.out.println("[Quest Load Fallback] Matched quest '" + questSave.questId + "' to index " + questIndex + " ('" + q.getId() + "')");
+                            }
+
                             if (q != null) {
                                 q.setStatus(Project1Game.quest.QuestStatus.valueOf(questSave.status));
                                 var objectives = q.getObjectives();
@@ -212,6 +240,7 @@ public class SaveLoadSystem {
                                     objectives.get(i).setCurrent(questSave.objectiveProgress.get(i));
                                 }
                             }
+                            questIndex++;
                         }
                     }
                 }
@@ -222,7 +251,7 @@ public class SaveLoadSystem {
         }
 
         // Load Trader Relationships & Histories (Runs for both map transitions and global saves)
-        FXGL.getGameWorld().getEntitiesByType(EntityType.TRADER).forEach(t -> {
+        new java.util.ArrayList<>(FXGL.getGameWorld().getEntitiesByType(EntityType.TRADER)).forEach(t -> {
             Project1Game.component.npc.TraderComponent tc = t.getComponentOptional(Project1Game.component.npc.TraderComponent.class).orElse(null);
             if (tc != null) {
                 String name = t.getProperties().keys().contains("name") ? t.getString("name") : "Trader";
@@ -247,7 +276,7 @@ public class SaveLoadSystem {
                 EntityType.CAULIFLOWER, EntityType.BEAN, EntityType.PINEAPPLE,
                 EntityType.SUNFLOWER, EntityType.COCONUT, EntityType.APPLE,
                 EntityType.ANIMAL, EntityType.MONSTER};
-        FXGL.getGameWorld().getEntitiesFiltered(e -> Arrays.asList(allDynamicEntities).contains(e.getType()))
+        new java.util.ArrayList<>(FXGL.getGameWorld().getEntitiesFiltered(e -> Arrays.asList(allDynamicEntities).contains(e.getType())))
                 .forEach(Entity::removeFromWorld);
 
         // Tái tạo ô đất

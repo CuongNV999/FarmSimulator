@@ -99,6 +99,10 @@ public class WeatherSystem {
         return currentWeather;
     }
 
+    public void setLastWeatherHourGroup(int group) {
+        this.lastWeatherHourGroup = group;
+    }
+
     public void init() {
         // Clean up old UI nodes to prevent duplicates upon game restart / main menu reload
         if (weatherText != null) {
@@ -155,8 +159,12 @@ public class WeatherSystem {
         // Set initial weather visuals
         changeWeather(currentWeather);
         
-        // Reset time group checks
-        lastWeatherHourGroup = -1;
+        // Reset time group checks based on active time system
+        if (Main.getInstance() != null && Main.getInstance().getTimeSystem() != null) {
+            lastWeatherHourGroup = (int) (Main.getInstance().getTimeSystem().getGameTime() / 240);
+        } else {
+            lastWeatherHourGroup = -1;
+        }
     }
 
     public void onUpdate(double tpf) {
