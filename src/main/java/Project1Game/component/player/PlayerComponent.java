@@ -45,31 +45,74 @@ public class PlayerComponent extends Component {
     }
 
     private void loadSkin(String skinFolder, double frameDuration) {
+        if (skinFolder.equals("Player_Skeleton") || skinFolder.equals("Player_Male")) {
+            String imageName = skinFolder + "/"
+                    + (skinFolder.equals("Player_Skeleton") ? "BODY_skeleton.png" : "BODY_male.png");
+            javafx.scene.image.Image img = FXGL.image(imageName);
+            int framesPerRow = 9;
+            int frameW = 64;
+            int frameH = 64;
+
+            // Row 1: UP (0 - 8)
+            idleUp = new AnimationChannel(img, framesPerRow, frameW, frameH, Duration.seconds(frameDuration), 0, 0);
+            walkUp = new AnimationChannel(img, framesPerRow, frameW, frameH, Duration.seconds(frameDuration * 9), 0, 8);
+            runUp = new AnimationChannel(img, framesPerRow, frameW, frameH, Duration.seconds(frameDuration * 6), 0, 8);
+
+            // Row 3: DOWN (18 - 26)
+            idleDown = new AnimationChannel(img, framesPerRow, frameW, frameH, Duration.seconds(frameDuration), 18, 18);
+            walkDown = new AnimationChannel(img, framesPerRow, frameW, frameH, Duration.seconds(frameDuration * 9), 18,
+                    26);
+            runDown = new AnimationChannel(img, framesPerRow, frameW, frameH, Duration.seconds(frameDuration * 6), 18,
+                    26);
+
+            // Row 4: RIGHT (27 - 35)
+            idleSide = new AnimationChannel(img, framesPerRow, frameW, frameH, Duration.seconds(frameDuration), 27, 27);
+            walkSide = new AnimationChannel(img, framesPerRow, frameW, frameH, Duration.seconds(frameDuration * 9), 27,
+                    35);
+            runSide = new AnimationChannel(img, framesPerRow, frameW, frameH, Duration.seconds(frameDuration * 6), 27,
+                    35);
+            return;
+        }
+
         boolean isDefaultOrHUST = skinFolder.equals("Player") || skinFolder.equals("Player_HUST");
         int walkRunFrames = isDefaultOrHUST ? 6 : 4;
         int walkRunEndFrame = isDefaultOrHUST ? 5 : 3;
         double walkRunSec = frameDuration * walkRunFrames;
 
-        idleDown = new AnimationChannel(FXGL.image(skinFolder + "/Carry_Idle/Carry_Idle_Down-Sheet.png"), 4, 64, 64, Duration.seconds(frameDuration * 4), 0, 3);
-        idleUp   = new AnimationChannel(FXGL.image(skinFolder + "/Carry_Idle/Carry_Idle_Up-Sheet.png"),   4, 64, 64, Duration.seconds(frameDuration * 4), 0, 3);
-        idleSide = new AnimationChannel(FXGL.image(skinFolder + "/Carry_Idle/Carry_Idle_Side-Sheet.png"), 4, 64, 64, Duration.seconds(frameDuration * 4), 0, 3);
+        idleDown = new AnimationChannel(FXGL.image(skinFolder + "/Carry_Idle/Carry_Idle_Down-Sheet.png"), 4, 64, 64,
+                Duration.seconds(frameDuration * 4), 0, 3);
+        idleUp = new AnimationChannel(FXGL.image(skinFolder + "/Carry_Idle/Carry_Idle_Up-Sheet.png"), 4, 64, 64,
+                Duration.seconds(frameDuration * 4), 0, 3);
+        idleSide = new AnimationChannel(FXGL.image(skinFolder + "/Carry_Idle/Carry_Idle_Side-Sheet.png"), 4, 64, 64,
+                Duration.seconds(frameDuration * 4), 0, 3);
 
-        walkDown = new AnimationChannel(FXGL.image(skinFolder + "/Carry_Walk/Carry_Walk_Down-Sheet.png"), walkRunFrames, 64, 64, Duration.seconds(walkRunSec), 0, walkRunEndFrame);
-        walkUp   = new AnimationChannel(FXGL.image(skinFolder + "/Carry_Walk/Carry_Walk_Up-Sheet.png"),   walkRunFrames, 64, 64, Duration.seconds(walkRunSec), 0, walkRunEndFrame);
-        walkSide = new AnimationChannel(FXGL.image(skinFolder + "/Carry_Walk/Carry_Walk_Side-Sheet.png"), walkRunFrames, 64, 64, Duration.seconds(walkRunSec), 0, walkRunEndFrame);
+        walkDown = new AnimationChannel(FXGL.image(skinFolder + "/Carry_Walk/Carry_Walk_Down-Sheet.png"), walkRunFrames,
+                64, 64, Duration.seconds(walkRunSec), 0, walkRunEndFrame);
+        walkUp = new AnimationChannel(FXGL.image(skinFolder + "/Carry_Walk/Carry_Walk_Up-Sheet.png"), walkRunFrames, 64,
+                64, Duration.seconds(walkRunSec), 0, walkRunEndFrame);
+        walkSide = new AnimationChannel(FXGL.image(skinFolder + "/Carry_Walk/Carry_Walk_Side-Sheet.png"), walkRunFrames,
+                64, 64, Duration.seconds(walkRunSec), 0, walkRunEndFrame);
 
-        runDown  = new AnimationChannel(FXGL.image(skinFolder + "/Carry_Run/Carry_Run_Down-Sheet.png"),  walkRunFrames, 64, 64, Duration.seconds(walkRunSec), 0, walkRunEndFrame);
-        runUp    = new AnimationChannel(FXGL.image(skinFolder + "/Carry_Run/Carry_Run_Up-Sheet.png"),    walkRunFrames, 64, 64, Duration.seconds(walkRunSec), 0, walkRunEndFrame);
-        runSide  = new AnimationChannel(FXGL.image(skinFolder + "/Carry_Run/Carry_Run_Side-Sheet.png"),  walkRunFrames, 64, 64, Duration.seconds(walkRunSec), 0, walkRunEndFrame);
+        runDown = new AnimationChannel(FXGL.image(skinFolder + "/Carry_Run/Carry_Run_Down-Sheet.png"), walkRunFrames,
+                64, 64, Duration.seconds(walkRunSec), 0, walkRunEndFrame);
+        runUp = new AnimationChannel(FXGL.image(skinFolder + "/Carry_Run/Carry_Run_Up-Sheet.png"), walkRunFrames, 64,
+                64, Duration.seconds(walkRunSec), 0, walkRunEndFrame);
+        runSide = new AnimationChannel(FXGL.image(skinFolder + "/Carry_Run/Carry_Run_Side-Sheet.png"), walkRunFrames,
+                64, 64, Duration.seconds(walkRunSec), 0, walkRunEndFrame);
     }
 
     public void changeSkin(String skinFolder) {
         this.currentSkin = skinFolder;
         double frameDuration = 0.1;
         loadSkin(skinFolder, frameDuration);
-        
-        // Cưỡng ép cập nhật hoạt ảnh hiện tại về Idle Down của skin mới ngay lập tức
+
         texture.loopAnimationChannel(idleDown);
+
+        if (entity != null) {
+            double scale = (skinFolder.equals("Player_Skeleton") || skinFolder.equals("Player_Male")) ? 1.2 : 1.8;
+            entity.setScaleX(scale);
+            entity.setScaleY(scale);
+        }
     }
 
     public String getCurrentSkin() {
@@ -79,8 +122,9 @@ public class PlayerComponent extends Component {
     @Override
     public void onAdded() {
         entity.getViewComponent().addChild(texture);
-        entity.setScaleX(1.8);
-        entity.setScaleY(1.8);
+        double scale = (currentSkin.equals("Player_Skeleton") || currentSkin.equals("Player_Male")) ? 1.2 : 1.8;
+        entity.setScaleX(scale);
+        entity.setScaleY(scale);
     }
 
     @Override
@@ -100,7 +144,8 @@ public class PlayerComponent extends Component {
         // 1. TỰ ĐỘNG LẤY VẬN TỐC TỪ HỆ THỐNG VẬT LÝ
         Point2D velocity = physics != null ? new Point2D(physics.getVelocityX(), physics.getVelocityY()) : Point2D.ZERO;
 
-        // Kiểm tra xem nhân vật có đang thực sự di chuyển không (ngưỡng 5 để tránh nhiễu)
+        // Kiểm tra xem nhân vật có đang thực sự di chuyển không (ngưỡng 5 để tránh
+        // nhiễu)
         if (velocity.magnitude() > 5) {
             isMoving = true;
             direction = velocity; // Cập nhật hướng theo vận tốc
