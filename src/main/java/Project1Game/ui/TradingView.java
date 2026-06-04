@@ -54,21 +54,8 @@ public class TradingView extends VBox {
     // Shopping Cart list
     private final List<CartItem> cartItems = new ArrayList<>();
 
-    private final List<ItemType> buyableItems = Arrays.asList(
-            ItemType.WHEAT_SEED, ItemType.RADISH_SEED,
-            ItemType.CABBAGE_SEED,
-            ItemType.GRAPE_SEED, ItemType.CUCUMBER_SEED, ItemType.PEPPER_SEED,
-            ItemType.CAULIFLOWER_SEED, ItemType.BEAN_SEED, ItemType.PINEAPPLE_SEED,
-            ItemType.SUNFLOWER_SEED, ItemType.COCONUT_SEED, ItemType.APPLE_SEED
-    );
- 
-    private final List<ItemType> sellableItems = Arrays.asList(
-            ItemType.WHEAT, ItemType.RADISH,
-            ItemType.CABBAGE,
-            ItemType.GRAPE, ItemType.CUCUMBER, ItemType.PEPPER,
-            ItemType.CAULIFLOWER, ItemType.BEAN, ItemType.PINEAPPLE,
-            ItemType.SUNFLOWER, ItemType.COCONUT, ItemType.APPLE
-    );
+    private final List<ItemType> buyableItems = new ArrayList<>();
+    private final List<ItemType> sellableItems = new ArrayList<>();
 
     // Danh sách các vật phẩm có thể mua (thực phẩm ăn được)
     private final List<ItemType> buyableFood = Arrays.asList(
@@ -99,7 +86,7 @@ public class TradingView extends VBox {
     private StackPane foodTabBtn;
 
     private final List<ItemType> buyableAnimals = Arrays.asList(
-            ItemType.CHICK, ItemType.CALF, ItemType.LAMB, ItemType.PIGLET, ItemType.TURKEY
+            ItemType.CHICK, ItemType.CALF, ItemType.LAMB, ItemType.PIGLET, ItemType.TURKEY, ItemType.BULL
     );
 
     private final List<ItemType> sellableAnimals = Arrays.asList(
@@ -123,6 +110,20 @@ public class TradingView extends VBox {
         this.inventory = inventory;
         this.playerComponent = playerComponent;
 
+        // Khởi tạo danh sách cây từ CropRegistry để tránh vi phạm Open/Closed Principle
+        for (Project1Game.core.EntityType cropType : Project1Game.core.CropRegistry.getInstance().getSupportedCrops()) {
+            try {
+                buyableItems.add(ItemType.valueOf(cropType.name() + "_SEED"));
+            } catch (IllegalArgumentException e) {
+                System.err.println("[TradingView] Warning: seed not found for crop " + cropType);
+            }
+            try {
+                sellableItems.add(ItemType.valueOf(cropType.name()));
+            } catch (IllegalArgumentException e) {
+                System.err.println("[TradingView] Warning: harvest item not found for crop " + cropType);
+            }
+        }
+
         // Cấu hình nền và viền cho TradingView - Mở rộng chiều ngang
         setPrefSize(FXGL.getAppWidth() * 0.9, FXGL.getAppHeight() * 0.85);
         setAlignment(Pos.CENTER);
@@ -131,19 +132,19 @@ public class TradingView extends VBox {
         setStyle("-fx-background-color: rgba(30, 20, 10, 0.95); -fx-background-radius: 15; -fx-border-color: #8B4513; -fx-border-width: 3; -fx-border-radius: 15;");
 
         Text title = new Text("Cửa hàng của Trader");
-        title.setFont(Font.font("Arial", FontWeight.BOLD, 28));
+        title.setFont(Font.font(GameFont.GAME_FONT, FontWeight.BOLD, 28));
         title.setFill(Color.GOLD);
 
         // Hiển thị tiền của người chơi
         Text moneyDisplay = new Text();
-        moneyDisplay.setFont(Font.font("Arial", FontWeight.BOLD, 20));
+        moneyDisplay.setFont(Font.font(GameFont.GAME_FONT, FontWeight.BOLD, 20));
         moneyDisplay.setFill(Color.LIGHTGREEN);
         moneyDisplay.textProperty().bind(
                 Bindings.concat("Tiền của bạn: ", playerComponent.moneyProperty(), " G")
         );
 
         // Text hiển thị quan hệ
-        relationshipText.setFont(Font.font("Arial", FontWeight.BOLD, 18));
+        relationshipText.setFont(Font.font(GameFont.GAME_FONT, FontWeight.BOLD, 18));
         relationshipText.setFill(Color.LIGHTGOLDENRODYELLOW);
 
         // Khởi tạo thanh trượt thương lượng
@@ -182,7 +183,7 @@ public class TradingView extends VBox {
 
         // Label thương lượng
         Text negotiateLabel = new Text("Thương lượng:");
-        negotiateLabel.setFont(Font.font("Arial", FontWeight.BOLD, 16));
+        negotiateLabel.setFont(Font.font(GameFont.GAME_FONT, FontWeight.BOLD, 16));
         negotiateLabel.setFill(Color.GOLD);
 
         // Slider từ 10% đến 30%
@@ -201,7 +202,7 @@ public class TradingView extends VBox {
 
         // Text hiển thị giá trị slider hiện tại
         sliderValueText = new Text("10%");
-        sliderValueText.setFont(Font.font("Arial", FontWeight.BOLD, 18));
+        sliderValueText.setFont(Font.font(GameFont.GAME_FONT, FontWeight.BOLD, 18));
         sliderValueText.setFill(Color.LIMEGREEN);
 
         // Cập nhật text khi kéo slider
@@ -235,7 +236,7 @@ public class TradingView extends VBox {
         ));
 
         Text riskLabel = new Text("An toàn ← → Rủi ro");
-        riskLabel.setFont(Font.font("Arial", 10));
+        riskLabel.setFont(Font.font(GameFont.GAME_FONT, 10));
         riskLabel.setFill(Color.LIGHTGRAY);
         riskIndicator.getChildren().addAll(riskBar, riskLabel);
 
@@ -246,12 +247,12 @@ public class TradingView extends VBox {
 
         // Text hiển thị kết quả thương lượng
         negotiationResultText = new Text("");
-        negotiationResultText.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+        negotiationResultText.setFont(Font.font(GameFont.GAME_FONT, FontWeight.BOLD, 14));
         negotiationResultText.setFill(Color.WHITE);
 
         // Text hiển thị số lần thương lượng
         negotiationHistoryText = new Text("");
-        negotiationHistoryText.setFont(Font.font("Arial", 11));
+        negotiationHistoryText.setFont(Font.font(GameFont.GAME_FONT, 11));
         negotiationHistoryText.setFill(Color.LIGHTGRAY);
 
         VBox resultBox = new VBox(3, negotiationResultText, negotiationHistoryText);
@@ -269,12 +270,12 @@ public class TradingView extends VBox {
      */
     private void handleNegotiation() {
         if (currentTrader == null) {
-            FXGL.getNotificationService().pushNotification("Không có Trader nào để thương lượng!");
+            Project1Game.Main.pushNotification("Không có Trader nào để thương lượng!");
             return;
         }
 
         if (currentTrader.hasNegotiatedThisSession()) {
-            FXGL.getNotificationService().pushNotification("Bạn đã thương lượng rồi! Mỗi lần vào shop chỉ được thương lượng 1 lần.");
+            Project1Game.Main.pushNotification("Bạn đã thương lượng rồi! Mỗi lần vào shop chỉ được thương lượng 1 lần.");
             return;
         }
 
@@ -284,12 +285,12 @@ public class TradingView extends VBox {
         if (success) {
             negotiationResultText.setText("✓ Thành công! Giảm " + requestedPercent + "%");
             negotiationResultText.setFill(Color.LIMEGREEN);
-            FXGL.getNotificationService().pushNotification("Thương lượng thành công! Giảm " + requestedPercent + "% giá!");
+            Project1Game.Main.pushNotification("Thương lượng thành công! Giảm " + requestedPercent + "% giá!");
         } else {
             int penalty = currentTrader.getNegotiationBonusPercent();
             negotiationResultText.setText("✗ Thất bại! Phạt " + Math.abs(penalty) + "%");
             negotiationResultText.setFill(Color.TOMATO);
-            FXGL.getNotificationService().pushNotification("Thương lượng thất bại! Bị phạt " + Math.abs(penalty) + "% giá!");
+            Project1Game.Main.pushNotification("Thương lượng thất bại! Bị phạt " + Math.abs(penalty) + "% giá!");
         }
 
         // Cập nhật lịch sử thương lượng
@@ -414,7 +415,7 @@ public class TradingView extends VBox {
             titleText = "Mua Thực phẩm & Đồ ăn";
         }
         Text buyTitle = new Text(titleText);
-        buyTitle.setFont(Font.font("Arial", FontWeight.BOLD, 22));
+        buyTitle.setFont(Font.font(GameFont.GAME_FONT, FontWeight.BOLD, 22));
         buyTitle.setFill(Color.LIGHTBLUE);
 
         GridPane buyGrid = new GridPane();
@@ -460,7 +461,7 @@ public class TradingView extends VBox {
             titleText = "Bán Thực phẩm & Đồ ăn";
         }
         Text sellTitle = new Text(titleText);
-        sellTitle.setFont(Font.font("Arial", FontWeight.BOLD, 22));
+        sellTitle.setFont(Font.font(GameFont.GAME_FONT, FontWeight.BOLD, 22));
         sellTitle.setFill(Color.ORANGE);
 
         GridPane sellGrid = new GridPane();
@@ -529,7 +530,7 @@ public class TradingView extends VBox {
 
         // Tên vật phẩm
         Text nameText = new Text(itemType.getDisplayName());
-        nameText.setFont(Font.font("Arial", FontWeight.BOLD, 12));
+        nameText.setFont(Font.font(GameFont.GAME_FONT, FontWeight.BOLD, 12));
         nameText.setFill(Color.WHITE);
         content.getChildren().add(nameText);
 
@@ -542,7 +543,7 @@ public class TradingView extends VBox {
 
         // Giá hiển thị
         Text priceText = new Text();
-        priceText.setFont(Font.font("Arial", 11));
+        priceText.setFont(Font.font(GameFont.GAME_FONT, 11));
         priceText.setFill(Color.YELLOW);
         if (isBuying) {
             priceText.setText("Giá mua: " + adjustedPrice + " G");
@@ -551,16 +552,33 @@ public class TradingView extends VBox {
         }
         content.getChildren().add(priceText);
 
-        // Nút mua/bán -> Chuyển thành thêm vào giỏ hàng
-        Text actionButton = new Text(isBuying ? "MUA (+)" : "BÁN (+)");
-        actionButton.setFont(Font.font("Arial", FontWeight.BOLD, 14));
-        actionButton.setFill(isBuying ? Color.LIMEGREEN : Color.RED);
-        actionButton.setStroke(Color.BLACK);
-        actionButton.setStrokeWidth(0.5);
+        // Nút mua/bán -> Chuyển thành thêm vào giỏ hàng (sử dụng StackPane để tạo nút rõ nét, không bị mờ)
+        StackPane actionButton = new StackPane();
+        
+        Rectangle btnBg = new Rectangle(75, 22);
+        btnBg.setArcWidth(6);
+        btnBg.setArcHeight(6);
+        btnBg.setFill(isBuying ? Color.rgb(46, 125, 50) : Color.rgb(198, 40, 40));
+        btnBg.setStroke(isBuying ? Color.rgb(27, 94, 32) : Color.rgb(183, 28, 28));
+        btnBg.setStrokeWidth(1);
+        
+        Text btnText = new Text(isBuying ? "MUA (+)" : "BÁN (+)");
+        btnText.setFont(Font.font(GameFont.GAME_FONT, FontWeight.BOLD, 12));
+        btnText.setFill(Color.WHITE);
+        
+        actionButton.getChildren().addAll(btnBg, btnText);
         actionButton.setStyle("-fx-cursor: hand;");
         actionButton.setOnMouseClicked(e -> {
             addToCart(itemType, isBuying);
         });
+        
+        actionButton.setOnMouseEntered(e -> {
+            btnBg.setFill(isBuying ? Color.rgb(56, 142, 60) : Color.rgb(211, 47, 47));
+        });
+        actionButton.setOnMouseExited(e -> {
+            btnBg.setFill(isBuying ? Color.rgb(46, 125, 50) : Color.rgb(198, 40, 40));
+        });
+        
         content.getChildren().add(actionButton);
 
         pane.getChildren().add(content);
@@ -569,7 +587,7 @@ public class TradingView extends VBox {
 
     private void addToCart(ItemType itemType, boolean isBuying) {
         if (currentTrader != null && currentTrader.willRefuseTrade()) {
-            FXGL.getNotificationService().pushNotification("Trader đang bực bội và từ chối giao dịch!");
+            Project1Game.Main.pushNotification("Trader đang bực bội và từ chối giao dịch!");
             return;
         }
 
@@ -579,7 +597,7 @@ public class TradingView extends VBox {
                 if (!isBuying) {
                     int inventoryCount = inventory.getCount(itemType);
                     if (ci.quantity >= inventoryCount) {
-                        FXGL.getNotificationService().pushNotification("Không thể bán nhiều hơn số lượng trong kho đồ!");
+                        Project1Game.Main.pushNotification("Không thể bán nhiều hơn số lượng trong kho đồ!");
                         return;
                     }
                 }
@@ -593,7 +611,7 @@ public class TradingView extends VBox {
         if (!isBuying) {
             int inventoryCount = inventory.getCount(itemType);
             if (inventoryCount <= 0) {
-                FXGL.getNotificationService().pushNotification("Không có " + itemType.getDisplayName() + " để bán!");
+                Project1Game.Main.pushNotification("Không có " + itemType.getDisplayName() + " để bán!");
                 return;
             }
         }
@@ -607,7 +625,7 @@ public class TradingView extends VBox {
         cartSectionContainer.getChildren().clear();
 
         Text cartTitle = new Text("Giỏ Hàng");
-        cartTitle.setFont(Font.font("Arial", FontWeight.BOLD, 22));
+        cartTitle.setFont(Font.font(GameFont.GAME_FONT, FontWeight.BOLD, 22));
         cartTitle.setFill(Color.GOLD);
         cartSectionContainer.getChildren().add(cartTitle);
 
@@ -619,7 +637,7 @@ public class TradingView extends VBox {
 
         if (cartItems.isEmpty()) {
             Text emptyText = new Text("Giỏ hàng trống");
-            emptyText.setFont(Font.font("Arial", 14));
+            emptyText.setFont(Font.font(GameFont.GAME_FONT, 14));
             emptyText.setFill(Color.GRAY);
             itemsBox.getChildren().add(emptyText);
         } else {
@@ -654,16 +672,16 @@ public class TradingView extends VBox {
         summaryBox.setStyle("-fx-border-color: #5C2E0B; -fx-border-width: 1 0 0 0;");
 
         Text buyCostText = new Text("Tổng mua: " + totalBuyCost + " G");
-        buyCostText.setFont(Font.font("Arial", 12));
+        buyCostText.setFont(Font.font(GameFont.GAME_FONT, 12));
         buyCostText.setFill(Color.LIGHTBLUE);
 
         Text sellIncomeText = new Text("Tổng bán: " + totalSellIncome + " G");
-        sellIncomeText.setFont(Font.font("Arial", 12));
+        sellIncomeText.setFont(Font.font(GameFont.GAME_FONT, 12));
         sellIncomeText.setFill(Color.ORANGE);
 
         int netCost = totalBuyCost - totalSellIncome;
         Text netText = new Text();
-        netText.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+        netText.setFont(Font.font(GameFont.GAME_FONT, FontWeight.BOLD, 14));
         if (netCost > 0) {
             netText.setText("Tổng thanh toán: " + netCost + " G");
             netText.setFill(Color.TOMATO);
@@ -722,17 +740,17 @@ public class TradingView extends VBox {
         VBox info = new VBox(2);
         info.setPrefWidth(100);
         Text nameText = new Text(cartItem.itemType.getDisplayName());
-        nameText.setFont(Font.font("Arial", FontWeight.BOLD, 11));
+        nameText.setFont(Font.font(GameFont.GAME_FONT, FontWeight.BOLD, 11));
         nameText.setFill(Color.WHITE);
 
         Text typeText = new Text(cartItem.isBuying ? "Mua" : "Bán");
-        typeText.setFont(Font.font("Arial", 9));
+        typeText.setFont(Font.font(GameFont.GAME_FONT, 9));
         typeText.setFill(cartItem.isBuying ? Color.LIMEGREEN : Color.ORANGE);
         info.getChildren().addAll(nameText, typeText);
 
         // Price
         Text priceText = new Text(unitPrice + " G");
-        priceText.setFont(Font.font("Arial", 10));
+        priceText.setFont(Font.font(GameFont.GAME_FONT, 10));
         priceText.setFill(Color.LIGHTGRAY);
         StackPane pricePane = new StackPane(priceText);
         pricePane.setPrefWidth(35);
@@ -744,7 +762,7 @@ public class TradingView extends VBox {
         qtyControls.setPrefWidth(60);
 
         Text minusBtn = new Text(" - ");
-        minusBtn.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+        minusBtn.setFont(Font.font(GameFont.GAME_FONT, FontWeight.BOLD, 14));
         minusBtn.setFill(Color.TOMATO);
         minusBtn.setStyle("-fx-cursor: hand;");
         minusBtn.setOnMouseClicked(e -> {
@@ -755,18 +773,18 @@ public class TradingView extends VBox {
         });
 
         Text qtyText = new Text(String.valueOf(cartItem.quantity));
-        qtyText.setFont(Font.font("Arial", FontWeight.BOLD, 11));
+        qtyText.setFont(Font.font(GameFont.GAME_FONT, FontWeight.BOLD, 11));
         qtyText.setFill(Color.YELLOW);
 
         Text plusBtn = new Text(" + ");
-        plusBtn.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+        plusBtn.setFont(Font.font(GameFont.GAME_FONT, FontWeight.BOLD, 14));
         plusBtn.setFill(Color.LIMEGREEN);
         plusBtn.setStyle("-fx-cursor: hand;");
         plusBtn.setOnMouseClicked(e -> {
             if (!cartItem.isBuying) {
                 int inventoryCount = inventory.getCount(cartItem.itemType);
                 if (cartItem.quantity >= inventoryCount) {
-                    FXGL.getNotificationService().pushNotification("Không thể bán nhiều hơn số lượng trong kho đồ!");
+                    Project1Game.Main.pushNotification("Không thể bán nhiều hơn số lượng trong kho đồ!");
                     return;
                 }
             }
@@ -777,7 +795,7 @@ public class TradingView extends VBox {
 
         // Total row price
         Text totalRowPrice = new Text((unitPrice * cartItem.quantity) + " G");
-        totalRowPrice.setFont(Font.font("Arial", FontWeight.BOLD, 11));
+        totalRowPrice.setFont(Font.font(GameFont.GAME_FONT, FontWeight.BOLD, 11));
         totalRowPrice.setFill(Color.GOLD);
         StackPane totalPane = new StackPane(totalRowPrice);
         totalPane.setPrefWidth(45);
@@ -785,7 +803,7 @@ public class TradingView extends VBox {
 
         // Remove button
         Text removeBtn = new Text("✕");
-        removeBtn.setFont(Font.font("Arial", FontWeight.BOLD, 12));
+        removeBtn.setFont(Font.font(GameFont.GAME_FONT, FontWeight.BOLD, 12));
         removeBtn.setFill(Color.TOMATO);
         removeBtn.setStyle("-fx-cursor: hand;");
         removeBtn.setOnMouseClicked(e -> {
@@ -808,7 +826,7 @@ public class TradingView extends VBox {
         bg.setArcHeight(5);
 
         Text text = new Text(label);
-        text.setFont(Font.font("Arial", FontWeight.BOLD, 12));
+        text.setFont(Font.font(GameFont.GAME_FONT, FontWeight.BOLD, 12));
         text.setFill(textColor);
 
         btn.getChildren().addAll(bg, text);
@@ -823,12 +841,12 @@ public class TradingView extends VBox {
 
     private void handleCheckout(int netCost) {
         if (cartItems.isEmpty()) {
-            FXGL.getNotificationService().pushNotification("Giỏ hàng của bạn đang trống!");
+            Project1Game.Main.pushNotification("Giỏ hàng của bạn đang trống!");
             return;
         }
 
         if (currentTrader != null && currentTrader.willRefuseTrade()) {
-            FXGL.getNotificationService().pushNotification("Trader đang bực bội và từ chối giao dịch!");
+            Project1Game.Main.pushNotification("Trader đang bực bội và từ chối giao dịch!");
             return;
         }
 
@@ -856,7 +874,7 @@ public class TradingView extends VBox {
                     }
                 }
                 if (remaining > 0) {
-                    FXGL.getNotificationService().pushNotification("Không đủ " + ci.itemType.getDisplayName() + " trong kho đồ!");
+                    Project1Game.Main.pushNotification("Không đủ " + ci.itemType.getDisplayName() + " trong kho đồ!");
                     return;
                 }
             }
@@ -885,7 +903,7 @@ public class TradingView extends VBox {
                     }
                 }
                 if (remaining > 0) {
-                    FXGL.getNotificationService().pushNotification("Kho đồ không đủ chỗ trống để chứa " + ci.itemType.getDisplayName() + "!");
+                    Project1Game.Main.pushNotification("Kho đồ không đủ chỗ trống để chứa " + ci.itemType.getDisplayName() + "!");
                     return;
                 }
             }
@@ -894,7 +912,7 @@ public class TradingView extends VBox {
         // 2. Kiểm tra tiền người chơi
         if (netCost > 0) {
             if (playerComponent.getMoney() < netCost) {
-                FXGL.getNotificationService().pushNotification("Bạn không đủ tiền để thực hiện giao dịch!");
+                Project1Game.Main.pushNotification("Bạn không đủ tiền để thực hiện giao dịch!");
                 if (currentTrader != null) {
                     currentTrader.updateRelationship(false, true);
                     relationshipText.setText("Mức quan hệ với Trader: " + currentTrader.getRelationship().name());
@@ -929,7 +947,7 @@ public class TradingView extends VBox {
         }
 
         // 4. Hoàn tất & cập nhật mối quan hệ
-        FXGL.getNotificationService().pushNotification("Giao dịch thành công!");
+        Project1Game.Main.pushNotification("Giao dịch thành công!");
         if (currentTrader != null) {
             currentTrader.updateRelationship(true, netCost > 0);
         }
@@ -968,7 +986,7 @@ public class TradingView extends VBox {
         bg.setArcHeight(6);
         
         Text text = new Text(label);
-        text.setFont(Font.font("Arial", FontWeight.BOLD, 12));
+        text.setFont(Font.font(GameFont.GAME_FONT, FontWeight.BOLD, 12));
         
         btn.getChildren().addAll(bg, text);
         btn.setStyle("-fx-cursor: hand;");

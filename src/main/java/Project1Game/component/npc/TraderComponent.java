@@ -131,13 +131,7 @@ public class TraderComponent extends Component implements Interactable {
         }
     }
 
-    /**
-     * Hàm xử lý tỷ lệ thành công khi bấm nút Thương lượng (legacy - giữ lại cho
-     * tương thích).
-     */
-    public boolean tryNegotiate() {
-        return tryNegotiateWithSlider(15); // Mặc định 15% cho hệ thống cũ
-    }
+
 
     /**
      * Lấy % bonus hiện tại từ kết quả thương lượng

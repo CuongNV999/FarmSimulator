@@ -32,7 +32,7 @@ public class EatAction implements Usable {
         double maxHealth = statusBars.getMaxHealth();
 
         if (currentHunger >= maxHunger && currentHealth >= maxHealth) {
-            FXGL.getNotificationService().pushNotification("Bạn đã đầy bụng và khỏe mạnh, không cần ăn!");
+            Main.pushNotification("Bạn đã đầy bụng và khỏe mạnh, không cần ăn!");
             return;
         }
 
@@ -44,6 +44,6 @@ public class EatAction implements Usable {
         main.getInventory().removeItem(foodType, 1);
 
         // Phát tín hiệu thông báo
-        FXGL.getNotificationService().pushNotification("Đã ăn " + foodType.getDisplayName() + " (+" + hungerRestore + " Đói, +" + healthRestore + " HP)");
+        Main.pushNotification("Đã ăn " + foodType.getDisplayName() + " (+" + hungerRestore + " Đói, +" + healthRestore + " HP)");
     }
 }

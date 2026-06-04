@@ -113,13 +113,8 @@ public class SaveLoadSystem {
 
         // Lưu Cây trồng (Crops)
         data.crops.clear(); // Xóa dữ liệu cũ trước khi lưu mới
-        // Lấy tất cả các loại cây trồng đã định nghĩa trong EntityType
-        EntityType[] cropTypes = {EntityType.WHEAT, EntityType.RADISH, EntityType.CABBAGE,
-                EntityType.GRAPE, EntityType.CUCUMBER, EntityType.PEPPER,
-                EntityType.CAULIFLOWER, EntityType.BEAN, EntityType.PINEAPPLE,
-                EntityType.SUNFLOWER, EntityType.COCONUT, EntityType.APPLE};
-
-        for (EntityType cropType : cropTypes) {
+        // Lấy tất cả các loại cây trồng đã định nghĩa trong CropRegistry
+        for (EntityType cropType : Project1Game.core.CropRegistry.getInstance().getSupportedCrops()) {
             FXGL.getGameWorld().getEntitiesByType(cropType).forEach(c -> {
                 SaveData.CropDataSave cd = new SaveData.CropDataSave();
                 cd.x = c.getX();
@@ -241,14 +236,16 @@ public class SaveLoadSystem {
             }
         });
 
-        EntityType[] allDynamicEntities = {EntityType.SOIL, EntityType.WHEAT,
-                EntityType.RADISH, EntityType.CABBAGE,
-                EntityType.GRAPE, EntityType.CUCUMBER, EntityType.PEPPER,
-                EntityType.CAULIFLOWER, EntityType.BEAN, EntityType.PINEAPPLE,
-                EntityType.SUNFLOWER, EntityType.COCONUT, EntityType.APPLE,
-                EntityType.ANIMAL, EntityType.MONSTER};
-        FXGL.getGameWorld().getEntitiesFiltered(e -> Arrays.asList(allDynamicEntities).contains(e.getType()))
-                .forEach(Entity::removeFromWorld);
+        FXGL.getGameWorld().getEntitiesFiltered(e -> {
+            Object type = e.getType();
+            if (type == EntityType.SOIL || type == EntityType.ANIMAL || type == EntityType.MONSTER) {
+                return true;
+            }
+            if (type instanceof EntityType && Project1Game.core.CropRegistry.getInstance().isCrop((EntityType) type)) {
+                return true;
+            }
+            return false;
+        }).forEach(Entity::removeFromWorld);
 
         // Tái tạo ô đất
         for (SaveData.SoilData sd : data.soils) {

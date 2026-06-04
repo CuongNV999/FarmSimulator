@@ -41,10 +41,37 @@ public class CropComponent extends Component {
         if (growTimer != null)    growTimer.expire();
         if (nightHandler != null) FXGL.getEventBus().removeEventHandler(DayNightEvent.SET_NIGHT, nightHandler);
         if (dayHandler != null)   FXGL.getEventBus().removeEventHandler(DayNightEvent.SET_DAY,   dayHandler);
+
+        // 1. Perform a spatial query to locate all soil entities in the world
+        com.almasb.fxgl.dsl.FXGL.getGameWorld()
+            .getEntitiesByType(Project1Game.core.EntityType.SOIL)
+            .stream()
+            // 2. Filter for the exact matching soil tile using a tight coordinate distance threshold (< 5.0 pixels)
+            .filter(soil -> soil.getPosition().distance(entity.getPosition()) < 5.0)
+            .findFirst()
+            .ifPresent(soil -> {
+                // 3. Reset the state machine flag to unlock the tile for future plowing/planting
+                Project1Game.component.farming.SoilComponent soilComp = soil.getComponent(Project1Game.component.farming.SoilComponent.class);
+                if (soilComp != null) {
+                    soilComp.setHasPlant(false);
+                }
+            });
     }
 
     private void updateView() {
         Texture frame = FXGL.texture(data.getSpriteForStage(stage));
+        
+        // Scale and offset for textures (e.g., Apple tree, Coconut tree, crops)
+        // Center horizontally and align to the bottom of the 32x32 bounding box
+        double w = frame.getImage().getWidth();
+        double h = frame.getImage().getHeight();
+        double scale = data.getScale();
+        
+        frame.setScaleX(scale);
+        frame.setScaleY(scale);
+        frame.setTranslateX((32 - w) / 2.0);
+        frame.setTranslateY(32 - h * (1.0 + scale) / 2.0);
+
         getEntity().getViewComponent().clearChildren();
         getEntity().getViewComponent().addChild(frame);
     }

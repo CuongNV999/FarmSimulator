@@ -18,6 +18,9 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
+import javafx.scene.control.Label;
+import javafx.scene.control.OverrunStyle;
+import javafx.scene.control.Tooltip;
 
 public class ToolbarView extends HBox {
     private static final int SLOT_SIZE = 80;
@@ -82,7 +85,7 @@ public class ToolbarView extends HBox {
 
         // Số lượng
         Text countText = new Text();
-        countText.setFont(Font.font("Arial", 18));
+        countText.setFont(Font.font(GameFont.GAME_FONT, 18));
         countText.setFill(Color.WHITE);
         countText.textProperty().bind(
                 Bindings.createStringBinding(
@@ -98,10 +101,13 @@ public class ToolbarView extends HBox {
         countText.setTranslateY(-2);
 
         // Tên vật phẩm (hiển thị nhỏ phía trên)
-        Text nameText = new Text();
-        nameText.setFont(Font.font("Arial", 11));
-        nameText.setFill(Color.LIGHTGRAY);
-        nameText.textProperty().bind(
+        Label nameLabel = new Label();
+        nameLabel.setFont(Font.font(GameFont.GAME_FONT, 10));
+        nameLabel.setTextFill(Color.LIGHTGRAY);
+        nameLabel.setMaxWidth(SLOT_SIZE - 6);
+        nameLabel.setAlignment(Pos.CENTER);
+        nameLabel.setTextOverrun(OverrunStyle.ELLIPSIS);
+        nameLabel.textProperty().bind(
                 Bindings.createStringBinding(
                         () -> {
                             ItemType itemType = inventorySlot.getItemType();
@@ -110,18 +116,46 @@ public class ToolbarView extends HBox {
                         inventorySlot.itemTypeProperty()
                 )
         );
-        StackPane.setAlignment(nameText, Pos.TOP_CENTER);
-        nameText.setTranslateY(2);
+        StackPane.setAlignment(nameLabel, Pos.TOP_CENTER);
+        nameLabel.setTranslateY(2);
+
+        // Tooltip hiển thị tên đầy đủ khi hover
+        Tooltip tooltip = new Tooltip();
+        tooltip.setFont(Font.font(GameFont.GAME_FONT, 12));
+        tooltip.setStyle(
+            "-fx-background-color: rgba(35, 20, 10, 0.95); " +
+            "-fx-text-fill: #eccb58; " +
+            "-fx-border-color: #8b5a2b; " +
+            "-fx-border-width: 2; " +
+            "-fx-border-radius: 4; " +
+            "-fx-background-radius: 4; " +
+            "-fx-padding: 6 10 6 10;"
+        );
+        
+        inventorySlot.itemTypeProperty().addListener((obs, oldType, newType) -> {
+            if (newType != null && !newType.getIconName().isEmpty()) {
+                tooltip.setText(newType.getDisplayName());
+                Tooltip.install(pane, tooltip);
+            } else {
+                Tooltip.uninstall(pane, tooltip);
+            }
+        });
+        
+        ItemType initialType = inventorySlot.getItemType();
+        if (initialType != null && !initialType.getIconName().isEmpty()) {
+            tooltip.setText(initialType.getDisplayName());
+            Tooltip.install(pane, tooltip);
+        }
 
         // Phím tắt
         Text keyText = new Text(String.valueOf(index + 1));
-        keyText.setFont(Font.font("Arial", 12));
+        keyText.setFont(Font.font(GameFont.GAME_FONT, 12));
         keyText.setFill(Color.YELLOW);
         StackPane.setAlignment(keyText, Pos.TOP_LEFT);
         keyText.setTranslateX(4);
         keyText.setTranslateY(2);
 
-        pane.getChildren().addAll(countText, nameText, keyText);
+        pane.getChildren().addAll(countText, nameLabel, keyText);
 
         // --- Drag and Drop Source ---
         pane.setOnDragDetected(event -> {

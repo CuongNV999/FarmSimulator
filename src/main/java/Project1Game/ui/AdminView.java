@@ -58,11 +58,11 @@ public class AdminView extends VBox {
         container.getChildren().clear();
 
         Text title = new Text("ADMIN PANEL ACCESS");
-        title.setFont(Font.font("Arial", FontWeight.BOLD, 28));
+        title.setFont(Font.font(GameFont.GAME_FONT, FontWeight.BOLD, 28));
         title.setFill(Color.web("#d9383a"));
 
         Text subtitle = new Text("Enter Authorization Passcode");
-        subtitle.setFont(Font.font("Arial", FontWeight.NORMAL, 16));
+        subtitle.setFont(Font.font(GameFont.GAME_FONT, FontWeight.NORMAL, 16));
         subtitle.setFill(Color.LIGHTGRAY);
 
         passcodeField.setPromptText("Enter key...");
@@ -79,7 +79,7 @@ public class AdminView extends VBox {
         submitBtn.setOnAction(e -> attemptAuthentication());
 
         errorText.setFill(Color.RED);
-        errorText.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+        errorText.setFont(Font.font(GameFont.GAME_FONT, FontWeight.BOLD, 14));
 
         container.getChildren().addAll(title, subtitle, passcodeField, submitBtn, errorText);
     }
@@ -101,7 +101,7 @@ public class AdminView extends VBox {
         container.getChildren().clear();
 
         Text title = new Text("SYSTEM ADMINISTRATOR CONSOLE");
-        title.setFont(Font.font("Arial", FontWeight.BOLD, 26));
+        title.setFont(Font.font(GameFont.GAME_FONT, FontWeight.BOLD, 26));
         title.setFill(Color.web("#d9383a"));
 
         HBox columns = new HBox(30);
@@ -116,13 +116,13 @@ public class AdminView extends VBox {
         statsCol.setStyle("-fx-background-color: rgba(30, 30, 40, 0.5); -fx-background-radius: 10; -fx-border-color: #444; -fx-border-width: 1; -fx-border-radius: 10;");
 
         Text statsTitle = new Text("Player Configuration");
-        statsTitle.setFont(Font.font("Arial", FontWeight.BOLD, 18));
+        statsTitle.setFont(Font.font(GameFont.GAME_FONT, FontWeight.BOLD, 18));
         statsTitle.setFill(Color.web("#eccb58"));
 
         // Adjusting gold field
         Text goldLabel = new Text("Gold:");
         goldLabel.setFill(Color.WHITE);
-        goldLabel.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+        goldLabel.setFont(Font.font(GameFont.GAME_FONT, FontWeight.BOLD, 14));
         
         TextField goldInput = new TextField(String.valueOf(playerComponent.getMoney()));
         goldInput.setPrefWidth(120);
@@ -160,7 +160,7 @@ public class AdminView extends VBox {
         // Skin Selection Panel
         Text skinTitle = new Text("Choose Player Skin:");
         skinTitle.setFill(Color.WHITE);
-        skinTitle.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+        skinTitle.setFont(Font.font(GameFont.GAME_FONT, FontWeight.BOLD, 14));
 
         GridPane skinGrid = new GridPane();
         skinGrid.setHgap(8);
@@ -183,7 +183,7 @@ public class AdminView extends VBox {
         // Time Speed Presets Panel
         Text timeTitle = new Text("Time Speed Multiplier:");
         timeTitle.setFill(Color.WHITE);
-        timeTitle.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+        timeTitle.setFont(Font.font(GameFont.GAME_FONT, FontWeight.BOLD, 14));
 
         HBox timeSpeedButtons = new HBox(6);
         timeSpeedButtons.setAlignment(Pos.CENTER_LEFT);
@@ -207,7 +207,7 @@ public class AdminView extends VBox {
         // Cheat button
         Text cheatsTitle = new Text("Cheats:");
         cheatsTitle.setFill(Color.WHITE);
-        cheatsTitle.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+        cheatsTitle.setFont(Font.font(GameFont.GAME_FONT, FontWeight.BOLD, 14));
 
         Button btnMatureAll = new Button("Instant Mature All");
         btnMatureAll.setPrefWidth(160);
@@ -235,7 +235,7 @@ public class AdminView extends VBox {
         itemsCol.setAlignment(Pos.TOP_LEFT);
 
         Text itemsTitle = new Text("Crop & Inventory Adjuster");
-        itemsTitle.setFont(Font.font("Arial", FontWeight.BOLD, 18));
+        itemsTitle.setFont(Font.font(GameFont.GAME_FONT, FontWeight.BOLD, 18));
         itemsTitle.setFill(Color.web("#eccb58"));
 
         ScrollPane scrollPane = new ScrollPane();
@@ -312,13 +312,13 @@ public class AdminView extends VBox {
 
         // Name
         Text name = new Text(type.getDisplayName());
-        name.setFont(Font.font("Arial", FontWeight.BOLD, 13));
+        name.setFont(Font.font(GameFont.GAME_FONT, FontWeight.BOLD, 13));
         name.setFill(Color.WHITE);
         name.setWrappingWidth(110);
 
         // Quantity count label
         Text qty = new Text("Qty: " + inventory.getCount(type));
-        qty.setFont(Font.font("Arial", FontWeight.NORMAL, 13));
+        qty.setFont(Font.font(GameFont.GAME_FONT, FontWeight.NORMAL, 13));
         qty.setFill(Color.LIGHTGREEN);
         qty.setWrappingWidth(60);
 

@@ -358,6 +358,17 @@ public class GameEntityFactory implements EntityFactory {
         return createAnimal(data, "turkey", 32, 32);
     }
 
+    @Spawns("Bull")
+    public Entity spawnBull(SpawnData data) {
+        Entity bull = createAnimal(data, "bull", 64, 64);
+        BaseAnimalComponent bac = bull.getComponent(BaseAnimalComponent.class);
+        if (bac != null) {
+            bac.setDaysGrown(bac.getMaxGrowthDays());
+            bac.initAnimation();
+        }
+        return bull;
+    }
+
     private Entity createMonster(SpawnData data, String monsterType, String runTexturePath, String idleTexturePath) {
         PhysicsComponent physics = new PhysicsComponent();
         physics.setFixtureDef(new FixtureDef().friction(0f).density(0.1f));
@@ -400,7 +411,7 @@ public class GameEntityFactory implements EntityFactory {
 
     @Spawns("Boar")
     public Entity spawnBoar(SpawnData data) {
-        return createMonster(data, "Boar", "monster/Boar/Boar_Run_with_shadow.png", "monster/Boar/Boar_Idle_with_shadow.png");
+        return createMonster(data, "Boar", "monster/Boar/Boar_Walk_with_shadow.png", "monster/Boar/Boar_Idle_with_shadow.png");
     }
 
     @Spawns("Fox")
@@ -425,6 +436,7 @@ public class GameEntityFactory implements EntityFactory {
         return FXGL.entityBuilder(data)
                 .type(EntityType.BUSH)
                 .bbox(new HitBox(BoundingShape.box(w, h)))
+                .collidable()
                 .build();
     }
 
@@ -434,7 +446,7 @@ public class GameEntityFactory implements EntityFactory {
         SpawnData copy = new SpawnData(data.getX(), data.getY());
         copy.put("tempBushMonster", true);
         if (rand.nextBoolean()) {
-            return createMonster(copy, "Boar", "monster/Boar/Boar_Run_with_shadow.png", "monster/Boar/Boar_Idle_with_shadow.png");
+            return createMonster(copy, "Boar", "monster/Boar/Boar_Walk_with_shadow.png", "monster/Boar/Boar_Idle_with_shadow.png");
         } else {
             return createMonster(copy, "Fox", "monster/Fox/Fox_walk_with_shadow.png", "monster/Fox/Fox_Idle_with_shadow.png");
         }

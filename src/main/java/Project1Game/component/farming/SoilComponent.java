@@ -27,7 +27,11 @@ public class SoilComponent extends Component {
 
     public void setWet(boolean wet) {
         if (wet) {
-            currentState = currentState.water();
+            SoilState newState = currentState.water();
+            if (newState != null) {
+                currentState = newState;
+                System.out.println("Soil watered: State changed to " + currentState.getClass().getSimpleName());
+            }
         } else {
             currentState = new TilledDryState();
         }
@@ -37,7 +41,11 @@ public class SoilComponent extends Component {
     public void updateTexture() {
         if (entity == null) return;
         entity.getViewComponent().clearChildren();
-        entity.getViewComponent().addChild(currentState.getTexture(entity.getX()));
+        if (isWet()) {
+            entity.getViewComponent().addChild(new Project1Game.component.farming.state.TilledWetState().getTexture(entity.getX()));
+        } else {
+            entity.getViewComponent().addChild(currentState.getTexture(entity.getX()));
+        }
     }
 
     private javafx.event.EventHandler<Project1Game.system.DayNightEvent> dayHandler;

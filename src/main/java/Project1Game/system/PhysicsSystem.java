@@ -46,6 +46,6 @@ public class PhysicsSystem {
             }
         });
 
-        // Bạn có thể thêm các Handler khác vào đây (Water, v.v.)
+
     }
 }

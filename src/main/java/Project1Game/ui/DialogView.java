@@ -20,7 +20,6 @@ public class DialogView extends Parent {
 
     private final Text nameText;
     private final Text contentText;
-    private boolean visible2 = false;
 
     public DialogView(double screenW, double screenH) {
         Rectangle bg = new Rectangle(WIDTH, HEIGHT);
@@ -31,16 +30,16 @@ public class DialogView extends Parent {
         bg.setStrokeWidth(2);
 
         nameText = new Text("NPC");
-        nameText.setFont(Font.font("Arial", 15));
+        nameText.setFont(Font.font(GameFont.GAME_FONT, 15));
         nameText.setFill(Color.GOLD);
 
         contentText = new Text("...");
-        contentText.setFont(Font.font("Arial", 14));
+        contentText.setFont(Font.font(GameFont.GAME_FONT, 14));
         contentText.setFill(Color.WHITE);
         contentText.setWrappingWidth(WIDTH - 24);
 
         Text hint = new Text("[R] Đóng");
-        hint.setFont(Font.font("Arial", 11));
+        hint.setFont(Font.font(GameFont.GAME_FONT, 11));
         hint.setFill(Color.GRAY);
 
         VBox box = new VBox(6, nameText, contentText, hint);
@@ -63,18 +62,16 @@ public class DialogView extends Parent {
     }
 
     public void show() {
-        visible2 = true;
         setVisible(true);
     }
 
     public void hide() {
-        visible2 = false;
         setVisible(false);
     }
 
     public void toggle() {
-        if (visible2) hide(); else show();
+        if (isVisible()) hide(); else show();
     }
 
-    public boolean isOpen() { return visible2; }
+    public boolean isOpen() { return isVisible(); }
 }

@@ -18,7 +18,7 @@ public class PlaceAnimalAction implements Usable {
 
         // House Check: prevent placing animals inside the main house map
         if ("Main_house.tmx".equals(Main.getInstance().getCurrentMap())) {
-            FXGL.getNotificationService().pushNotification("Không thể thả động vật trong nhà!");
+            Main.pushNotification("Không thể thả động vật trong nhà!");
             return;
         }
 
@@ -31,6 +31,6 @@ public class PlaceAnimalAction implements Usable {
         // Spawn animal at selector position
         FXGL.spawn(spawnName, target.getX(), target.getY());
         inventory.removeItem(animalItem, 1);
-        FXGL.getNotificationService().pushNotification("Đã thả " + animalItem.getDisplayName() + "!");
+        Main.pushNotification("Đã thả " + animalItem.getDisplayName() + "!");
     }
 }
