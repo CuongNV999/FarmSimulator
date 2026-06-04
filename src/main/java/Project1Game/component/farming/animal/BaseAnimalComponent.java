@@ -403,7 +403,8 @@ public class BaseAnimalComponent extends Component implements Interactable {
 
                             if (cellInField) {
                                 boolean cellHasSoil = soils.stream()
-                                        .anyMatch(s -> s.getX() == cx && s.getY() == cy);
+                                        .anyMatch(s -> Math.round(s.getX() / 32.0) == Math.round(cx / 32.0)
+                                                && Math.round(s.getY() / 32.0) == Math.round(cy / 32.0));
 
                                 if (!cellHasSoil) {
                                     FXGL.spawn("Soil", cx, cy);

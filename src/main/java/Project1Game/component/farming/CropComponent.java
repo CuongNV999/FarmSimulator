@@ -51,7 +51,7 @@ public class CropComponent extends Component {
             .findFirst()
             .ifPresent(soil -> {
                 // 3. Reset the state machine flag to unlock the tile for future plowing/planting
-                Project1Game.component.farming.SoilComponent soilComp = soil.getComponent(Project1Game.component.farming.SoilComponent.class);
+                Project1Game.component.farming.SoilComponent soilComp = soil.getComponentOptional(Project1Game.component.farming.SoilComponent.class).orElse(null);
                 if (soilComp != null) {
                     soilComp.setHasPlant(false);
                 }
