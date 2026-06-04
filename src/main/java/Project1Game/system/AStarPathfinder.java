@@ -45,8 +45,13 @@ public class AStarPathfinder {
     }
 
     public static List<Point2D> findPath(Point2D start, Point2D target, double mapWidth, double mapHeight) {
+        return findPath(start, target, mapWidth, mapHeight, 64.0); // Default to human NPC height (32x64)
+    }
+
+    public static List<Point2D> findPath(Point2D start, Point2D target, double mapWidth, double mapHeight, double entityHeight) {
         int cols = (int) Math.ceil(mapWidth / CELL_SIZE);
         int rows = (int) Math.ceil(mapHeight / CELL_SIZE);
+        boolean isTall = entityHeight > 32.0;
 
         boolean[][] blocked = new boolean[cols][rows];
         double[][] costGrid = new double[cols][rows];
@@ -119,8 +124,10 @@ public class AStarPathfinder {
         blocked[targetCol][targetRow] = false;
 
         // Since the NPC is 32x64, it occupies two vertical cells. Let's make sure the cell below the start and target is also passable
-        if (startRow + 1 < rows) blocked[startCol][startRow + 1] = false;
-        if (targetRow + 1 < rows) blocked[targetCol][targetRow + 1] = false;
+        if (isTall) {
+            if (startRow + 1 < rows) blocked[startCol][startRow + 1] = false;
+            if (targetRow + 1 < rows) blocked[targetCol][targetRow + 1] = false;
+        }
 
         PriorityQueue<Node> openSet = new PriorityQueue<>();
         Set<String> closedSet = new HashSet<>();
@@ -157,7 +164,7 @@ public class AStarPathfinder {
                 if (closedSet.contains(nCol + "," + nRow)) continue;
 
                 // Since NPC is 32x64, check if the cell below is also blocked
-                if (nRow + 1 < rows && blocked[nCol][nRow + 1]) continue;
+                if (isTall && nRow + 1 < rows && blocked[nCol][nRow + 1]) continue;
 
                 double movementCost = costGrid[nCol][nRow];
                 double tentativeG = current.g + movementCost;

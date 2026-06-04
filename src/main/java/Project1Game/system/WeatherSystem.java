@@ -119,7 +119,7 @@ public class WeatherSystem {
 
         // Initialize UI Nodes
         weatherText = new Text("Thời tiết: Nắng");
-        weatherText.setFont(Font.font("Arial", FontWeight.BOLD, 18));
+        weatherText.setFont(Font.font(Project1Game.ui.GameFont.GAME_FONT, FontWeight.BOLD, 18));
         weatherText.setStroke(Color.BLACK);
         weatherText.setStrokeWidth(0.3);
         weatherText.setFill(Color.GOLD);

@@ -20,6 +20,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
+import javafx.scene.control.Tooltip;
 
 public class InventoryView extends VBox {
     private static final int SLOT_SIZE = 64;
@@ -40,7 +41,7 @@ public class InventoryView extends VBox {
         bg.setArcHeight(12);
 
         Text title = new Text("Inventory");
-        title.setFont(Font.font("Arial", 16));
+        title.setFont(Font.font(GameFont.GAME_FONT, 16));
         title.setFill(Color.GOLD);
 
         GridPane grid = new GridPane();
@@ -108,7 +109,7 @@ public class InventoryView extends VBox {
 
         // Số lượng
         Text countText = new Text();
-        countText.setFont(Font.font("Arial", 14));
+        countText.setFont(Font.font(GameFont.GAME_FONT, 14));
         countText.setFill(Color.WHITE);
         countText.textProperty().bind(
                 Bindings.createStringBinding(
@@ -123,6 +124,34 @@ public class InventoryView extends VBox {
         countText.setTranslateX(-3);
         countText.setTranslateY(-2);
         pane.getChildren().add(countText);
+
+        // Tooltip hiển thị tên đầy đủ khi hover
+        Tooltip tooltip = new Tooltip();
+        tooltip.setFont(Font.font(GameFont.GAME_FONT, 12));
+        tooltip.setStyle(
+            "-fx-background-color: rgba(35, 20, 10, 0.95); " +
+            "-fx-text-fill: #eccb58; " +
+            "-fx-border-color: #8b5a2b; " +
+            "-fx-border-width: 2; " +
+            "-fx-border-radius: 4; " +
+            "-fx-background-radius: 4; " +
+            "-fx-padding: 6 10 6 10;"
+        );
+        
+        inventorySlot.itemTypeProperty().addListener((obs, oldType, newType) -> {
+            if (newType != null && !newType.getIconName().isEmpty()) {
+                tooltip.setText(newType.getDisplayName());
+                Tooltip.install(pane, tooltip);
+            } else {
+                Tooltip.uninstall(pane, tooltip);
+            }
+        });
+        
+        ItemType initialType = inventorySlot.getItemType();
+        if (initialType != null && !initialType.getIconName().isEmpty()) {
+            tooltip.setText(initialType.getDisplayName());
+            Tooltip.install(pane, tooltip);
+        }
 
         // --- Drag and Drop Source ---
         pane.setOnDragDetected(event -> {

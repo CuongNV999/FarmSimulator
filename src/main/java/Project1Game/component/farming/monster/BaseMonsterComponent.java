@@ -272,7 +272,8 @@ public abstract class BaseMonsterComponent extends Component {
             recalculatePath();
         }
 
-        if (targetEntity != null) {
+        boolean canSeekDirectly = targetEntity != null && entity.distance(targetEntity) < 48.0;
+        if (targetEntity != null && (!pathWaypoints.isEmpty() || canSeekDirectly)) {
             pathTimer += tpf;
             if (pathTimer >= 1.0) {
                 pathTimer = 0.0;
@@ -387,14 +388,10 @@ public abstract class BaseMonsterComponent extends Component {
             return;
         }
 
-        // TỐI ƯU HÓA TỐC ĐỘ: Sử dụng kích thước bản đồ đã được lưu trong bộ đệm (O(1))
+        // TỐI ƯU HÓA TỐC ĐỘ: Sử dụng kích thước bản đồ đã được lưu trong bộ đệm (O(1)) và truyền chiều cao thực thể
+        double h = entity.getHeight() > 0 ? entity.getHeight() : 32.0;
         this.pathWaypoints = Project1Game.system.AStarPathfinder.findPath(entity.getPosition(),
-                targetEntity.getPosition(), cachedMapWidth, cachedMapHeight);
-
-        if (this.pathWaypoints.isEmpty()) {
-            this.pathWaypoints = new ArrayList<>();
-            this.pathWaypoints.add(targetEntity.getPosition());
-        }
+                targetEntity.getPosition(), cachedMapWidth, cachedMapHeight, h);
     }
 
     protected Entity findClosestTarget() {
@@ -512,5 +509,9 @@ public abstract class BaseMonsterComponent extends Component {
 
         wanderTimer = 0;
         wanderDuration = collisionCooldown;
+    }
+
+    public double getCollisionCooldown() {
+        return collisionCooldown;
     }
 }

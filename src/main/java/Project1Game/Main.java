@@ -58,24 +58,25 @@ public class Main extends GameApplication {
             return false;
         }
         String msg = message.toLowerCase();
-        
+
         // Ăn (Eat)
-        if (msg.contains("ăn") || msg.contains("đầy bụng") || msg.contains("đói") || msg.contains("thức ăn") || msg.contains("eat")) {
+        if (msg.contains("ăn") || msg.contains("đầy bụng") || msg.contains("đói") || msg.contains("thức ăn")
+                || msg.contains("eat")) {
             return true;
         }
-        
+
         // Mua / Bán / Giao dịch (Buy / Sell / Trade / Negotiate)
-        if (msg.contains("giao dịch") || msg.contains("tiền") || msg.contains("mua") || 
-            msg.contains("bán") || msg.contains("kho đồ") || msg.contains("giỏ hàng") || 
-            msg.contains("trader") || msg.contains("thương lượng") || msg.contains("giá") || msg.contains("shop")) {
+        if (msg.contains("giao dịch") || msg.contains("tiền") || msg.contains("mua") ||
+                msg.contains("bán") || msg.contains("kho đồ") || msg.contains("giỏ hàng") ||
+                msg.contains("trader") || msg.contains("thương lượng") || msg.contains("giá") || msg.contains("shop")) {
             return true;
         }
-        
+
         // Ngủ (Sleep)
         if (msg.contains("ngủ") || msg.contains("sleep") || msg.contains("hồi phục") || msg.contains("ngon")) {
             return true;
         }
-        
+
         return false;
     }
 
@@ -194,7 +195,7 @@ public class Main extends GameApplication {
             timeSystem.advanceToNextDay();
             statusBarsView.setHealth(statusBarsView.getMaxHealth());
             statusBarsView.setHunger(statusBarsView.getMaxHunger());
-            
+
             // Cache the guider and trader reappearance at 6:00 AM morning
             if (currentMap.equals("Main_house.tmx")) {
                 pendingNPCSpawns.clear();
@@ -202,7 +203,7 @@ public class Main extends GameApplication {
                 pendingNPCSpawns.add(new NPCSpawnConfig("Trader", 1600, 1024, false));
                 System.out.println("[NPC Cache] Cached morning transitions via sleep: NPCs are visible");
             }
-            
+
             dialogView.setDialog("Thông báo", "Bạn đã ngủ một giấc thật ngon.", "Sức khỏe đã được hồi phục!");
             dialogView.show();
             System.out.println("Nhân vật đã đi ngủ.");
@@ -269,6 +270,7 @@ public class Main extends GameApplication {
         public double x;
         public double y;
         public boolean isHidden;
+
         public NPCSpawnConfig(String type, double x, double y, boolean isHidden) {
             this.type = type;
             this.x = x;
@@ -276,6 +278,7 @@ public class Main extends GameApplication {
             this.isHidden = isHidden;
         }
     }
+
     private final java.util.List<NPCSpawnConfig> pendingNPCSpawns = new java.util.ArrayList<>();
     private VBox hudContainer;
     private double lastHungerDrainTime = -1;
@@ -286,6 +289,10 @@ public class Main extends GameApplication {
     public void toggleHPDepletion() {
         this.isHPDepletionEnabled = !this.isHPDepletionEnabled;
         pushNotification("HP Depletion: " + (isHPDepletionEnabled ? "ON" : "OFF"));
+    }
+
+    public boolean isHPDepletionEnabled() {
+        return isHPDepletionEnabled;
     }
 
     @Override
@@ -299,6 +306,11 @@ public class Main extends GameApplication {
         gameSettings.setFullScreenAllowed(true);
         gameSettings.setSceneFactory(new FarmSceneFactory());
         gameSettings.setNotificationViewClass(CustomNotificationView.class);
+    }
+
+    @Override
+    protected void onPreInit() {
+        FXGL.loopBGM("background_music.mp3");
     }
 
     @Override
@@ -346,7 +358,16 @@ public class Main extends GameApplication {
         // Dynamic collision avoidance (push prevention) for animals and monsters
         FXGL.getPhysicsWorld().addCollisionHandler(new CreatureAvoidanceHandler(EntityType.ANIMAL, EntityType.ANIMAL));
         FXGL.getPhysicsWorld().addCollisionHandler(new CreatureAvoidanceHandler(EntityType.ANIMAL, EntityType.MONSTER));
-        FXGL.getPhysicsWorld().addCollisionHandler(new CreatureAvoidanceHandler(EntityType.MONSTER, EntityType.MONSTER));
+        FXGL.getPhysicsWorld()
+                .addCollisionHandler(new CreatureAvoidanceHandler(EntityType.MONSTER, EntityType.MONSTER));
+
+        // Tránh chướng ngại vật cho động vật khi va chạm với các vật cản khác
+        FXGL.getPhysicsWorld().addCollisionHandler(new AnimalObstacleCollisionHandler(EntityType.COLLISION));
+        FXGL.getPhysicsWorld().addCollisionHandler(new AnimalObstacleCollisionHandler(EntityType.WALL));
+        FXGL.getPhysicsWorld().addCollisionHandler(new AnimalObstacleCollisionHandler(EntityType.PLAYER));
+        FXGL.getPhysicsWorld().addCollisionHandler(new AnimalObstacleCollisionHandler(EntityType.NPC));
+        FXGL.getPhysicsWorld().addCollisionHandler(new AnimalObstacleCollisionHandler(EntityType.GUIDER));
+        FXGL.getPhysicsWorld().addCollisionHandler(new AnimalObstacleCollisionHandler(EntityType.TRADER));
     }
 
     private static class CreatureAvoidanceHandler extends CollisionHandler {
@@ -356,48 +377,63 @@ public class Main extends GameApplication {
 
         @Override
         protected void onCollision(Entity entityA, Entity entityB) {
-            PhysicsComponent physA = entityA.getComponentOptional(PhysicsComponent.class).orElse(null);
-            PhysicsComponent physB = entityB.getComponentOptional(PhysicsComponent.class).orElse(null);
-            if (physA == null || physB == null) return;
+            boolean shouldForceA = false;
+            boolean shouldForceB = false;
 
-            Point2D velA = new Point2D(physA.getVelocityX(), physA.getVelocityY());
-            Point2D velB = new Point2D(physB.getVelocityX(), physB.getVelocityY());
-
-            double speedA = velA.magnitude();
-            double speedB = velB.magnitude();
-
-            boolean isIdleA = speedA < 5.0;
-            boolean isIdleB = speedB < 5.0;
-
-            // Stop both creatures when they collide
-            physA.setVelocityX(0);
-            physA.setVelocityY(0);
-            physB.setVelocityX(0);
-            physB.setVelocityY(0);
-
-            // Force both creatures to choose new random directions
+            BaseAnimalComponent animalA = null;
+            BaseMonsterComponent monsterA = null;
             if (entityA.isType(EntityType.ANIMAL)) {
-                BaseAnimalComponent animalA = entityA.getComponentOptional(BaseAnimalComponent.class).orElse(null);
-                if (animalA != null) {
-                    animalA.forceNewDirection();
+                animalA = entityA.getComponentOptional(BaseAnimalComponent.class).orElse(null);
+                if (animalA != null && animalA.getCollisionCooldown() <= 0) {
+                    shouldForceA = true;
                 }
             } else if (entityA.isType(EntityType.MONSTER)) {
-                BaseMonsterComponent monsterA = entityA.getComponentOptional(BaseMonsterComponent.class).orElse(null);
-                if (monsterA != null) {
-                    monsterA.forceNewDirection();
+                monsterA = entityA.getComponentOptional(BaseMonsterComponent.class).orElse(null);
+                if (monsterA != null && monsterA.getCollisionCooldown() <= 0) {
+                    shouldForceA = true;
                 }
             }
 
+            BaseAnimalComponent animalB = null;
+            BaseMonsterComponent monsterB = null;
             if (entityB.isType(EntityType.ANIMAL)) {
-                BaseAnimalComponent animalB = entityB.getComponentOptional(BaseAnimalComponent.class).orElse(null);
-                if (animalB != null) {
-                    animalB.forceNewDirection();
+                animalB = entityB.getComponentOptional(BaseAnimalComponent.class).orElse(null);
+                if (animalB != null && animalB.getCollisionCooldown() <= 0) {
+                    shouldForceB = true;
                 }
             } else if (entityB.isType(EntityType.MONSTER)) {
-                BaseMonsterComponent monsterB = entityB.getComponentOptional(BaseMonsterComponent.class).orElse(null);
-                if (monsterB != null) {
-                    monsterB.forceNewDirection();
+                monsterB = entityB.getComponentOptional(BaseMonsterComponent.class).orElse(null);
+                if (monsterB != null && monsterB.getCollisionCooldown() <= 0) {
+                    shouldForceB = true;
                 }
+            }
+
+            if (shouldForceA) {
+                if (animalA != null)
+                    animalA.forceNewDirection();
+                else if (monsterA != null)
+                    monsterA.forceNewDirection();
+            }
+
+            if (shouldForceB) {
+                if (animalB != null)
+                    animalB.forceNewDirection();
+                else if (monsterB != null)
+                    monsterB.forceNewDirection();
+            }
+        }
+    }
+
+    private static class AnimalObstacleCollisionHandler extends CollisionHandler {
+        public AnimalObstacleCollisionHandler(EntityType obstacleType) {
+            super(EntityType.ANIMAL, obstacleType);
+        }
+
+        @Override
+        protected void onCollision(Entity animal, Entity obstacle) {
+            BaseAnimalComponent animalComp = animal.getComponentOptional(BaseAnimalComponent.class).orElse(null);
+            if (animalComp != null && animalComp.getCollisionCooldown() <= 0) {
+                animalComp.forceNewDirection();
             }
         }
     }
@@ -405,7 +441,7 @@ public class Main extends GameApplication {
     @Override
     protected void initGame() {
         instance = this;
-        
+
         // Reset state variables to prevent carry-over from previous sessions
         player = null;
         selector = null;
@@ -499,13 +535,13 @@ public class Main extends GameApplication {
         nightOverlay = new NightLightingOverlay(FXGL.getAppWidth(), FXGL.getAppHeight());
 
         clockText = new Text();
-        clockText.setFont(Font.font("Arial", FontWeight.BOLD, 20));
+        clockText.setFont(Project1Game.ui.GameFont.font(FontWeight.BOLD, 20));
         clockText.setStroke(Color.BLACK);
         clockText.setStrokeWidth(0.5);
 
         // Khởi tạo Text hiển thị tiền
         moneyText = new Text();
-        moneyText.setFont(Font.font("Arial", FontWeight.BOLD, 18));
+        moneyText.setFont(Project1Game.ui.GameFont.font(FontWeight.BOLD, 18));
         moneyText.setFill(Color.GOLD); // Màu chữ
         moneyText.setStroke(Color.BLACK);
         moneyText.setStrokeWidth(0.3);
@@ -858,7 +894,8 @@ public class Main extends GameApplication {
                 if (!bushes.isEmpty()) {
                     if (rng.nextDouble() < 0.15) {
                         Entity targetBush = bushes.get(rng.nextInt(bushes.size()));
-                        FXGL.spawn("BushMonster", targetBush.getX() + targetBush.getWidth()/2 - 16, targetBush.getY() + targetBush.getHeight()/2 - 16);
+                        FXGL.spawn("BushMonster", targetBush.getX() + targetBush.getWidth() / 2 - 16,
+                                targetBush.getY() + targetBush.getHeight() / 2 - 16);
                         pushNotification("Cảnh báo: Có quái vật xuất hiện từ bụi cây!");
                         System.out.println("Spawned BushMonster at " + targetBush.getPosition());
                     }
@@ -902,7 +939,7 @@ public class Main extends GameApplication {
                         })
                         .findFirst()
                         .orElse(null);
-                
+
                 if (overheadLayerEntity != null && overheadLayerEntity.getViewComponent() != null) {
                     overheadLayerEntity.getViewComponent().setZIndex(15);
                     System.out.println("Set OverheadLayer Z-index to 15!");
@@ -957,7 +994,8 @@ public class Main extends GameApplication {
             @Override
             protected void onActionBegin() {
                 isDraggingCamera = false;
-                FXGL.getGameScene().getViewport().bindToEntity(player, FXGL.getAppWidth() / 2.0, FXGL.getAppHeight() / 2.0);
+                FXGL.getGameScene().getViewport().bindToEntity(player, FXGL.getAppWidth() / 2.0,
+                        FXGL.getAppHeight() / 2.0);
             }
 
             @Override
@@ -976,7 +1014,8 @@ public class Main extends GameApplication {
             @Override
             protected void onActionBegin() {
                 isDraggingCamera = false;
-                FXGL.getGameScene().getViewport().bindToEntity(player, FXGL.getAppWidth() / 2.0, FXGL.getAppHeight() / 2.0);
+                FXGL.getGameScene().getViewport().bindToEntity(player, FXGL.getAppWidth() / 2.0,
+                        FXGL.getAppHeight() / 2.0);
             }
 
             @Override
@@ -995,7 +1034,8 @@ public class Main extends GameApplication {
             @Override
             protected void onActionBegin() {
                 isDraggingCamera = false;
-                FXGL.getGameScene().getViewport().bindToEntity(player, FXGL.getAppWidth() / 2.0, FXGL.getAppHeight() / 2.0);
+                FXGL.getGameScene().getViewport().bindToEntity(player, FXGL.getAppWidth() / 2.0,
+                        FXGL.getAppHeight() / 2.0);
             }
 
             @Override
@@ -1014,7 +1054,8 @@ public class Main extends GameApplication {
             @Override
             protected void onActionBegin() {
                 isDraggingCamera = false;
-                FXGL.getGameScene().getViewport().bindToEntity(player, FXGL.getAppWidth() / 2.0, FXGL.getAppHeight() / 2.0);
+                FXGL.getGameScene().getViewport().bindToEntity(player, FXGL.getAppWidth() / 2.0,
+                        FXGL.getAppHeight() / 2.0);
             }
 
             @Override
@@ -1227,10 +1268,14 @@ public class Main extends GameApplication {
                 double targetY = viewport.getY() - dy;
                 double maxX = currentMapWidth - FXGL.getAppWidth();
                 double maxY = currentMapHeight - FXGL.getAppHeight();
-                if (targetX < 0) targetX = 0;
-                if (targetX > maxX) targetX = maxX;
-                if (targetY < 0) targetY = 0;
-                if (targetY > maxY) targetY = maxY;
+                if (targetX < 0)
+                    targetX = 0;
+                if (targetX > maxX)
+                    targetX = maxX;
+                if (targetY < 0)
+                    targetY = 0;
+                if (targetY > maxY)
+                    targetY = maxY;
                 viewport.setX(targetX);
                 viewport.setY(targetY);
                 lastMouseX = e.getScreenX();

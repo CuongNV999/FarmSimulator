@@ -45,6 +45,18 @@ public class CropComponent extends Component {
 
     private void updateView() {
         Texture frame = FXGL.texture(data.getSpriteForStage(stage));
+        
+        // Scale and offset for textures (e.g., Apple tree, Coconut tree, crops)
+        // Center horizontally and align to the bottom of the 32x32 bounding box
+        double w = frame.getImage().getWidth();
+        double h = frame.getImage().getHeight();
+        double scale = data.getScale();
+        
+        frame.setScaleX(scale);
+        frame.setScaleY(scale);
+        frame.setTranslateX((32 - w) / 2.0);
+        frame.setTranslateY(32 - h * (1.0 + scale) / 2.0);
+
         getEntity().getViewComponent().clearChildren();
         getEntity().getViewComponent().addChild(frame);
     }

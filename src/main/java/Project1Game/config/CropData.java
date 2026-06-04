@@ -70,4 +70,11 @@ public enum CropData {
         }
         return WHEAT;
     }
+
+    public double getScale() {
+        if (this == APPLE || this == COCONUT) {
+            return 2.0;
+        }
+        return 1.3;
+    }
 }

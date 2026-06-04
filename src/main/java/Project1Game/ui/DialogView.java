@@ -31,16 +31,16 @@ public class DialogView extends Parent {
         bg.setStrokeWidth(2);
 
         nameText = new Text("NPC");
-        nameText.setFont(Font.font("Arial", 15));
+        nameText.setFont(Font.font(GameFont.GAME_FONT, 15));
         nameText.setFill(Color.GOLD);
 
         contentText = new Text("...");
-        contentText.setFont(Font.font("Arial", 14));
+        contentText.setFont(Font.font(GameFont.GAME_FONT, 14));
         contentText.setFill(Color.WHITE);
         contentText.setWrappingWidth(WIDTH - 24);
 
         Text hint = new Text("[R] Đóng");
-        hint.setFont(Font.font("Arial", 11));
+        hint.setFont(Font.font(GameFont.GAME_FONT, 11));
         hint.setFill(Color.GRAY);
 
         VBox box = new VBox(6, nameText, contentText, hint);

@@ -97,19 +97,19 @@ public class TutorialSystem {
 
         // Header Title
         Text headerText = new Text("HƯỚNG DẪN TÂN THỦ / FARMER'S GUIDE");
-        headerText.setFont(Font.font("Arial", FontWeight.BOLD, 22));
+        headerText.setFont(Font.font(Project1Game.ui.GameFont.GAME_FONT, FontWeight.BOLD, 22));
         headerText.setFill(Color.web("#eccb58"));
         headerText.setStroke(Color.BLACK);
         headerText.setStrokeWidth(0.5);
 
         // Step Title
         stepTitleText = new Text();
-        stepTitleText.setFont(Font.font("Arial", FontWeight.BOLD, 17));
+        stepTitleText.setFont(Font.font(Project1Game.ui.GameFont.GAME_FONT, FontWeight.BOLD, 17));
         stepTitleText.setFill(Color.WHITE);
 
         // Step Description
         descText = new Text();
-        descText.setFont(Font.font("Arial", FontWeight.NORMAL, 14));
+        descText.setFont(Font.font(Project1Game.ui.GameFont.GAME_FONT, FontWeight.NORMAL, 14));
         descText.setFill(Color.LIGHTGRAY);
         descText.setWrappingWidth(500);
 

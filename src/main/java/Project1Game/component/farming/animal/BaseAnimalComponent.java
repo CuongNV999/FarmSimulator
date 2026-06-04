@@ -153,6 +153,10 @@ public class BaseAnimalComponent extends Component implements Interactable {
         wanderDuration = collisionCooldown;
     }
 
+    public double getCollisionCooldown() {
+        return collisionCooldown;
+    }
+
     private void setAnimationChannel(AnimationChannel channel) {
         if (texture != null && texture.getAnimationChannel() != channel) {
             texture.loopAnimationChannel(channel);
@@ -643,7 +647,8 @@ public class BaseAnimalComponent extends Component implements Interactable {
         }
 
         fleeTarget = candidate;
-        fleePathWaypoints = Project1Game.system.AStarPathfinder.findPath(entity.getPosition(), fleeTarget, mapW, mapH);
+        double h = entity.getHeight() > 0 ? entity.getHeight() : 32.0;
+        fleePathWaypoints = Project1Game.system.AStarPathfinder.findPath(entity.getPosition(), fleeTarget, mapW, mapH, h);
         if (fleePathWaypoints.isEmpty()) {
             fleePathWaypoints = new java.util.ArrayList<>();
             fleePathWaypoints.add(fleeTarget);
