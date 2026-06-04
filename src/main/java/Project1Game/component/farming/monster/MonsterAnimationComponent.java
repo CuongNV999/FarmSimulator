@@ -12,6 +12,7 @@ import javafx.util.Duration;
 
 /**
  * Handles running and idling animations for wild monsters.
+ * Fixed to support standard 6-column 4-row grid sprite sheets.
  */
 public class MonsterAnimationComponent extends Component {
     private AnimatedTexture texture;
@@ -73,33 +74,23 @@ public class MonsterAnimationComponent extends Component {
         }
 
         if (walkImg != null && idleImg != null) {
-            int walkFrameW = 32;
-            int walkFrameH = 32;
-            int idleFrameW = 32;
-            int idleFrameH = 32;
+            int frameW = 32;
+            int frameH = 32;
 
-            animWalkDown  = new AnimationChannel(walkImg, 5, walkFrameW, walkFrameH, Duration.seconds(0.8), 0, 4);
-            animWalkUp    = new AnimationChannel(walkImg, 5, walkFrameW, walkFrameH, Duration.seconds(0.8), 5, 9);
-            
-            animIdleDown  = new AnimationChannel(idleImg, 4, idleFrameW, idleFrameH, Duration.seconds(1.0), 0, 3);
-            animIdleUp    = new AnimationChannel(idleImg, 4, idleFrameW, idleFrameH, Duration.seconds(1.0), 4, 7);
+            // SỐ CỘT THỰC TẾ TRÊN 1 HÀNG LÀ 6 (Đã sửa từ 5 và 4 thành 6)
+            int totalColumns = 6;
 
-            // Left triggers true Left channel (Row 3, frames 10-14 for Walk, 8-11 for Idle)
-            // Right triggers true Right channel (Row 4, frames 15-19 for Walk, 12-15 for Idle)
-            if ("Fox".equalsIgnoreCase(monsterType)) {
-                // Fox animations are reversed in the sprite sheet relative to expectations
-                animWalkLeft  = new AnimationChannel(walkImg, 5, walkFrameW, walkFrameH, Duration.seconds(0.8), 15, 19); // Row 4
-                animWalkRight = new AnimationChannel(walkImg, 5, walkFrameW, walkFrameH, Duration.seconds(0.8), 10, 14); // Row 3
-                
-                animIdleLeft  = new AnimationChannel(idleImg, 4, idleFrameW, idleFrameH, Duration.seconds(1.0), 12, 15); // Row 4
-                animIdleRight = new AnimationChannel(idleImg, 4, idleFrameW, idleFrameH, Duration.seconds(1.0), 8, 11); // Row 3
-            } else {
-                animWalkLeft  = new AnimationChannel(walkImg, 5, walkFrameW, walkFrameH, Duration.seconds(0.8), 10, 14); // Row 3
-                animWalkRight = new AnimationChannel(walkImg, 5, walkFrameW, walkFrameH, Duration.seconds(0.8), 15, 19); // Row 4
-                
-                animIdleLeft  = new AnimationChannel(idleImg, 4, idleFrameW, idleFrameH, Duration.seconds(1.0), 8, 11); // Row 3
-                animIdleRight = new AnimationChannel(idleImg, 4, idleFrameW, idleFrameH, Duration.seconds(1.0), 12, 15); // Row 4
-            }
+            // Cấu hình lại chuẩn chỉ số khung hình dựa trên ma trận ảnh Fox thực tế
+            animWalkDown  = new AnimationChannel(walkImg, totalColumns, frameW, frameH, Duration.seconds(0.8), 0, 5);  // Hàng 1
+            animWalkUp    = new AnimationChannel(walkImg, totalColumns, frameW, frameH, Duration.seconds(0.8), 6, 11); // Hàng 2
+            animWalkLeft  = new AnimationChannel(walkImg, totalColumns, frameW, frameH, Duration.seconds(0.8), 12, 17);// Hàng 3
+            animWalkRight = new AnimationChannel(walkImg, totalColumns, frameW, frameH, Duration.seconds(0.8), 18, 23);// Hàng 4
+
+            // Hoạt ảnh Đứng im (Idle): Lấy luôn khung hình đầu tiên của mỗi hướng di chuyển để làm trạng thái đứng im mượt mà
+            animIdleDown  = new AnimationChannel(idleImg, totalColumns, frameW, frameH, Duration.seconds(0.2), 0, 0);
+            animIdleUp    = new AnimationChannel(idleImg, totalColumns, frameW, frameH, Duration.seconds(0.2), 6, 6);
+            animIdleLeft  = new AnimationChannel(idleImg, totalColumns, frameW, frameH, Duration.seconds(0.2), 12, 12);
+            animIdleRight = new AnimationChannel(idleImg, totalColumns, frameW, frameH, Duration.seconds(0.2), 18, 18);
 
             texture = new AnimatedTexture(animIdleDown);
             lastWalkAnim = animWalkDown;
@@ -112,7 +103,6 @@ public class MonsterAnimationComponent extends Component {
     public void onAdded() {
         physics = entity.getComponentOptional(PhysicsComponent.class).orElse(null);
 
-        // Scale wild monsters up to look more appropriate
         if (entity != null) {
             entity.getTransformComponent().setScaleOrigin(new javafx.geometry.Point2D(16.0, 16.0));
             entity.getTransformComponent().setRotationOrigin(new javafx.geometry.Point2D(16.0, 16.0));
@@ -156,13 +146,11 @@ public class MonsterAnimationComponent extends Component {
 
         AnimationChannel targetAnim;
         if (vx == 0 && vy == 0) {
-            // Idle state matching direction
             if (lastWalkAnim == animWalkDown) targetAnim = animIdleDown;
             else if (lastWalkAnim == animWalkUp) targetAnim = animIdleUp;
             else if (lastWalkAnim == animWalkLeft) targetAnim = animIdleLeft;
             else targetAnim = animIdleRight;
         } else {
-            // Run state
             if (Math.abs(vx) > Math.abs(vy)) {
                 if (vx < 0) {
                     targetAnim = animWalkLeft;
