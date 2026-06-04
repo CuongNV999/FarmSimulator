@@ -53,6 +53,24 @@ public class TutorialSystem {
         }
     }
 
+    public void resetTutorial() {
+        try {
+            File file = new File(TUTORIAL_FILE);
+            if (file.exists()) {
+                file.delete();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        if (overlay != null) {
+            try {
+                FXGL.getGameScene().removeUINode(overlay);
+            } catch (Exception ignored) {}
+            overlay = null;
+        }
+        currentStep = 1;
+    }
+
     public void startTutorial() {
         if (overlay != null) return; // Already running
 

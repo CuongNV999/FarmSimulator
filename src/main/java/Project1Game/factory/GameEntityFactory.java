@@ -301,6 +301,8 @@ public class GameEntityFactory implements EntityFactory {
         return FXGL.entityBuilder(data).type(EntityType.GUIDER_IN).build();
     }
 
+    private static int animalSpawnOffset = 0;
+
     private Entity createAnimal(SpawnData data, String animalType, double w, double h) {
         PhysicsComponent physics = new PhysicsComponent();
         physics.setFixtureDef(new FixtureDef().friction(0f).density(0.1f));
@@ -312,7 +314,14 @@ public class GameEntityFactory implements EntityFactory {
             }
         });
 
-        return FXGL.entityBuilder(data)
+        double x = data.getX();
+        if (!data.hasKey("fromSave")) {
+            x += animalSpawnOffset;
+            animalSpawnOffset = (animalSpawnOffset + 32) % 128;
+            data = new SpawnData(x, data.getY()).put("fromSave", false);
+        }
+
+        Entity entity = FXGL.entityBuilder(data)
                 .type(EntityType.ANIMAL)
                 .bbox(new HitBox(BoundingShape.box(w, h)))
                 .zIndex(7)
@@ -320,6 +329,8 @@ public class GameEntityFactory implements EntityFactory {
                 .with(BaseAnimalComponent.create(animalType))
                 .collidable()
                 .build();
+
+        return entity;
     }
 
     @Spawns("Chick")
@@ -400,12 +411,12 @@ public class GameEntityFactory implements EntityFactory {
 
     @Spawns("Boar")
     public Entity spawnBoar(SpawnData data) {
-        return createMonster(data, "Boar", "monster/Boar/Boar_Run_with_shadow.png", "monster/Boar/Boar_Idle_with_shadow.png");
+        return createMonster(data, "Boar", "monster/Boar/Boar_Walk_with_shadow.png", "monster/Boar/Boar_Idle_with_shadow.png");
     }
 
     @Spawns("Fox")
     public Entity spawnFox(SpawnData data) {
-        return createMonster(data, "Fox", "monster/Fox/Fox_Run_with_shadow.png", "monster/Fox/Fox_Idle_with_shadow.png");
+        return createMonster(data, "Fox", "monster/Fox/Fox_walk_with_shadow.png", "monster/Fox/Fox_Idle_with_shadow.png");
     }
 
     @Spawns("Deer")
@@ -435,9 +446,9 @@ public class GameEntityFactory implements EntityFactory {
         SpawnData copy = new SpawnData(data.getX(), data.getY());
         copy.put("tempBushMonster", true);
         if (rand.nextBoolean()) {
-            return createMonster(copy, "Boar", "monster/Boar/Boar_Run_with_shadow.png", "monster/Boar/Boar_Idle_with_shadow.png");
+            return createMonster(copy, "Boar", "monster/Boar/Boar_Walk_with_shadow.png", "monster/Boar/Boar_Idle_with_shadow.png");
         } else {
-            return createMonster(copy, "Fox", "monster/Fox/Fox_Run_with_shadow.png", "monster/Fox/Fox_Idle_with_shadow.png");
+            return createMonster(copy, "Fox", "monster/Fox/Fox_walk_with_shadow.png", "monster/Fox/Fox_Idle_with_shadow.png");
         }
     }
 }

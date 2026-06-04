@@ -15,9 +15,9 @@ public class MinimapView extends Pane {
     private final int MINI_W = 150;
     private final int MINI_H = 150;
 
-    // Kích thước thực tế của Map
-    private final double WORLD_W = 3840;
-    private final double WORLD_H = 2176;
+    // Kích thước thực tế của Map (lấy từ thông số bạn cung cấp)
+    private final double WORLD_W = 3520;
+    private final double WORLD_H = 2048;
 
     private Canvas canvas;
     private GraphicsContext gc;
@@ -26,9 +26,9 @@ public class MinimapView extends Pane {
         // 1. Tạo nền cho Minimap
         Rectangle bg = new Rectangle(MINI_W, MINI_H);
         bg.setFill(Color.rgb(0, 0, 0, 0.5)); // Đen mờ 50%
-        bg.setStroke(Color.WHITE); // Viền trắng
+        bg.setStroke(Color.WHITE);           // Viền trắng
         bg.setStrokeWidth(1.5);
-        bg.setArcWidth(10); // Bo góc
+        bg.setArcWidth(10);                  // Bo góc
         bg.setArcHeight(10);
 
         // 2. Tạo Canvas để vẽ các chấm màu

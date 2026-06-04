@@ -411,6 +411,10 @@ public abstract class BaseMonsterComponent extends Component {
 
         double mapW = 3520;
         double mapH = 2048;
+        if (Project1Game.Main.getInstance() != null) {
+            mapW = Project1Game.Main.getInstance().getCurrentMapWidth();
+            mapH = Project1Game.Main.getInstance().getCurrentMapHeight();
+        }
         if (nextX < 32 || nextX > mapW - 64 || nextY < 32 || nextY > mapH - 64) {
             return true;
         }

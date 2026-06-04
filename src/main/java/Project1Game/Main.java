@@ -192,6 +192,7 @@ public class Main extends GameApplication {
         if (timeSystem != null) {
             timeSystem.advanceToNextDay();
             statusBarsView.setHealth(statusBarsView.getMaxHealth());
+            statusBarsView.setHunger(statusBarsView.getMaxHunger());
             
             // Cache the guider and trader reappearance at 6:00 AM morning
             if (currentMap.equals("Main_house.tmx")) {
@@ -211,7 +212,13 @@ public class Main extends GameApplication {
     // --- Các thực thể chính ---
     private Entity player;
     private Entity selector;
+    private String lastFarmedCell = "";
     private Inventory inventory;
+    private javafx.beans.property.IntegerProperty boundMoneyProperty = null;
+    private javafx.beans.value.ChangeListener<Number> moneyListener = null;
+    private final java.util.Random rng = new java.util.Random();
+    private static boolean shiftHeld = false;
+    private javafx.event.EventHandler<DayNightEvent> dayNightHandler = null;
 
     // --- Các lớp giao diện (UI) ---
     private ToolbarView toolbarView;
@@ -335,6 +342,50 @@ public class Main extends GameApplication {
             }
         });
 
+        // Dynamic collision avoidance (push prevention) for animals and monsters
+        FXGL.getPhysicsWorld().addCollisionHandler(new CreatureAvoidanceHandler(EntityType.ANIMAL, EntityType.ANIMAL));
+        FXGL.getPhysicsWorld().addCollisionHandler(new CreatureAvoidanceHandler(EntityType.ANIMAL, EntityType.MONSTER));
+        FXGL.getPhysicsWorld().addCollisionHandler(new CreatureAvoidanceHandler(EntityType.MONSTER, EntityType.MONSTER));
+    }
+
+    private static class CreatureAvoidanceHandler extends CollisionHandler {
+        public CreatureAvoidanceHandler(EntityType a, EntityType b) {
+            super(a, b);
+        }
+
+        @Override
+        protected void onCollision(Entity entityA, Entity entityB) {
+            PhysicsComponent physA = entityA.getComponentOptional(PhysicsComponent.class).orElse(null);
+            PhysicsComponent physB = entityB.getComponentOptional(PhysicsComponent.class).orElse(null);
+            if (physA == null || physB == null) return;
+
+            Point2D velA = new Point2D(physA.getVelocityX(), physA.getVelocityY());
+            Point2D velB = new Point2D(physB.getVelocityX(), physB.getVelocityY());
+
+            double speedA = velA.magnitude();
+            double speedB = velB.magnitude();
+
+            boolean isIdleA = speedA < 5.0;
+            boolean isIdleB = speedB < 5.0;
+
+            if (isIdleA && !isIdleB) {
+                Point2D pushDir = entityA.getPosition().subtract(entityB.getPosition());
+                if (pushDir.magnitude() < 0.1) {
+                    pushDir = new Point2D(Math.random() - 0.5, Math.random() - 0.5);
+                }
+                pushDir = pushDir.normalize();
+                physA.setVelocityX(pushDir.getX() * 40.0);
+                physA.setVelocityY(pushDir.getY() * 40.0);
+            } else if (isIdleB && !isIdleA) {
+                Point2D pushDir = entityB.getPosition().subtract(entityA.getPosition());
+                if (pushDir.magnitude() < 0.1) {
+                    pushDir = new Point2D(Math.random() - 0.5, Math.random() - 0.5);
+                }
+                pushDir = pushDir.normalize();
+                physB.setVelocityX(pushDir.getX() * 40.0);
+                physB.setVelocityY(pushDir.getY() * 40.0);
+            }
+        }
     }
 
     @Override
@@ -357,10 +408,14 @@ public class Main extends GameApplication {
         farmingSystem = new FarmingSystem(inventory);
 
         // 2. Khởi tạo Quest
+        QuestManager.getInstance().reset();
         QuestManager.getInstance().init();
 
         // Listen to DayNightEvent.SET_DAY to grow animals in inactive maps
-        FXGL.getEventBus().addEventHandler(DayNightEvent.SET_DAY, e -> {
+        if (dayNightHandler != null) {
+            FXGL.getEventBus().removeEventHandler(DayNightEvent.SET_DAY, dayNightHandler);
+        }
+        dayNightHandler = e -> {
             for (SaveData state : mapStates.values()) {
                 if (state.animals != null) {
                     for (SaveData.AnimalSaveData asd : state.animals) {
@@ -392,7 +447,8 @@ public class Main extends GameApplication {
                     }
                 }
             }
-        });
+        };
+        FXGL.getEventBus().addEventHandler(DayNightEvent.SET_DAY, dayNightHandler);
 
         // 3. Nạp Map và Factory
         FXGL.getGameWorld().addEntityFactory(new GameEntityFactory());
@@ -604,6 +660,7 @@ public class Main extends GameApplication {
         FXGL.getGameScene().getViewport().setLazy(true);
 
         // Tạo biên bản đồ (Wall) bao quanh map để chặn người chơi đi ra ngoài
+        FXGL.getGameWorld().getEntitiesByType(EntityType.WALL).forEach(Entity::removeFromWorld);
         spawnBoundaries((int) mapW, (int) mapH);
 
         // 5. TẢI TRẠNG THÁI BẢN ĐỒ MỚI (nếu có)
@@ -719,6 +776,7 @@ public class Main extends GameApplication {
                         if (ai != null && !ai.isGoingHome() && !ai.isHidden()) {
                             FXGL.getGameWorld().getEntitiesByType(EntityType.GUIDER_IN).stream().findFirst()
                                     .ifPresent(target -> {
+                                        nearbyNPC = null;
                                         ai.goHome(target);
                                     });
                         }
@@ -729,6 +787,10 @@ public class Main extends GameApplication {
                         if (ai != null && !ai.isGoingHome() && !ai.isHidden()) {
                             FXGL.getGameWorld().getEntitiesByType(EntityType.TRADER_IN).stream().findFirst()
                                     .ifPresent(target -> {
+                                        if (tradingView != null && tradingView.isOpen()) {
+                                            tradingView.toggle();
+                                        }
+                                        nearbyNPC = null;
                                         ai.goHome(target);
                                     });
                         }
@@ -780,9 +842,8 @@ public class Main extends GameApplication {
                 bushMonsterSpawnTimer = 0.0;
                 java.util.List<Entity> bushes = FXGL.getGameWorld().getEntitiesByType(EntityType.BUSH);
                 if (!bushes.isEmpty()) {
-                    java.util.Random rand = new java.util.Random();
-                    if (rand.nextDouble() < 0.15) {
-                        Entity targetBush = bushes.get(rand.nextInt(bushes.size()));
+                    if (rng.nextDouble() < 0.15) {
+                        Entity targetBush = bushes.get(rng.nextInt(bushes.size()));
                         FXGL.spawn("BushMonster", targetBush.getX() + targetBush.getWidth()/2 - 16, targetBush.getY() + targetBush.getHeight()/2 - 16);
                         pushNotification("Cảnh báo: Có quái vật xuất hiện từ bụi cây!");
                         System.out.println("Spawned BushMonster at " + targetBush.getPosition());
@@ -865,6 +926,17 @@ public class Main extends GameApplication {
     @Override
     protected void initInput() {
         Input input = FXGL.getInput();
+
+        input.addEventFilter(javafx.scene.input.KeyEvent.KEY_PRESSED, e -> {
+            if (e.getCode() == KeyCode.SHIFT) {
+                shiftHeld = true;
+            }
+        });
+        input.addEventFilter(javafx.scene.input.KeyEvent.KEY_RELEASED, e -> {
+            if (e.getCode() == KeyCode.SHIFT) {
+                shiftHeld = false;
+            }
+        });
 
         // 1. DI CHUYỂN
         input.addAction(new UserAction("Move Right") {
@@ -949,7 +1021,7 @@ public class Main extends GameApplication {
             protected void onActionBegin() {
                 Entity target = null;
                 if (player != null) {
-                    double radius = 80.0;
+                    double radius = 150.0;
                     javafx.geometry.Point2D playerCenter = player.getCenter();
                     javafx.geometry.Rectangle2D range = new javafx.geometry.Rectangle2D(
                             playerCenter.getX() - radius, playerCenter.getY() - radius,
@@ -979,7 +1051,33 @@ public class Main extends GameApplication {
         input.addAction(new UserAction("Use Tool Mouse") {
             @Override
             protected void onActionBegin() {
+                if (selector != null) {
+                    int gridX = (int) Math.round(selector.getX() / 32.0);
+                    int gridY = (int) Math.round(selector.getY() / 32.0);
+                    lastFarmedCell = gridX + "," + gridY;
+                }
                 handleUseItem();
+            }
+
+            @Override
+            protected void onAction() {
+                ItemType selected = inventory.getSelectedItem();
+                if (selected == ItemType.HOE || selected == ItemType.WATERING_CAN) {
+                    if (selector != null && selector.getViewComponent().getOpacity() >= 1.0) {
+                        int gridX = (int) Math.round(selector.getX() / 32.0);
+                        int gridY = (int) Math.round(selector.getY() / 32.0);
+                        String currentCell = gridX + "," + gridY;
+                        if (!currentCell.equals(lastFarmedCell)) {
+                            lastFarmedCell = currentCell;
+                            handleUseItem();
+                        }
+                    }
+                }
+            }
+
+            @Override
+            protected void onActionEnd() {
+                lastFarmedCell = "";
             }
         }, MouseButton.PRIMARY);
 
@@ -1146,6 +1244,14 @@ public class Main extends GameApplication {
         return currentMap;
     }
 
+    public double getCurrentMapWidth() {
+        return currentMapWidth;
+    }
+
+    public double getCurrentMapHeight() {
+        return currentMapHeight;
+    }
+
     public void setShouldLoadSaveOnStart(boolean value) {
         this.shouldLoadSaveOnStart = value;
     }
@@ -1174,9 +1280,14 @@ public class Main extends GameApplication {
         if (player == null || !player.isActive() || !player.hasComponent(PlayerComponent.class) || moneyText == null)
             return;
         PlayerComponent playerComponent = player.getComponent(PlayerComponent.class);
-        playerComponent.moneyProperty().addListener((obs, old, newV) -> {
+        if (boundMoneyProperty != null && moneyListener != null) {
+            boundMoneyProperty.removeListener(moneyListener);
+        }
+        boundMoneyProperty = playerComponent.moneyProperty();
+        moneyListener = (obs, old, newV) -> {
             moneyText.setText("Tiền: " + newV + " G");
-        });
+        };
+        boundMoneyProperty.addListener(moneyListener);
         moneyText.setText("Tiền: " + playerComponent.getMoney() + " G");
     }
 
@@ -1229,6 +1340,7 @@ public class Main extends GameApplication {
         FXGL.getGameScene().getViewport().bindToEntity(player, FXGL.getAppWidth() / 2.0, FXGL.getAppHeight() / 2.0);
         FXGL.getGameScene().getViewport().setLazy(true);
 
+        FXGL.getGameWorld().getEntitiesByType(EntityType.WALL).forEach(Entity::removeFromWorld);
         spawnBoundaries((int) mapW, (int) mapH);
     }
 
@@ -1286,27 +1398,30 @@ public class Main extends GameApplication {
             return;
         }
 
-        java.util.List<Entity> bushes = FXGL.getGameWorld().getEntitiesByType(EntityType.BUSH);
-        if (bushes.isEmpty()) {
-            pushNotification("Không tìm thấy bụi cây nào trên map để spawn!");
-            return;
+        double spawnX = 64;
+        double spawnY = 64;
+        int corner = rng.nextInt(4);
+        if (corner == 0) { // Top-Left
+            spawnX = 64;
+            spawnY = 64;
+        } else if (corner == 1) { // Top-Right
+            spawnX = currentMapWidth - 96;
+            spawnY = 64;
+        } else if (corner == 2) { // Bottom-Left
+            spawnX = 64;
+            spawnY = currentMapHeight - 96;
+        } else { // Bottom-Right
+            spawnX = currentMapWidth - 96;
+            spawnY = currentMapHeight - 96;
         }
 
-        java.util.Random rand = new java.util.Random();
-        Entity targetBush = bushes.get(rand.nextInt(bushes.size()));
-        FXGL.spawn("BushMonster", targetBush.getX() + targetBush.getWidth()/2 - 16, targetBush.getY() + targetBush.getHeight()/2 - 16);
-        pushNotification("Admin: Đã spawn một quái vật từ bụi cây!");
-        System.out.println("Admin spawned BushMonster at " + targetBush.getPosition());
+        FXGL.spawn("BushMonster", spawnX, spawnY);
+        pushNotification("Admin: Đã spawn một quái vật tại góc bản đồ!");
+        System.out.println("Admin spawned BushMonster at corner (" + spawnX + ", " + spawnY + ")");
     }
 
     public static boolean isShiftHeld() {
-        try {
-            Input input = FXGL.getInput();
-            java.lang.reflect.Method method = input.getClass().getMethod("isHeldKey", KeyCode.class);
-            return (boolean) method.invoke(input, KeyCode.SHIFT);
-        } catch (Exception e) {
-            return false;
-        }
+        return shiftHeld;
     }
 
     public static boolean isDayTime() {
