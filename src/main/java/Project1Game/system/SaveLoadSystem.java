@@ -102,13 +102,20 @@ public class SaveLoadSystem {
 
         // Lưu Đất (Soil)
         data.soils.clear(); // Xóa dữ liệu cũ trước khi lưu mới
+        java.util.Set<String> savedCoords = new java.util.HashSet<>();
         FXGL.getGameWorld().getEntitiesByType(EntityType.SOIL).forEach(s -> {
-            SaveData.SoilData sd = new SaveData.SoilData();
-            sd.x = s.getX();
-            sd.y = s.getY();
-            sd.isWet = s.getComponent(SoilComponent.class).isWet();
-            sd.hasPlant = s.getComponent(SoilComponent.class).isHasPlant();
-            data.soils.add(sd);
+            int gridX = (int) Math.round(s.getX() / 32.0);
+            int gridY = (int) Math.round(s.getY() / 32.0);
+            String coordKey = gridX + "," + gridY;
+            if (!savedCoords.contains(coordKey)) {
+                savedCoords.add(coordKey);
+                SaveData.SoilData sd = new SaveData.SoilData();
+                sd.x = gridX * 32.0;
+                sd.y = gridY * 32.0;
+                sd.isWet = s.getComponent(SoilComponent.class).isWet();
+                sd.hasPlant = s.getComponent(SoilComponent.class).isHasPlant();
+                data.soils.add(sd);
+            }
         });
 
         // Lưu Cây trồng (Crops)
@@ -248,10 +255,17 @@ public class SaveLoadSystem {
         }).forEach(Entity::removeFromWorld);
 
         // Tái tạo ô đất
+        java.util.Set<String> loadedCoords = new java.util.HashSet<>();
         for (SaveData.SoilData sd : data.soils) {
-            Entity s = FXGL.getGameWorld().spawn("Soil", sd.x, sd.y);
-            s.getComponent(SoilComponent.class).setWet(sd.isWet);
-            s.getComponent(SoilComponent.class).setHasPlant(sd.hasPlant);
+            int gridX = (int) Math.round(sd.x / 32.0);
+            int gridY = (int) Math.round(sd.y / 32.0);
+            String coordKey = gridX + "," + gridY;
+            if (!loadedCoords.contains(coordKey)) {
+                loadedCoords.add(coordKey);
+                Entity s = FXGL.getGameWorld().spawn("Soil", gridX * 32.0, gridY * 32.0);
+                s.getComponent(SoilComponent.class).setWet(sd.isWet);
+                s.getComponent(SoilComponent.class).setHasPlant(sd.hasPlant);
+            }
         }
 
         // Tái tạo cây trồng

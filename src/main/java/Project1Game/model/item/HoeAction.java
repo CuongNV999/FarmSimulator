@@ -19,8 +19,9 @@ public class HoeAction implements Usable {
                         && f.getY() <= selY && selY < f.getY() + f.getHeight());
 
         if (inField) {
-            boolean hasSoil = FXGL.getGameWorld().getEntitiesAt(new Point2D(selX + 16, selY + 16)).stream()
-                    .anyMatch(e -> e.isType(EntityType.SOIL));
+            boolean hasSoil = FXGL.getGameWorld().getEntitiesByType(EntityType.SOIL).stream()
+                    .anyMatch(s -> Math.round(s.getX() / 32.0) == Math.round(selX / 32.0)
+                            && Math.round(s.getY() / 32.0) == Math.round(selY / 32.0));
 
             if (!hasSoil) {
                 FXGL.spawn("Soil", selX, selY);

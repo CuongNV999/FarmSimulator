@@ -188,8 +188,8 @@ public class AdminView extends VBox {
         HBox timeSpeedButtons = new HBox(6);
         timeSpeedButtons.setAlignment(Pos.CENTER_LEFT);
 
-        double[] presets = {1.0, 10.0, 50.0, 100.0};
-        String[] presetLabels = {"1x", "10x", "50x", "100x"};
+        double[] presets = {1.0, 10.0, 20.0};
+        String[] presetLabels = {"1x", "10x", "20x"};
 
         for (int i = 0; i < presets.length; i++) {
             final double val = presets[i];
