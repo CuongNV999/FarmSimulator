@@ -90,7 +90,7 @@ public class TradingView extends VBox {
     );
 
     private final List<ItemType> sellableAnimals = Arrays.asList(
-            ItemType.ROOSTER, ItemType.BULL, ItemType.SHEEP, ItemType.PIG, ItemType.TURKEY
+            ItemType.ROOSTER, ItemType.SHEEP, ItemType.PIG, ItemType.TURKEY
     );
 
     // Inner class representing items in cart

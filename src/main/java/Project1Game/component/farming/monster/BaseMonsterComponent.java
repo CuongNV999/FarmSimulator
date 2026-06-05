@@ -521,6 +521,22 @@ public abstract class BaseMonsterComponent extends Component {
         return isReturning;
     }
 
+    public boolean isTemporary() {
+        return isTemporary;
+    }
+
+    public double getLifeTimer() {
+        return lifeTimer;
+    }
+
+    public void setReturning(boolean returning) {
+        this.isReturning = returning;
+    }
+
+    public double getSpawnProtectionTimer() {
+        return spawnProtectionTimer;
+    }
+
     public boolean isAlerted() {
         return isAlerted;
     }

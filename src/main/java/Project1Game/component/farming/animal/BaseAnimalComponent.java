@@ -552,7 +552,7 @@ public class BaseAnimalComponent extends Component implements Interactable {
 
     @Override
     public void interact(Entity player, Entity target) {
-        if (Project1Game.Main.isShiftHeld()) {
+        if (Project1Game.Main.isShiftHeld() && adultItem != ItemType.BULL) {
             if (isReadyToHarvest()) {
                 Project1Game.model.Inventory inventory = Main.getInstance().getInventory();
                 if (inventory != null) {

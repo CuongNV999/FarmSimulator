@@ -1161,14 +1161,33 @@ public class Main extends GameApplication {
 
                     if (closestAnimal != null && closestDist <= interactionRange) {
                         BaseAnimalComponent bac = closestAnimal.getComponentOptional(BaseAnimalComponent.class).orElse(null);
-                        if (bac != null && bac.isReadyToHarvest()) {
-                            Project1Game.model.Inventory inv = getInventory();
-                            if (inv != null) {
-                                inv.addItem(bac.getAdultItem(), 1);
-                                Project1Game.Main.pushNotification("Đã thu hoạch một " + bac.getAdultName() + "!");
-                                closestAnimal.removeFromWorld();
+                        if (bac != null) {
+                            if (bac.getAdultItem() == ItemType.BULL) {
+                                // Toggle follow state for Bull/Calf
+                                bac.setFollowing(!bac.isFollowing());
+                                if (!bac.isFollowing()) {
+                                    if (bac.getEntity().hasComponent(PhysicsComponent.class)) {
+                                        PhysicsComponent p = bac.getEntity().getComponent(PhysicsComponent.class);
+                                        p.setVelocityX(0);
+                                        p.setVelocityY(0);
+                                    }
+                                }
+                                String name = bac.isReadyToHarvest() ? bac.getAdultName() : bac.getBabyName();
+                                if (bac.isFollowing()) {
+                                    Project1Game.Main.pushNotification(name + " đang đi theo bạn!");
+                                } else {
+                                    Project1Game.Main.pushNotification(name + " đã dừng lại.");
+                                }
+                                return;
+                            } else if (bac.isReadyToHarvest()) {
+                                Project1Game.model.Inventory inv = getInventory();
+                                if (inv != null) {
+                                    inv.addItem(bac.getAdultItem(), 1);
+                                    Project1Game.Main.pushNotification("Đã thu hoạch một " + bac.getAdultName() + "!");
+                                    closestAnimal.removeFromWorld();
+                                }
+                                return;
                             }
-                            return;
                         }
                     }
                 }
