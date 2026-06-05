@@ -26,8 +26,6 @@ public abstract class BaseMonsterComponent extends Component {
         CARNIVORE, HERBIVORE
     }
 
-
-
     protected double fleeRadius;
     protected final MonsterClassification classification;
 
@@ -208,7 +206,8 @@ public abstract class BaseMonsterComponent extends Component {
 
         followPath(tpf, baseSpeed);
 
-        if (entity.distance(targetEntity) < 8.0) {
+        // Sử dụng center distance ổn định hơn để quay về bụi cây
+        if (entity.getCenter().distance(targetEntity.getCenter()) < 16.0) {
             if (spawnProtectionTimer <= 0) {
                 System.out.println("[BaseMonsterComponent] Removed monster " + getClass().getSimpleName() + " at " + entity.getPosition() 
                         + ": returned to bush " + targetEntity.getPosition() + " | spawnProtectionTimer=" + spawnProtectionTimer);
@@ -262,6 +261,14 @@ public abstract class BaseMonsterComponent extends Component {
     }
 
     private void handleNormalSeekingState(double tpf) {
+        // Bỏ qua mục tiêu là động vật đang đi theo người chơi
+        if (targetEntity != null && targetEntity.getType() == EntityType.ANIMAL) {
+            BaseAnimalComponent bac = targetEntity.getComponentOptional(BaseAnimalComponent.class).orElse(null);
+            if (bac != null && bac.isFollowing()) {
+                targetEntity = null;
+            }
+        }
+
         targetScanTimer += tpf;
         if (targetScanTimer >= 0.5) {
             targetScanTimer = 0.0;
@@ -277,7 +284,8 @@ public abstract class BaseMonsterComponent extends Component {
             recalculatePath();
         }
 
-        boolean canSeekDirectly = targetEntity != null && entity.distance(targetEntity) < 48.0;
+        // Sử dụng khoảng cách tâm để tối ưu hóa va chạm / di chuyển tầm gần
+        boolean canSeekDirectly = targetEntity != null && entity.getCenter().distance(targetEntity.getCenter()) < 90.0;
         if (targetEntity != null && (!pathWaypoints.isEmpty() || canSeekDirectly)) {
             pathTimer += tpf;
             if (pathTimer >= 1.0) {
@@ -374,19 +382,26 @@ public abstract class BaseMonsterComponent extends Component {
             return;
         }
 
-        double dist = entity.distance(targetEntity);
-        if (dist < 48.0) {
+        double centerDist = entity.getCenter().distance(targetEntity.getCenter());
+        
+        // Tính toán khoảng cách tấn công động dựa trên kích thước của quái vật và con mồi
+        double entityWidthSum = (entity.getWidth() * Math.abs(entity.getScaleX()) + targetEntity.getWidth() * Math.abs(targetEntity.getScaleX()));
+        double attackRange = Math.max(80.0, entityWidthSum / 2.0 + 16.0);
+        
+        if (centerDist <= attackRange) {
             BaseAnimalComponent bac = targetEntity.getComponentOptional(BaseAnimalComponent.class).orElse(null);
-            if (classification == MonsterClassification.CARNIVORE && targetEntity.isType(EntityType.ANIMAL) && (bac == null || !bac.isFollowing())) {
-                System.out.println("[BaseMonsterComponent] CARNIVORE " + getClass().getSimpleName() + " ate animal " + targetEntity + " at " + targetEntity.getPosition());
-                targetEntity.removeFromWorld();
-                Project1Game.Main.pushNotification("Quái vật đã ăn thịt động vật của bạn!");
-                targetEntity = null;
-                damageCooldown = 2.0;
-            } else if (classification == MonsterClassification.HERBIVORE && targetEntity.getType() instanceof EntityType && isCrop((EntityType) targetEntity.getType())) {
+            if (classification == MonsterClassification.CARNIVORE && targetEntity.getType() == EntityType.ANIMAL) {
+                if (bac == null || !bac.isFollowing()) {
+                    System.out.println("[BaseMonsterComponent] CARNIVORE " + getClass().getSimpleName() + " ate animal " + targetEntity + " at " + targetEntity.getPosition());
+                    targetEntity.removeFromWorld();
+                    Project1Game.Main.pushNotification("Cảnh báo: Quái vật đã ăn thịt động vật của bạn!");
+                    targetEntity = null;
+                    damageCooldown = 2.0;
+                }
+            } else if (classification == MonsterClassification.HERBIVORE && Project1Game.core.CropRegistry.getInstance().isCrop((EntityType) targetEntity.getType())) {
                 System.out.println("[BaseMonsterComponent] HERBIVORE " + getClass().getSimpleName() + " destroyed crop " + targetEntity.getType() + " at " + targetEntity.getPosition());
                 targetEntity.removeFromWorld();
-                Project1Game.Main.pushNotification("Quái vật đã phá hoại mùa màng của bạn!");
+                Project1Game.Main.pushNotification("Cảnh báo: Quái vật đã phá hoại mùa màng của bạn!");
                 targetEntity = null;
                 damageCooldown = 2.0;
             }
@@ -416,7 +431,7 @@ public abstract class BaseMonsterComponent extends Component {
                 if (bac != null && bac.isFollowing()) {
                     continue;
                 }
-                double dist = entity.distance(animal);
+                double dist = entity.getCenter().distance(animal.getCenter());
                 if (dist < minDist) {
                     minDist = dist;
                     closest = animal;
@@ -427,7 +442,7 @@ public abstract class BaseMonsterComponent extends Component {
             for (EntityType cropType : Project1Game.core.CropRegistry.getInstance().getSupportedCrops()) {
                 List<Entity> crops = FXGL.getGameWorld().getEntitiesByType(cropType);
                 for (Entity crop : crops) {
-                    double dist = entity.distance(crop);
+                    double dist = entity.getCenter().distance(crop.getCenter());
                     if (dist < minDist) {
                         minDist = dist;
                         closest = crop;
