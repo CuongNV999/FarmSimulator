@@ -1,6 +1,7 @@
 package Project1Game.ui;
 
 import Project1Game.component.player.PlayerComponent;
+import Project1Game.system.NotificationManager;
 import Project1Game.component.npc.TraderComponent;
 import Project1Game.core.ItemType;
 import Project1Game.model.Inventory;
@@ -39,6 +40,7 @@ public class TradingView extends VBox {
     private boolean visible = false;
 
     private TraderComponent currentTrader;
+    private final TradingPresenter presenter;
     private final VBox buySectionContainer = new VBox();
     private final VBox sellSectionContainer = new VBox();
     private final VBox cartSectionContainer = new VBox();
@@ -109,6 +111,7 @@ public class TradingView extends VBox {
     public TradingView(Inventory inventory, PlayerComponent playerComponent) {
         this.inventory = inventory;
         this.playerComponent = playerComponent;
+        this.presenter = new TradingPresenter(this, inventory, playerComponent);
 
         // Khởi tạo danh sách cây từ CropRegistry để tránh vi phạm Open/Closed Principle
         for (Project1Game.core.EntityType cropType : Project1Game.core.CropRegistry.getInstance().getSupportedCrops()) {
@@ -270,27 +273,26 @@ public class TradingView extends VBox {
      */
     private void handleNegotiation() {
         if (currentTrader == null) {
-            Project1Game.Main.pushNotification("Không có Trader nào để thương lượng!");
-            return;
-        }
-
-        if (currentTrader.hasNegotiatedThisSession()) {
-            Project1Game.Main.pushNotification("Bạn đã thương lượng rồi! Mỗi lần vào shop chỉ được thương lượng 1 lần.");
+            NotificationManager.pushNotification("Không có Trader nào để thương lượng!");
             return;
         }
 
         int requestedPercent = (int) negotiationSlider.getValue();
-        boolean success = currentTrader.tryNegotiateWithSlider(requestedPercent);
+        presenter.negotiate(currentTrader, requestedPercent);
+    }
+
+    public void displayNegotiationResult(boolean success, int requestedPercent) {
+        if (currentTrader == null) return;
 
         if (success) {
             negotiationResultText.setText("✓ Thành công! Giảm " + requestedPercent + "%");
             negotiationResultText.setFill(Color.LIMEGREEN);
-            Project1Game.Main.pushNotification("Thương lượng thành công! Giảm " + requestedPercent + "% giá!");
+            NotificationManager.pushNotification("Thương lượng thành công! Giảm " + requestedPercent + "% giá!");
         } else {
             int penalty = currentTrader.getNegotiationBonusPercent();
             negotiationResultText.setText("✗ Thất bại! Phạt " + Math.abs(penalty) + "%");
             negotiationResultText.setFill(Color.TOMATO);
-            Project1Game.Main.pushNotification("Thương lượng thất bại! Bị phạt " + Math.abs(penalty) + "% giá!");
+            NotificationManager.pushNotification("Thương lượng thất bại! Bị phạt " + Math.abs(penalty) + "% giá!");
         }
 
         // Cập nhật lịch sử thương lượng
@@ -587,7 +589,7 @@ public class TradingView extends VBox {
 
     private void addToCart(ItemType itemType, boolean isBuying) {
         if (currentTrader != null && currentTrader.willRefuseTrade()) {
-            Project1Game.Main.pushNotification("Trader đang bực bội và từ chối giao dịch!");
+            NotificationManager.pushNotification("Trader đang bực bội và từ chối giao dịch!");
             return;
         }
 
@@ -597,7 +599,7 @@ public class TradingView extends VBox {
                 if (!isBuying) {
                     int inventoryCount = inventory.getCount(itemType);
                     if (ci.quantity >= inventoryCount) {
-                        Project1Game.Main.pushNotification("Không thể bán nhiều hơn số lượng trong kho đồ!");
+                        NotificationManager.pushNotification("Không thể bán nhiều hơn số lượng trong kho đồ!");
                         return;
                     }
                 }
@@ -611,7 +613,7 @@ public class TradingView extends VBox {
         if (!isBuying) {
             int inventoryCount = inventory.getCount(itemType);
             if (inventoryCount <= 0) {
-                Project1Game.Main.pushNotification("Không có " + itemType.getDisplayName() + " để bán!");
+                NotificationManager.pushNotification("Không có " + itemType.getDisplayName() + " để bán!");
                 return;
             }
         }
@@ -784,7 +786,7 @@ public class TradingView extends VBox {
             if (!cartItem.isBuying) {
                 int inventoryCount = inventory.getCount(cartItem.itemType);
                 if (cartItem.quantity >= inventoryCount) {
-                    Project1Game.Main.pushNotification("Không thể bán nhiều hơn số lượng trong kho đồ!");
+                    NotificationManager.pushNotification("Không thể bán nhiều hơn số lượng trong kho đồ!");
                     return;
                 }
             }
@@ -840,119 +842,14 @@ public class TradingView extends VBox {
     }
 
     private void handleCheckout(int netCost) {
-        if (cartItems.isEmpty()) {
-            Project1Game.Main.pushNotification("Giỏ hàng của bạn đang trống!");
-            return;
-        }
+        presenter.checkout(currentTrader, cartItems, netCost);
+    }
 
-        if (currentTrader != null && currentTrader.willRefuseTrade()) {
-            Project1Game.Main.pushNotification("Trader đang bực bội và từ chối giao dịch!");
-            return;
-        }
-
-        // 1. Kiểm tra không gian kho đồ thông qua giả lập
-        InventorySlot[] simulatedSlots = new InventorySlot[inventory.getSlots().length];
-        for (int i = 0; i < simulatedSlots.length; i++) {
-            simulatedSlots[i] = inventory.getSlots()[i].copy();
-        }
-
-        // Giả lập xóa hàng bán khỏi kho đồ
-        for (CartItem ci : cartItems) {
-            if (!ci.isBuying) {
-                int remaining = ci.quantity;
-                for (InventorySlot slot : simulatedSlots) {
-                    if (slot.getItemType() == ci.itemType) {
-                        int count = slot.getCount();
-                        if (count >= remaining) {
-                            slot.remove(remaining);
-                            remaining = 0;
-                            break;
-                        } else {
-                            slot.clear();
-                            remaining -= count;
-                        }
-                    }
-                }
-                if (remaining > 0) {
-                    Project1Game.Main.pushNotification("Không đủ " + ci.itemType.getDisplayName() + " trong kho đồ!");
-                    return;
-                }
-            }
-        }
-
-        // Giả lập thêm hàng mua vào kho đồ
-        for (CartItem ci : cartItems) {
-            if (ci.isBuying) {
-                int remaining = ci.quantity;
-                // Thử gộp vào slot đã chứa loại hạt giống đó
-                for (InventorySlot slot : simulatedSlots) {
-                    if (slot.getItemType() == ci.itemType) {
-                        slot.add(ci.itemType, remaining);
-                        remaining = 0;
-                        break;
-                    }
-                }
-                // Nếu chưa gộp hết, thử thêm vào các slot trống
-                if (remaining > 0) {
-                    for (InventorySlot slot : simulatedSlots) {
-                        if (slot.isEmpty()) {
-                            slot.add(ci.itemType, remaining);
-                            remaining = 0;
-                            break;
-                        }
-                    }
-                }
-                if (remaining > 0) {
-                    Project1Game.Main.pushNotification("Kho đồ không đủ chỗ trống để chứa " + ci.itemType.getDisplayName() + "!");
-                    return;
-                }
-            }
-        }
-
-        // 2. Kiểm tra tiền người chơi
-        if (netCost > 0) {
-            if (playerComponent.getMoney() < netCost) {
-                Project1Game.Main.pushNotification("Bạn không đủ tiền để thực hiện giao dịch!");
-                if (currentTrader != null) {
-                    currentTrader.updateRelationship(false, true);
-                    relationshipText.setText("Mức quan hệ với Trader: " + currentTrader.getRelationship().name());
-                    updateNegotiationPanelState();
-                    refreshTabs();
-                    updateCartUI();
-                }
-                return;
-            }
-        }
-
-        // 3. Thực thi giao dịch thực tế
-        // Xóa hàng bán
-        for (CartItem ci : cartItems) {
-            if (!ci.isBuying) {
-                inventory.removeItem(ci.itemType, ci.quantity);
-            }
-        }
-
-        // Thêm hàng mua
-        for (CartItem ci : cartItems) {
-            if (ci.isBuying) {
-                inventory.addItem(ci.itemType, ci.quantity);
-            }
-        }
-
-        // Cộng/Trừ tiền
-        if (netCost > 0) {
-            playerComponent.removeMoney(netCost);
-        } else if (netCost < 0) {
-            playerComponent.addMoney(-netCost);
-        }
-
-        // 4. Hoàn tất & cập nhật mối quan hệ
-        Project1Game.Main.pushNotification("Giao dịch thành công!");
-        if (currentTrader != null) {
-            currentTrader.updateRelationship(true, netCost > 0);
-        }
-
+    public void clearCart() {
         cartItems.clear();
+    }
+
+    public void refreshAfterTrade() {
         if (currentTrader != null) {
             relationshipText.setText("Mức quan hệ với Trader: " + currentTrader.getRelationship().name());
         }

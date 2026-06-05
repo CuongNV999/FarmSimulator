@@ -6,7 +6,9 @@ import Project1Game.core.EntityType;
 import Project1Game.interaction.Interactable;
 import Project1Game.interaction.InteractableComponent;
 import Project1Game.system.DayNightEvent;
+import Project1Game.system.SteeringComponent;
 import Project1Game.ui.DialogView;
+import Project1Game.system.NotificationManager;
 import com.almasb.fxgl.dsl.FXGL;
 import com.almasb.fxgl.entity.Entity;
 import com.almasb.fxgl.entity.component.Component;
@@ -18,8 +20,6 @@ import javafx.scene.image.Image;
 import javafx.scene.image.WritableImage;
 import javafx.util.Duration;
 import com.almasb.fxgl.physics.PhysicsComponent;
-import com.almasb.fxgl.physics.BoundingShape;
-import com.almasb.fxgl.physics.HitBox;
 
 import java.util.List;
 import java.util.Random;
@@ -48,14 +48,8 @@ public class BaseAnimalComponent extends Component implements Interactable {
     protected AnimationChannel animWalkDown, animWalkUp, animWalkLeft, animWalkRight;
     protected AnimationChannel animIdleDown, animIdleUp, animIdleLeft, animIdleRight;
 
-    // AI Wandering variables
-    private double wanderTimer = 0;
-    private double wanderDuration = 0;
-    private Point2D moveDir = Point2D.ZERO;
     private final Random random = new Random();
     
-    private double collisionCooldown = 0.0; // Cooldown after collision
-
     private EventHandler<DayNightEvent> dayHandler;
 
     // Fleeing variables
@@ -73,6 +67,8 @@ public class BaseAnimalComponent extends Component implements Interactable {
     private int lastEndGridY = -1;
     
     protected PhysicsComponent physics;
+    protected SteeringComponent steering;
+    protected GrowthComponent growth;
 
     public BaseAnimalComponent(AnimalType type, String animalName, String babyName, String adultName, int maxGrowthDays,
                                String babyTexture, String adultTexture, ItemType adultItem,
@@ -96,15 +92,18 @@ public class BaseAnimalComponent extends Component implements Interactable {
     }
 
     public int getDaysGrown() {
-        return daysGrown;
+        return growth != null ? growth.getDaysGrown() : daysGrown;
     }
 
     public void setDaysGrown(int daysGrown) {
         this.daysGrown = daysGrown;
+        if (growth != null) {
+            growth.setDaysGrown(daysGrown);
+        }
     }
 
     public boolean isReadyToHarvest() {
-        return daysGrown >= maxGrowthDays;
+        return growth != null ? growth.isReadyToHarvest() : daysGrown >= maxGrowthDays;
     }
 
     public ItemType getAdultItem() {
@@ -143,14 +142,8 @@ public class BaseAnimalComponent extends Component implements Interactable {
             return; // Don't interrupt following or fleeing behavior
         }
         
-        // Set collision cooldown to prevent immediate movement
-        collisionCooldown = 0.5; // 0.5 second pause
-        
-        // Stop movement
-        moveDir = Point2D.ZERO;
-        if (physics != null && physics.getBody() != null) {
-            physics.setVelocityX(0);
-            physics.setVelocityY(0);
+        if (steering != null) {
+            steering.forceNewDirection(0.5); // 0.5 second pause
         }
         
         // Set to idle animation (random direction)
@@ -159,14 +152,10 @@ public class BaseAnimalComponent extends Component implements Interactable {
         else if (dir == 1) texture.loopAnimationChannel(animIdleUp);
         else if (dir == 2) texture.loopAnimationChannel(animIdleLeft);
         else texture.loopAnimationChannel(animIdleRight);
-        
-        // Force immediate recalculation of new direction after cooldown
-        wanderTimer = 0;
-        wanderDuration = collisionCooldown;
     }
 
     public double getCollisionCooldown() {
-        return collisionCooldown;
+        return steering != null ? steering.getCollisionCooldown() : 0.0;
     }
 
     private void setAnimationChannel(AnimationChannel channel) {
@@ -223,81 +212,42 @@ public class BaseAnimalComponent extends Component implements Interactable {
             texture.loopAnimationChannel(animIdleDown);
         }
 
-        // Handle visual scaling to distinguish age
-        updateScale(isMature);
-
-        if (entity != null) {
+        // Handle visual scaling and hitboxes via GrowthComponent
+        if (growth != null) {
+            growth.updateHitboxAndScale(entity, type, frameW, frameH);
+        } else {
+            // Fallback scaling to distinguish age before GrowthComponent is added
+            if (type == AnimalType.TURKEY) {
+                entity.setScaleX(2.4);
+                entity.setScaleY(2.4);
+            } else {
+                double scale = isMature ? 2.6 : 1.8;
+                entity.setScaleX(scale);
+                entity.setScaleY(scale);
+            }
             entity.getTransformComponent().setScaleOrigin(new Point2D(frameW / 2.0, frameH / 2.0));
             entity.getTransformComponent().setRotationOrigin(new Point2D(frameW / 2.0, frameH / 2.0));
-        }
-
-        // Configure solid bounding box dynamically
-        if (entity != null && entity.getBoundingBoxComponent() != null) {
-            entity.getBoundingBoxComponent().clearHitBoxes();
-            HitBox hitbox;
-            switch (type) {
-                case COW:
-                    if (isMature) {
-                        // Bò trưởng thành (Bull) - 64x64 frame
-                        hitbox = new HitBox("ANIMAL_BODY", new Point2D(16, 16), BoundingShape.box(32, 32));
-                    } else {
-                        // Con bê (Calf) - 64x64 frame
-                        hitbox = new HitBox("ANIMAL_BODY", new Point2D(22, 22), BoundingShape.box(20, 20));
-                    }
-                    break;
-                case CHICKEN:
-                    if (isMature) {
-                        // Gà trưởng thành (Rooster) - 32x32 frame
-                        hitbox = new HitBox("ANIMAL_BODY", new Point2D(6, 6), BoundingShape.box(20, 20));
-                    } else {
-                        // Gà con (Chick) - 16x16 frame
-                        hitbox = new HitBox("ANIMAL_BODY", new Point2D(2, 2), BoundingShape.box(12, 12));
-                    }
-                    break;
-                case SHEEP:
-                    if (isMature) {
-                        // Cừu trưởng thành - 32x32 frame
-                        hitbox = new HitBox("ANIMAL_BODY", new Point2D(4, 4), BoundingShape.box(24, 24));
-                    } else {
-                        // Cừu non - 32x32 frame
-                        hitbox = new HitBox("ANIMAL_BODY", new Point2D(8, 8), BoundingShape.box(16, 16));
-                    }
-                    break;
-                case PIG:
-                    if (isMature) {
-                        // Heo trưởng thành - 32x32 frame
-                        hitbox = new HitBox("ANIMAL_BODY", new Point2D(4, 4), BoundingShape.box(24, 24));
-                    } else {
-                        // Heo con - 32x32 frame
-                        hitbox = new HitBox("ANIMAL_BODY", new Point2D(8, 8), BoundingShape.box(16, 16));
-                    }
-                    break;
-                case TURKEY:
-                    // Gà tây - 32x32 frame
-                    hitbox = new HitBox("ANIMAL_BODY", new Point2D(6, 6), BoundingShape.box(20, 20));
-                    break;
-                default:
-                    hitbox = new HitBox("ANIMAL_BODY", BoundingShape.box(frameW, frameH));
-                    break;
-            }
-            entity.getBoundingBoxComponent().addHitBox(hitbox);
-        }
-    }
-
-    private void updateScale(boolean isMature) {
-        if (type == AnimalType.TURKEY) {
-            entity.setScaleX(2.4);
-            entity.setScaleY(2.4);
-        } else {
-            double scale = isMature ? 2.6 : 1.8;
-            entity.setScaleX(scale);
-            entity.setScaleY(scale);
         }
     }
 
     @Override
     public void onAdded() {
         physics = entity.getComponent(PhysicsComponent.class);
+        
+        // Setup composition components
+        steering = entity.getComponentOptional(SteeringComponent.class).orElse(null);
+        if (steering == null) {
+            steering = new SteeringComponent();
+            entity.addComponent(steering);
+        }
+        
+        growth = entity.getComponentOptional(GrowthComponent.class).orElse(null);
+        if (growth == null) {
+            growth = new GrowthComponent(maxGrowthDays);
+            growth.setDaysGrown(daysGrown);
+            entity.addComponent(growth);
+        }
+
         initAnimation();
         homePosition = entity.getPosition();
         initialSpawnPos = entity.getPosition();
@@ -318,65 +268,24 @@ public class BaseAnimalComponent extends Component implements Interactable {
     }
 
     private void growOneDay() {
-        if (daysGrown < maxGrowthDays) {
-            daysGrown++;
+        if (growth != null) {
+            growth.growOneDay();
+            daysGrown = growth.getDaysGrown();
             System.out.println(animalName + " grew: " + daysGrown + "/" + maxGrowthDays);
-            if (daysGrown == maxGrowthDays) {
+            if (growth.isReadyToHarvest()) {
                 initAnimation();
                 System.out.println(animalName + " has matured into adult " + adultName + "!");
             }
         }
     }
 
-    private boolean isMovementBlocked(Point2D velocity) {
-        if (velocity.getX() == 0 && velocity.getY() == 0) {
-            return false;
-        }
-
-        double nextX = entity.getX() + velocity.getX() * FXGL.tpf();
-        double nextY = entity.getY() + velocity.getY() * FXGL.tpf();
-
-        double mapW = 3520;
-        double mapH = 2048;
-        if (Project1Game.Main.getInstance() != null) {
-            mapW = Project1Game.Main.getInstance().getCurrentMapWidth();
-            mapH = Project1Game.Main.getInstance().getCurrentMapHeight();
-        }
-
-        if (nextX < 32 || nextX > mapW - 64 || nextY < 32 || nextY > mapH - 64) {
-            return true;
-        }
-
-        if (initialSpawnPos != null) {
-            if (Math.abs(nextX - initialSpawnPos.getX()) > 300.0 || Math.abs(nextY - initialSpawnPos.getY()) > 300.0) {
-                return true;
-            }
-        }
-
-        double w = entity.getWidth();
-        double h = entity.getHeight();
-        Point2D probePos = entity.getPosition().add(velocity.normalize().multiply(16.0));
-        javafx.geometry.Rectangle2D nextBox = new javafx.geometry.Rectangle2D(probePos.getX(), probePos.getY(), w, h);
-
-        List<Entity> obstacles = FXGL.getGameWorld().getEntitiesInRange(nextBox);
-        for (Entity obs : obstacles) {
-            if (obs.getType() == EntityType.WALL || obs.getType() == EntityType.COLLISION) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
     @Override
     public void onUpdate(double tpf) {
-        // Handle collision cooldown
-        if (collisionCooldown > 0) {
-            collisionCooldown -= tpf;
-            if (physics != null && physics.getBody() != null) {
-                physics.setVelocityX(0);
-                physics.setVelocityY(0);
-            }
+        if (steering == null) return;
+
+        // Handle collision cooldown via SteeringComponent
+        steering.updateCooldown(tpf);
+        if (steering.getCollisionCooldown() > 0) {
             return; // Skip all other updates during cooldown
         }
         
@@ -439,12 +348,7 @@ public class BaseAnimalComponent extends Component implements Interactable {
                     double speed = 150.0; // Moderate speed to keep up with player
                     Point2D velocity = dir.multiply(speed);
 
-                    if (physics != null && physics.getBody() != null) {
-                        physics.setVelocityX(velocity.getX());
-                        physics.setVelocityY(velocity.getY());
-                    } else {
-                        entity.translate(velocity.multiply(tpf));
-                    }
+                    steering.moveDirect(velocity, tpf);
 
                     // Update animations
                     if (Math.abs(dir.getX()) > Math.abs(dir.getY())) {
@@ -461,10 +365,7 @@ public class BaseAnimalComponent extends Component implements Interactable {
                         }
                     }
                 } else {
-                    if (physics != null && physics.getBody() != null) {
-                        physics.setVelocityX(0);
-                        physics.setVelocityY(0);
-                    }
+                    steering.stop();
                     
                     // Loop idle animation in the direction of the last active walk animation
                     if (texture.getAnimationChannel() == animWalkRight) {
@@ -492,61 +393,31 @@ public class BaseAnimalComponent extends Component implements Interactable {
             return;
         }
 
-        wanderTimer += tpf;
-        if (wanderTimer >= wanderDuration) {
-            wanderTimer = 0;
-            wanderDuration = 2.0 + random.nextDouble() * 3.0; // 2 to 5 seconds cooldown
-
-            if (random.nextDouble() < 0.4) {
-                // Idle
-                moveDir = Point2D.ZERO;
-                int dir = random.nextInt(4);
-                if (dir == 0) texture.loopAnimationChannel(animIdleDown);
-                else if (dir == 1) texture.loopAnimationChannel(animIdleUp);
-                else if (dir == 2) texture.loopAnimationChannel(animIdleLeft);
-                else texture.loopAnimationChannel(animIdleRight);
-            } else {
-                // Walk
-                int dir = random.nextInt(4);
-                double speed = 25.0; // Moderate speed
-                if (dir == 0) {
-                    moveDir = new Point2D(0, speed);
-                    texture.loopAnimationChannel(animWalkDown);
-                } else if (dir == 1) {
-                    moveDir = new Point2D(0, -speed);
-                    texture.loopAnimationChannel(animWalkUp);
-                } else if (dir == 2) {
-                    moveDir = new Point2D(-speed, 0);
-                    texture.loopAnimationChannel(animWalkLeft);
-                } else {
-                    moveDir = new Point2D(speed, 0);
-                    texture.loopAnimationChannel(animWalkRight);
-                }
-            }
+        // Wandering logic delegated to SteeringComponent
+        double mapW = 3520;
+        double mapH = 2048;
+        if (Project1Game.Main.getInstance() != null) {
+            mapW = Project1Game.Main.getInstance().getCurrentMapWidth();
+            mapH = Project1Game.Main.getInstance().getCurrentMapHeight();
         }
 
-        if (moveDir.getX() != 0 || moveDir.getY() != 0) {
-            if (isMovementBlocked(moveDir)) {
-                moveDir = Point2D.ZERO;
-                if (physics != null && physics.getBody() != null) {
-                    physics.setVelocityX(0);
-                    physics.setVelocityY(0);
-                }
-                texture.loopAnimationChannel(animIdleDown);
-                wanderTimer = wanderDuration; // Force choice of new random direction next frame
+        steering.wander(tpf, 25.0, initialSpawnPos, mapW, mapH);
+
+        // Update animations based on Steering wander direction
+        Point2D wanderDir = steering.getWanderDir();
+        if (wanderDir.magnitude() > 0) {
+            if (Math.abs(wanderDir.getX()) > Math.abs(wanderDir.getY())) {
+                if (wanderDir.getX() > 0) setAnimationChannel(animWalkRight);
+                else setAnimationChannel(animWalkLeft);
             } else {
-                if (physics != null && physics.getBody() != null) {
-                    physics.setVelocityX(moveDir.getX());
-                    physics.setVelocityY(moveDir.getY());
-                } else {
-                    entity.translate(moveDir.multiply(FXGL.tpf()));
-                }
+                if (wanderDir.getY() > 0) setAnimationChannel(animWalkDown);
+                else setAnimationChannel(animWalkUp);
             }
         } else {
-            if (physics != null && physics.getBody() != null) {
-                physics.setVelocityX(0);
-                physics.setVelocityY(0);
-            }
+            if (texture.getAnimationChannel() == animWalkRight) setAnimationChannel(animIdleRight);
+            else if (texture.getAnimationChannel() == animWalkLeft) setAnimationChannel(animIdleLeft);
+            else if (texture.getAnimationChannel() == animWalkUp) setAnimationChannel(animIdleUp);
+            else if (texture.getAnimationChannel() == animWalkDown) setAnimationChannel(animIdleDown);
         }
     }
 
@@ -557,11 +428,11 @@ public class BaseAnimalComponent extends Component implements Interactable {
                 Project1Game.model.Inventory inventory = Main.getInstance().getInventory();
                 if (inventory != null) {
                     inventory.addItem(adultItem, 1);
-                    Project1Game.Main.pushNotification("Đã thu hoạch một " + adultName + "!");
+                    NotificationManager.pushNotification("Đã thu hoạch một " + adultName + "!");
                     entity.removeFromWorld();
                 }
             } else {
-                int daysRemaining = maxGrowthDays - daysGrown;
+                int daysRemaining = maxGrowthDays - getDaysGrown();
                 String msg;
                 if (type == AnimalType.TURKEY) {
                     msg = "Gà tây cần thêm " + daysRemaining + " ngày để sẵn sàng thu hoạch.";
@@ -576,23 +447,19 @@ public class BaseAnimalComponent extends Component implements Interactable {
             isFollowing = !isFollowing;
             String name = isReadyToHarvest() ? adultName : babyName;
             if (isFollowing) {
-                Project1Game.Main.pushNotification(name + " đang đi theo bạn!");
+                NotificationManager.pushNotification(name + " đang đi theo bạn!");
             } else {
-                if (physics != null && physics.getBody() != null) {
-                    physics.setVelocityX(0);
-                    physics.setVelocityY(0);
+                if (steering != null) {
+                    steering.stop();
                 }
                 
                 // Reset initial spawn position to current position so the animal can wander in this new area
                 initialSpawnPos = entity.getPosition();
-                moveDir = Point2D.ZERO;
-                wanderTimer = 0;
-                wanderDuration = 2.0 + random.nextDouble() * 3.0;
                 if (texture != null && animIdleDown != null) {
                     texture.loopAnimationChannel(animIdleDown);
                 }
 
-                Project1Game.Main.pushNotification(name + " đã dừng lại.");
+                NotificationManager.pushNotification(name + " đã dừng lại.");
             }
         }
     }
@@ -625,6 +492,9 @@ public class BaseAnimalComponent extends Component implements Interactable {
                 isFleeing = false;
                 fleeTarget = null;
                 fleePathWaypoints.clear();
+                if (steering != null) {
+                    steering.clearPath();
+                }
                 texture.loopAnimationChannel(animIdleDown);
                 homePosition = entity.getPosition(); // Reset home position to current position after fleeing
             }
@@ -666,37 +536,32 @@ public class BaseAnimalComponent extends Component implements Interactable {
             fleePathWaypoints = new java.util.ArrayList<>();
             fleePathWaypoints.add(fleeTarget);
         }
+        if (steering != null) {
+            steering.setPathWaypoints(fleePathWaypoints);
+        }
     }
 
     private void handleFleeing(double tpf) {
+        if (steering == null) return;
+        
         if (fleeTarget == null || fleePathWaypoints == null || fleePathWaypoints.isEmpty()) {
             chooseFleeTarget(null);
             return;
         }
 
-        Point2D currentWaypoint = fleePathWaypoints.get(0);
-        double distToWaypoint = entity.getPosition().distance(currentWaypoint);
+        double fleeSpeed = 60.0;
+        steering.followPath(tpf, fleeSpeed);
+        fleePathWaypoints = steering.getPathWaypoints();
 
-        if (distToWaypoint < 12.0) {
-            fleePathWaypoints.remove(0);
-            if (fleePathWaypoints.isEmpty()) {
-                chooseFleeTarget(null);
-                return;
-            }
-            currentWaypoint = fleePathWaypoints.get(0);
+        if (fleePathWaypoints.isEmpty()) {
+            chooseFleeTarget(null);
+            return;
         }
 
-        Point2D dir = currentWaypoint.subtract(entity.getPosition()).normalize();
-        double fleeSpeed = 60.0;
-        Point2D velocity = dir.multiply(fleeSpeed);
-
-        updateFleeAnimation(dir);
-
-        if (physics != null && physics.getBody() != null) {
-            physics.setVelocityX(velocity.getX());
-            physics.setVelocityY(velocity.getY());
-        } else {
-            entity.translate(velocity.multiply(tpf));
+        Point2D currentWaypoint = fleePathWaypoints.get(0);
+        Point2D dir = currentWaypoint.subtract(entity.getPosition());
+        if (dir.magnitude() > 0.01) {
+            updateFleeAnimation(dir.normalize());
         }
     }
 

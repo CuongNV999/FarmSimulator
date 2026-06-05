@@ -6,6 +6,7 @@ import Project1Game.interaction.Interactable;
 import com.almasb.fxgl.entity.Entity;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import Project1Game.system.NegotiationEngine;
 
 public class TraderComponent extends Component implements Interactable {
 
@@ -70,55 +71,17 @@ public class TraderComponent extends Component implements Interactable {
         hasNegotiatedThisSession = true;
         negotiationCount++; // Tăng tổng số lần đã thương lượng
 
-        // Giới hạn phạm vi 10-30
-        requestedPercent = Math.max(10, Math.min(30, requestedPercent));
+        NegotiationEngine.NegotiationResult result = NegotiationEngine.calculateNegotiation(requestedPercent, relationship.get(), negotiationCount);
 
-        // 1. Tính tỉ lệ thành công cơ bản (nội suy tuyến tính):
-        int baseSuccessChance = 80 - 3 * (requestedPercent - 10);
+        this.negotiationBonusPercent = result.bonusPercent;
 
-        // 2. Điều chỉnh theo quan hệ
-        int relationshipBonus = 0;
-        switch (relationship.get()) {
-            case GOOD:
-                relationshipBonus = 15;
-                break;
-            case NEUTRAL:
-                relationshipBonus = 0;
-                break;
-            case BAD:
-                relationshipBonus = -15;
-                break;
-        }
-
-        // 3. Phạt theo số lần thương lượng trước đó (-5% mỗi lần trước)
-        int historyPenalty = (negotiationCount - 1) * 5;
-
-        int finalSuccessChance = Math.max(5, Math.min(95, baseSuccessChance + relationshipBonus - historyPenalty));
-
-        System.out.println("[TraderComponent] Thương lượng " + requestedPercent + "% | "
-                + "Base: " + baseSuccessChance + "% | Quan hệ: " + (relationshipBonus >= 0 ? "+" : "")
-                + relationshipBonus
-                + "% | Phạt lần thứ " + negotiationCount + ": -" + historyPenalty
-                + "% | Final: " + finalSuccessChance + "%");
-
-        // 4. Quay số
-        if (FXGL.random(0, 100) < finalSuccessChance) {
-            // Thành công: Người chơi được giảm giá/tăng giá bán
-            negotiationBonusPercent = requestedPercent;
+        if (result.success) {
             System.out.println("[TraderComponent] Thương lượng THÀNH CÔNG! Bonus: +" + requestedPercent + "%");
             return true;
         } else {
-            // Thất bại: Bị phạt ngược (trader tăng giá mua / giảm giá bán)
-            int penaltyPercent = requestedPercent / 2;
-            negotiationBonusPercent = -penaltyPercent;
-            System.out.println("[TraderComponent] Thương lượng THẤT BẠI! Phạt: -" + penaltyPercent + "%");
+            System.out.println("[TraderComponent] Thương lượng THẤT BẠI! Phạt: " + this.negotiationBonusPercent + "%");
 
-            // 5. Xác suất giảm quan hệ khi thất bại
-            int downgradeChance = 10 + 2 * (requestedPercent - 10);
-            downgradeChance += (negotiationCount - 1) * 5;
-            downgradeChance = Math.min(80, downgradeChance); // Giới hạn tối đa 80%
-
-            if (FXGL.random(0, 100) < downgradeChance) {
+            if (result.relationshipDowngraded) {
                 if (relationship.get() == RelationshipLevel.GOOD) {
                     setRelationship(RelationshipLevel.NEUTRAL);
                     System.out.println("[TraderComponent] Quan hệ bị giảm: GOOD → NEUTRAL");

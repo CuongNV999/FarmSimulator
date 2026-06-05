@@ -29,6 +29,7 @@ public class AdminView extends VBox {
 
     private final Inventory inventory;
     private final PlayerComponent playerComponent;
+    private final AdminPresenter presenter;
     private boolean visible = false;
     private boolean authenticated = false;
 
@@ -39,6 +40,7 @@ public class AdminView extends VBox {
     public AdminView(Inventory inventory, PlayerComponent playerComponent) {
         this.inventory = inventory;
         this.playerComponent = playerComponent;
+        this.presenter = new AdminPresenter(inventory, playerComponent);
 
         // Base styles for the admin console panel overlay
         setPrefSize(FXGL.getAppWidth() * 0.75, FXGL.getAppHeight() * 0.85);
@@ -86,7 +88,7 @@ public class AdminView extends VBox {
 
     private void attemptAuthentication() {
         String code = passcodeField.getText().trim();
-        if ("1111".equals(code)) {
+        if (presenter.verifyPasscode(code)) {
             authenticated = true;
             errorText.setText("");
             passcodeField.clear();
@@ -123,17 +125,17 @@ public class AdminView extends VBox {
         Text goldLabel = new Text("Gold:");
         goldLabel.setFill(Color.WHITE);
         goldLabel.setFont(Font.font(GameFont.GAME_FONT, FontWeight.BOLD, 14));
-        
+
         TextField goldInput = new TextField(String.valueOf(playerComponent.getMoney()));
         goldInput.setPrefWidth(120);
         goldInput.setStyle("-fx-background-color: #1a1a24; -fx-text-fill: gold; -fx-border-color: #555; -fx-border-radius: 4; -fx-font-weight: bold;");
-        
+
         Button applyGold = new Button("Set");
         applyGold.setStyle("-fx-background-color: #444; -fx-text-fill: white; -fx-cursor: hand;");
         applyGold.setOnAction(e -> {
             try {
                 int gold = Integer.parseInt(goldInput.getText().trim());
-                playerComponent.setMoney(gold);
+                presenter.setGold(gold);
             } catch (NumberFormatException ignored) {}
         });
 
@@ -144,14 +146,14 @@ public class AdminView extends VBox {
         Button add1k = new Button("+1K Gold");
         add1k.setStyle("-fx-background-color: #2b4c3f; -fx-text-fill: #a2e8c2; -fx-font-weight: bold; -fx-cursor: hand;");
         add1k.setOnAction(e -> {
-            playerComponent.addMoney(1000);
+            presenter.addGold(1000);
             goldInput.setText(String.valueOf(playerComponent.getMoney()));
         });
 
         Button add10k = new Button("+10K Gold");
         add10k.setStyle("-fx-background-color: #1e3a47; -fx-text-fill: #92d4f5; -fx-font-weight: bold; -fx-cursor: hand;");
         add10k.setOnAction(e -> {
-            playerComponent.addMoney(10000);
+            presenter.addGold(10000);
             goldInput.setText(String.valueOf(playerComponent.getMoney()));
         });
 
@@ -175,7 +177,7 @@ public class AdminView extends VBox {
             btnSkin.setPrefWidth(80);
             btnSkin.setStyle("-fx-background-color: #3e3e4a; -fx-text-fill: white; -fx-cursor: hand; -fx-font-weight: bold; -fx-font-size: 11px;");
             btnSkin.setOnAction(e -> {
-                playerComponent.changeSkin(path);
+                presenter.changeSkin(path);
             });
             skinGrid.add(btnSkin, i % 3, i / 3);
         }
@@ -197,9 +199,7 @@ public class AdminView extends VBox {
             btnTime.setPrefWidth(55);
             btnTime.setStyle("-fx-background-color: #3e3e4a; -fx-text-fill: white; -fx-cursor: hand; -fx-font-weight: bold; -fx-font-size: 11px;");
             btnTime.setOnAction(e -> {
-                if (Project1Game.Main.getInstance() != null && Project1Game.Main.getInstance().getTimeSystem() != null) {
-                    Project1Game.Main.getInstance().getTimeSystem().setTimeSpeedMultiplier(val);
-                }
+                presenter.setTimeSpeedMultiplier(val);
             });
             timeSpeedButtons.getChildren().add(btnTime);
         }
@@ -213,18 +213,14 @@ public class AdminView extends VBox {
         btnMatureAll.setPrefWidth(160);
         btnMatureAll.setStyle("-fx-background-color: #eccb58; -fx-text-fill: #12121c; -fx-cursor: hand; -fx-font-weight: bold; -fx-font-size: 13px;");
         btnMatureAll.setOnAction(e -> {
-            if (Project1Game.Main.getInstance() != null) {
-                Project1Game.Main.getInstance().matureAllCropsAndAnimals();
-            }
+            presenter.triggerMatureAllCropsAndAnimals();
         });
 
         Button btnSpawnBushMonster = new Button("Spawn Bush Monster");
         btnSpawnBushMonster.setPrefWidth(160);
         btnSpawnBushMonster.setStyle("-fx-background-color: #d9383a; -fx-text-fill: white; -fx-cursor: hand; -fx-font-weight: bold; -fx-font-size: 13px;");
         btnSpawnBushMonster.setOnAction(e -> {
-            if (Project1Game.Main.getInstance() != null) {
-                Project1Game.Main.getInstance().spawnBushMonsterAdmin();
-            }
+            presenter.triggerSpawnBushMonsterAdmin();
         });
 
         statsCol.getChildren().addAll(statsTitle, goldRow, quickGoldRow, skinTitle, skinGrid, timeTitle, timeSpeedButtons, cheatsTitle, btnMatureAll, btnSpawnBushMonster);
@@ -326,28 +322,28 @@ public class AdminView extends VBox {
         Button minus5 = new Button("-5");
         minus5.setStyle("-fx-background-color: #d9383a; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 11px; -fx-cursor: hand;");
         minus5.setOnAction(e -> {
-            inventory.removeItem(type, 5);
+            presenter.removeItem(type, 5);
             qty.setText("Qty: " + inventory.getCount(type));
         });
 
         Button minus1 = new Button("-1");
         minus1.setStyle("-fx-background-color: #b05c5c; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 11px; -fx-cursor: hand;");
         minus1.setOnAction(e -> {
-            inventory.removeItem(type, 1);
+            presenter.removeItem(type, 1);
             qty.setText("Qty: " + inventory.getCount(type));
         });
 
         Button plus1 = new Button("+1");
         plus1.setStyle("-fx-background-color: #5c9eb0; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 11px; -fx-cursor: hand;");
         plus1.setOnAction(e -> {
-            inventory.addItem(type, 1);
+            presenter.addItem(type, 1);
             qty.setText("Qty: " + inventory.getCount(type));
         });
 
         Button plus5 = new Button("+5");
         plus5.setStyle("-fx-background-color: #38a6d9; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 11px; -fx-cursor: hand;");
         plus5.setOnAction(e -> {
-            inventory.addItem(type, 5);
+            presenter.addItem(type, 5);
             qty.setText("Qty: " + inventory.getCount(type));
         });
 

@@ -2,6 +2,7 @@ package Project1Game.model.item;
 
 import Project1Game.Main;
 import Project1Game.core.ItemType;
+import Project1Game.system.NotificationManager;
 import com.almasb.fxgl.dsl.FXGL;
 import com.almasb.fxgl.entity.Entity;
 
@@ -18,7 +19,7 @@ public class PlaceAnimalAction implements Usable {
 
         // House Check: prevent placing animals inside the main house map
         if ("Main_house.tmx".equals(Main.getInstance().getCurrentMap())) {
-            Main.pushNotification("Không thể thả động vật trong nhà!");
+            NotificationManager.pushNotification("Không thể thả động vật trong nhà!");
             return;
         }
 
@@ -31,6 +32,6 @@ public class PlaceAnimalAction implements Usable {
         // Spawn animal at selector position
         FXGL.spawn(spawnName, target.getX(), target.getY());
         inventory.removeItem(animalItem, 1);
-        Main.pushNotification("Đã thả " + animalItem.getDisplayName() + "!");
+        NotificationManager.pushNotification("Đã thả " + animalItem.getDisplayName() + "!");
     }
 }
