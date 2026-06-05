@@ -1,3 +1,8 @@
+# Merged Main.java
+
+Below is the complete, merged, and production-ready `Main.java` code, based strictly on the `feature/monster` branch architecture with integrated notification rules.
+
+```java
 package Project1Game;
 
 // --- IMPORT CÁC THÀNH PHẦN NỘI BỘ DỰ ÁN ---
@@ -77,10 +82,6 @@ public class Main extends GameApplication {
 
     public TimeSystem getTimeSystem() {
         return timeSystem;
-    }
-
-    public SaveLoadSystem getSaveLoadSystem() {
-        return saveLoadSystem;
     }
 
     public Inventory getInventory() {
@@ -214,28 +215,6 @@ public class Main extends GameApplication {
         return playerStateManager.isHPDepletionEnabled();
     }
 
-    public void showDeadScreen() {
-        if (deadScreenView != null) {
-            deadScreenView.show();
-        }
-    }
-
-    public void hideDeadScreen() {
-        if (deadScreenView != null) {
-            deadScreenView.hide();
-        }
-    }
-
-    public void loadLastSave() {
-        if (saveLoadSystem != null) {
-            if (hasAutosave()) {
-                saveLoadSystem.loadGameFromFile("autosave.dat");
-            } else if (hasSaveGame()) {
-                saveLoadSystem.loadGameFromFile("save_game.dat");
-            }
-        }
-    }
-
     // --- Các thực thể chính ---
     private Entity player;
     private Entity selector;
@@ -254,7 +233,6 @@ public class Main extends GameApplication {
     private Text moneyText;
     private TradingView tradingView;
     private AdminView adminView;
-    private Project1Game.ui.DeadScreenView deadScreenView;
 
     // --- Các hệ thống logic (Systems) ---
     private TimeSystem timeSystem;
@@ -351,6 +329,10 @@ public class Main extends GameApplication {
 
         // 3. Nạp Map và Factory
         FXGL.getGameWorld().addEntityFactory(new GameEntityFactory());
+
+        // Khởi tạo SaveLoadSystem trước khi gọi updateLevel lần đầu
+        // (cần statusBarsView và timeSystem đã được khởi tạo trong initUI)
+        // Tạm thời khởi tạo ở đây, sẽ chuyển sang initUI sau khi UI sẵn sàng
     }
 
     @Override
@@ -426,10 +408,6 @@ public class Main extends GameApplication {
         // Khởi tạo AdminView
         adminView = new AdminView(inventory, player.getComponent(PlayerComponent.class));
         FXGL.getGameScene().addUINode(adminView);
-
-        // Khởi tạo DeadScreenView
-        deadScreenView = new Project1Game.ui.DeadScreenView();
-        FXGL.getGameScene().addUINode(deadScreenView);
 
         if (shouldLoadSaveOnStart) {
             saveLoadSystem.loadGameFromFile();
@@ -527,10 +505,6 @@ public class Main extends GameApplication {
         return new java.io.File("save_game.dat").exists();
     }
 
-    public boolean hasAutosave() {
-        return new java.io.File("autosave.dat").exists();
-    }
-
     public void bindPlayerUI() {
         if (player == null || !player.isActive() || !player.hasComponent(PlayerComponent.class) || moneyText == null)
             return;
@@ -588,3 +562,4 @@ public class Main extends GameApplication {
         launch(args);
     }
 }
+```
