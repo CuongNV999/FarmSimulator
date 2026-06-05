@@ -361,6 +361,33 @@ public class Main extends GameApplication {
         FXGL.getPhysicsWorld()
                 .addCollisionHandler(new CreatureAvoidanceHandler(EntityType.MONSTER, EntityType.MONSTER));
 
+        // Monster returning to bush collision handler
+        FXGL.getPhysicsWorld().addCollisionHandler(new CollisionHandler(EntityType.MONSTER, EntityType.BUSH) {
+            private void handleCollision(Entity monster) {
+                BaseMonsterComponent bmc = monster.getComponentOptional(BaseMonsterComponent.class).orElse(null);
+                if (bmc != null && bmc.isReturning()) {
+                    if (bmc.getSpawnProtectionTimer() <= 0) {
+                        if (monster.isActive()) {
+                            String name = bmc.getClass().getSimpleName().replace("Component", "");
+                            Project1Game.Main.pushNotification("Quái vật " + name + " đã ẩn nấp vào bụi cây!");
+                            System.out.println("[CollisionHandler] Monster " + monster + " returned to Bush and was removed.");
+                            monster.removeFromWorld();
+                        }
+                    }
+                }
+            }
+
+            @Override
+            protected void onCollisionBegin(Entity monster, Entity bush) {
+                handleCollision(monster);
+            }
+
+            @Override
+            protected void onCollision(Entity monster, Entity bush) {
+                handleCollision(monster);
+            }
+        });
+
         // Tránh chướng ngại vật cho động vật khi va chạm với các vật cản khác
         FXGL.getPhysicsWorld().addCollisionHandler(new AnimalObstacleCollisionHandler(EntityType.COLLISION));
         FXGL.getPhysicsWorld().addCollisionHandler(new AnimalObstacleCollisionHandler(EntityType.WALL));
@@ -368,6 +395,15 @@ public class Main extends GameApplication {
         FXGL.getPhysicsWorld().addCollisionHandler(new AnimalObstacleCollisionHandler(EntityType.NPC));
         FXGL.getPhysicsWorld().addCollisionHandler(new AnimalObstacleCollisionHandler(EntityType.GUIDER));
         FXGL.getPhysicsWorld().addCollisionHandler(new AnimalObstacleCollisionHandler(EntityType.TRADER));
+
+        // Tránh chướng ngại vật cho quái vật khi va chạm với các vật cản khác
+        FXGL.getPhysicsWorld().addCollisionHandler(new MonsterObstacleCollisionHandler(EntityType.COLLISION));
+        FXGL.getPhysicsWorld().addCollisionHandler(new MonsterObstacleCollisionHandler(EntityType.WALL));
+        FXGL.getPhysicsWorld().addCollisionHandler(new MonsterObstacleCollisionHandler(EntityType.PLAYER));
+        FXGL.getPhysicsWorld().addCollisionHandler(new MonsterObstacleCollisionHandler(EntityType.NPC));
+        FXGL.getPhysicsWorld().addCollisionHandler(new MonsterObstacleCollisionHandler(EntityType.GUIDER));
+        FXGL.getPhysicsWorld().addCollisionHandler(new MonsterObstacleCollisionHandler(EntityType.TRADER));
+        FXGL.getPhysicsWorld().addCollisionHandler(new MonsterObstacleCollisionHandler(EntityType.BUSH));
     }
 
     private static class CreatureAvoidanceHandler extends CollisionHandler {
@@ -434,6 +470,20 @@ public class Main extends GameApplication {
             BaseAnimalComponent animalComp = animal.getComponentOptional(BaseAnimalComponent.class).orElse(null);
             if (animalComp != null && animalComp.getCollisionCooldown() <= 0) {
                 animalComp.forceNewDirection();
+            }
+        }
+    }
+
+    private static class MonsterObstacleCollisionHandler extends CollisionHandler {
+        public MonsterObstacleCollisionHandler(EntityType obstacleType) {
+            super(EntityType.MONSTER, obstacleType);
+        }
+
+        @Override
+        protected void onCollision(Entity monster, Entity obstacle) {
+            BaseMonsterComponent monsterComp = monster.getComponentOptional(BaseMonsterComponent.class).orElse(null);
+            if (monsterComp != null && monsterComp.getCollisionCooldown() <= 0) {
+                monsterComp.forceNewDirection();
             }
         }
     }

@@ -127,6 +127,8 @@ public abstract class BaseMonsterComponent extends Component {
                 isReturning = true;
                 targetEntity = findClosestBush();
                 recalculatePath();
+                String name = getClass().getSimpleName().replace("Component", "");
+                Project1Game.Main.pushNotification("Quái vật " + name + " đang quay lại bụi cây!");
                 System.out.println("[BaseMonsterComponent] Monster " + getClass().getSimpleName() + " life expired. Returning to closest bush: " 
                         + (targetEntity != null ? targetEntity.getPosition() : "none") + " | spawnProtectionTimer=" + spawnProtectionTimer);
             }
@@ -208,11 +210,34 @@ public abstract class BaseMonsterComponent extends Component {
 
         followPath(tpf, baseSpeed);
 
-        if (entity.distance(targetEntity) < 8.0) {
+        Point2D targetPos = getTargetPosition();
+        double dist = targetPos != null ? entity.getPosition().distance(targetPos) : Double.MAX_VALUE;
+
+        // Check if bounding boxes overlap
+        boolean overlaps = false;
+        if (targetEntity != null) {
+            double mx = entity.getX();
+            double my = entity.getY();
+            double mw = entity.getWidth() > 0 ? entity.getWidth() : 32.0;
+            double mh = entity.getHeight() > 0 ? entity.getHeight() : 32.0;
+
+            double bx = targetEntity.getX();
+            double by = targetEntity.getY();
+            double bw = targetEntity.getWidth() > 0 ? targetEntity.getWidth() : 32.0;
+            double bh = targetEntity.getHeight() > 0 ? targetEntity.getHeight() : 32.0;
+
+            overlaps = (mx < bx + bw && mx + mw > bx && my < by + bh && my + mh > by);
+        }
+
+        if (dist < 16.0 || overlaps) {
             if (spawnProtectionTimer <= 0) {
-                System.out.println("[BaseMonsterComponent] Removed monster " + getClass().getSimpleName() + " at " + entity.getPosition() 
-                        + ": returned to bush " + targetEntity.getPosition() + " | spawnProtectionTimer=" + spawnProtectionTimer);
-                entity.removeFromWorld();
+                if (entity.isActive()) {
+                    String name = getClass().getSimpleName().replace("Component", "");
+                    Project1Game.Main.pushNotification("Quái vật " + name + " đã ẩn nấp vào bụi cây!");
+                    System.out.println("[BaseMonsterComponent] Removed monster " + getClass().getSimpleName() + " at " + entity.getPosition() 
+                            + ": returned to bush " + targetEntity.getPosition() + " | spawnProtectionTimer=" + spawnProtectionTimer);
+                    entity.removeFromWorld();
+                }
             }
         }
     }
@@ -329,8 +354,9 @@ public abstract class BaseMonsterComponent extends Component {
 
     private void followPath(double tpf, double speedToUse) {
         if (pathWaypoints == null || pathWaypoints.isEmpty()) {
-            if (targetEntity != null) {
-                Point2D dir = targetEntity.getPosition().subtract(entity.getPosition());
+            Point2D targetPos = getTargetPosition();
+            if (targetPos != null) {
+                Point2D dir = targetPos.subtract(entity.getPosition());
                 if (dir.magnitude() > 0.01) dir = dir.normalize();
                 move(dir.multiply(speedToUse), tpf);
             } else {
@@ -399,10 +425,16 @@ public abstract class BaseMonsterComponent extends Component {
             return;
         }
 
+        Point2D targetPos = getTargetPosition();
+        if (targetPos == null) {
+            pathWaypoints.clear();
+            return;
+        }
+
         // TỐI ƯU HÓA TỐC ĐỘ: Sử dụng kích thước bản đồ đã được lưu trong bộ đệm (O(1)) và truyền chiều cao thực thể
         double h = entity.getHeight() > 0 ? entity.getHeight() : 32.0;
         this.pathWaypoints = Project1Game.system.AStarPathfinder.findPath(entity.getPosition(),
-                targetEntity.getPosition(), cachedMapWidth, cachedMapHeight, h);
+                targetPos, cachedMapWidth, cachedMapHeight, h);
     }
 
     protected Entity findClosestTarget() {
@@ -508,6 +540,34 @@ public abstract class BaseMonsterComponent extends Component {
 
     public boolean isAlerted() {
         return isAlerted;
+    }
+
+    public double getSpawnProtectionTimer() {
+        return spawnProtectionTimer;
+    }
+
+    public boolean isTemporary() {
+        return isTemporary;
+    }
+
+    public double getLifeTimer() {
+        return lifeTimer;
+    }
+
+    public void setReturning(boolean returning) {
+        this.isReturning = returning;
+    }
+
+    private Point2D getTargetPosition() {
+        if (targetEntity == null) return null;
+        if (targetEntity.getType() == EntityType.BUSH) {
+            double mx = entity.getX() + (entity.getWidth() > 0 ? entity.getWidth() : 32.0) / 2;
+            double my = entity.getY() + (entity.getHeight() > 0 ? entity.getHeight() : 32.0) / 2;
+            double px = Math.max(targetEntity.getX(), Math.min(mx, targetEntity.getX() + targetEntity.getWidth()));
+            double py = Math.max(targetEntity.getY(), Math.min(my, targetEntity.getY() + targetEntity.getHeight()));
+            return new Point2D(px, py);
+        }
+        return targetEntity.getPosition();
     }
 
     public void forceNewDirection() {

@@ -445,10 +445,15 @@ public class GameEntityFactory implements EntityFactory {
         java.util.Random rand = new java.util.Random();
         SpawnData copy = new SpawnData(data.getX(), data.getY());
         copy.put("tempBushMonster", true);
-        if (rand.nextBoolean()) {
+        int r = rand.nextInt(4);
+        if (r == 0) {
             return createMonster(copy, "Boar", "monster/Boar/Boar_Walk_with_shadow.png", "monster/Boar/Boar_Idle_with_shadow.png");
-        } else {
+        } else if (r == 1) {
             return createMonster(copy, "Fox", "monster/Fox/Fox_walk_with_shadow.png", "monster/Fox/Fox_Idle_with_shadow.png");
+        } else if (r == 2) {
+            return createMonster(copy, "Deer", "monster/Deer/Deer_Run_with_shadow.png", "monster/Deer/Deer_Idle_with_shadow.png");
+        } else {
+            return createMonster(copy, "Hare", "monster/Hare/Hare_Run_with_shadow.png", "monster/Hare/Hare_Idle_with_shadow.png");
         }
     }
 }

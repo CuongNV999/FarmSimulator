@@ -2,6 +2,7 @@ package Project1Game.system;
 
 import Project1Game.component.farming.CropComponent;
 import Project1Game.component.farming.SoilComponent;
+import Project1Game.component.farming.monster.BaseMonsterComponent;
 import Project1Game.component.player.PlayerComponent; // Import PlayerComponent
 import Project1Game.core.EntityType;
 import Project1Game.core.ItemType;
@@ -154,11 +155,15 @@ public class SaveLoadSystem {
         data.monsters.clear();
         FXGL.getGameWorld().getEntitiesByType(EntityType.MONSTER).forEach(m -> {
             String spawnName = m.getString("monsterType");
-            if (spawnName != null && !spawnName.isEmpty()) {
+            BaseMonsterComponent bmc = m.getComponentOptional(BaseMonsterComponent.class).orElse(null);
+            if (spawnName != null && !spawnName.isEmpty() && bmc != null) {
                 SaveData.MonsterSaveData msd = new SaveData.MonsterSaveData();
                 msd.x = m.getX();
                 msd.y = m.getY();
                 msd.type = spawnName;
+                msd.isTemporary = bmc.isTemporary();
+                msd.lifeTimer = bmc.getLifeTimer();
+                msd.isReturning = bmc.isReturning();
                 data.monsters.add(msd);
             }
         });
@@ -308,7 +313,14 @@ public class SaveLoadSystem {
         // Tái tạo quái vật
         if (data.monsters != null) {
             for (SaveData.MonsterSaveData msd : data.monsters) {
-                FXGL.getGameWorld().spawn(msd.type, msd.x, msd.y);
+                Entity m = FXGL.getGameWorld().spawn(msd.type, msd.x, msd.y);
+                BaseMonsterComponent bmc = m.getComponentOptional(BaseMonsterComponent.class).orElse(null);
+                if (bmc != null && msd.isTemporary) {
+                    bmc.setTemporary(msd.lifeTimer);
+                    if (msd.isReturning) {
+                        bmc.setReturning(true);
+                    }
+                }
             }
         }
     }
