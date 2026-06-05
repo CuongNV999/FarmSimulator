@@ -4,6 +4,8 @@ import com.almasb.fxgl.app.scene.FXGLMenu;
 import com.almasb.fxgl.app.scene.MenuType;
 import com.almasb.fxgl.dsl.FXGL;
 import Project1Game.Main;
+import Project1Game.system.InputController;
+import javafx.scene.input.KeyCode;
 
 import javafx.geometry.Pos;
 import javafx.geometry.Insets;
@@ -212,7 +214,12 @@ public class FarmMenu extends FXGLMenu {
         });
         btnFullscreen[0].setText("Fullscreen: " + (FXGL.getPrimaryStage().isFullScreen() ? "ON" : "OFF"));
 
-        // 5. Back Button
+        // 5. Controls Config
+        MenuButton btnControls = new MenuButton("Controls Config", () -> {
+            showKeybindingsScreen(menuBox, titleContainer);
+        });
+
+        // 6. Back Button
         MenuButton btnBack = new MenuButton("Back", () -> {
             if (this.type == MenuType.MAIN_MENU) {
                 showMainMenuScreen(menuBox, titleContainer, app);
@@ -221,7 +228,63 @@ public class FarmMenu extends FXGLMenu {
             }
         });
 
-        menuBox.getChildren().addAll(btnHpDepletion[0], btnMusic[0], btnSound[0], btnFullscreen[0], btnBack);
+        menuBox.getChildren().addAll(btnHpDepletion[0], btnMusic[0], btnSound[0], btnFullscreen[0], btnControls, btnBack);
+    }
+
+    private void showKeybindingsScreen(VBox menuBox, VBox titleContainer) {
+        menuBox.getChildren().clear();
+        titleContainer.getChildren().clear();
+
+        Text titleText = new Text("KEYBINDINGS CONFIG");
+        titleText.setFont(GameFont.font(FontWeight.EXTRA_BOLD, 42));
+        titleText.setFill(Color.web("#eccb58"));
+        titleContainer.getChildren().add(titleText);
+
+        javafx.scene.layout.GridPane grid = new javafx.scene.layout.GridPane();
+        grid.setHgap(30);
+        grid.setVgap(10);
+        grid.setAlignment(Pos.CENTER);
+
+        int row = 0;
+        for (String actionName : Project1Game.system.InputController.getKeybindings().keySet()) {
+            Text actionLabel = new Text(actionName + ":");
+            actionLabel.setFont(GameFont.font(FontWeight.BOLD, 15));
+            actionLabel.setFill(Color.WHITE);
+
+            KeyCode currentKey = Project1Game.system.InputController.getKey(actionName);
+            Button bindBtn = new Button(currentKey.toString());
+            bindBtn.setStyle("-fx-background-color: #254c35; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 13px; -fx-pref-width: 140; -fx-cursor: hand; -fx-background-radius: 5;");
+
+            bindBtn.setOnAction(e -> {
+                bindBtn.setText("Press any key...");
+                bindBtn.setStyle("-fx-background-color: #d9383a; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 13px; -fx-pref-width: 140;");
+
+                javafx.scene.Scene scene = bindBtn.getScene();
+                javafx.event.EventHandler<javafx.scene.input.KeyEvent> keyHandler = new javafx.event.EventHandler<>() {
+                    @Override
+                    public void handle(javafx.scene.input.KeyEvent event) {
+                        KeyCode key = event.getCode();
+                        if (key != KeyCode.ESCAPE) {
+                            Project1Game.system.InputController.rebind(actionName, key);
+                            showKeybindingsScreen(menuBox, titleContainer);
+                        } else {
+                            bindBtn.setText(currentKey.toString());
+                            bindBtn.setStyle("-fx-background-color: #254c35; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 13px; -fx-pref-width: 140;");
+                        }
+                        scene.removeEventFilter(javafx.scene.input.KeyEvent.KEY_PRESSED, this);
+                        event.consume();
+                    }
+                };
+                scene.addEventFilter(javafx.scene.input.KeyEvent.KEY_PRESSED, keyHandler);
+            });
+
+            grid.add(actionLabel, 0, row);
+            grid.add(bindBtn, 1, row);
+            row++;
+        }
+
+        MenuButton btnBack = new MenuButton("Back", () -> showOptionsScreen(menuBox, titleContainer));
+        menuBox.getChildren().addAll(grid, btnBack);
     }
     private void showSkinSelectionScreen(VBox menuBox, VBox titleContainer, Main app, boolean isNewGame) {
         menuBox.getChildren().clear();

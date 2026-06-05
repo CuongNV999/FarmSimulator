@@ -275,7 +275,170 @@ public class AdminView extends VBox {
         scrollPane.setContent(itemGrid);
         itemsCol.getChildren().addAll(itemsTitle, scrollPane);
 
-        columns.getChildren().addAll(statsCol, itemsCol);
+        // --- SECTION 3: Feature Showcase & Cheats ---
+        VBox cheatsCol = new VBox(12);
+        cheatsCol.setPrefWidth(280);
+        cheatsCol.setAlignment(Pos.TOP_LEFT);
+        cheatsCol.setPadding(new Insets(10));
+        cheatsCol.setStyle("-fx-background-color: rgba(30, 30, 40, 0.5); -fx-background-radius: 10; -fx-border-color: #444; -fx-border-width: 1; -fx-border-radius: 10;");
+
+        Text cheatsColTitle = new Text("Feature Showcase & Cheats");
+        cheatsColTitle.setFont(Font.font(GameFont.GAME_FONT, FontWeight.BOLD, 18));
+        cheatsColTitle.setFill(Color.web("#eccb58"));
+
+        // 1. Weather Control Block
+        Text weatherCtrlTitle = new Text("Weather Control:");
+        weatherCtrlTitle.setFill(Color.WHITE);
+        weatherCtrlTitle.setFont(Font.font(GameFont.GAME_FONT, FontWeight.BOLD, 14));
+
+        HBox weatherButtons = new HBox(6);
+        weatherButtons.setAlignment(Pos.CENTER_LEFT);
+
+        Button sunnyBtn = new Button("Sunny");
+        sunnyBtn.setPrefWidth(70);
+        sunnyBtn.setStyle("-fx-background-color: #e3a81e; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 11px; -fx-cursor: hand;");
+        sunnyBtn.setOnAction(e -> {
+            Project1Game.system.WeatherSystem.getInstance().changeWeather(Project1Game.system.WeatherSystem.Weather.SUNNY);
+        });
+
+        Button rainyBtn = new Button("Rainy");
+        rainyBtn.setPrefWidth(70);
+        rainyBtn.setStyle("-fx-background-color: #2b70c4; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 11px; -fx-cursor: hand;");
+        rainyBtn.setOnAction(e -> {
+            Project1Game.system.WeatherSystem.getInstance().changeWeather(Project1Game.system.WeatherSystem.Weather.RAINY);
+        });
+
+        Button droughtBtn = new Button("Drought");
+        droughtBtn.setPrefWidth(70);
+        droughtBtn.setStyle("-fx-background-color: #d16b28; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 11px; -fx-cursor: hand;");
+        droughtBtn.setOnAction(e -> {
+            Project1Game.system.WeatherSystem.getInstance().changeWeather(Project1Game.system.WeatherSystem.Weather.DROUGHT);
+        });
+
+        weatherButtons.getChildren().addAll(sunnyBtn, rainyBtn, droughtBtn);
+
+        // 2. Time Control Block
+        Text timeCtrlTitle = new Text("Time Shortcuts:");
+        timeCtrlTitle.setFill(Color.WHITE);
+        timeCtrlTitle.setFont(Font.font(GameFont.GAME_FONT, FontWeight.BOLD, 14));
+
+        HBox timeShortcutButtons = new HBox(6);
+        timeShortcutButtons.setAlignment(Pos.CENTER_LEFT);
+
+        String[] timeLabels = {"6 AM", "12 AM", "6 PM", "10 PM"};
+        double[] timeMinutes = {360, 0, 1080, 1320};
+
+        for (int i = 0; i < timeLabels.length; i++) {
+            final double mins = timeMinutes[i];
+            Button btnTime = new Button(timeLabels[i]);
+            btnTime.setPrefWidth(55);
+            btnTime.setStyle("-fx-background-color: #3e3e4a; -fx-text-fill: white; -fx-cursor: hand; -fx-font-weight: bold; -fx-font-size: 10px;");
+            btnTime.setOnAction(e -> {
+                if (Project1Game.Main.getInstance() != null && Project1Game.Main.getInstance().getTimeSystem() != null) {
+                    Project1Game.Main.getInstance().getTimeSystem().setGameTime(mins);
+                }
+            });
+            timeShortcutButtons.getChildren().add(btnTime);
+        }
+
+        // 3. Map Teleport Block
+        Text mapTeleportTitle = new Text("Map Teleport:");
+        mapTeleportTitle.setFill(Color.WHITE);
+        mapTeleportTitle.setFont(Font.font(GameFont.GAME_FONT, FontWeight.BOLD, 14));
+
+        HBox teleportButtons = new HBox(10);
+        teleportButtons.setAlignment(Pos.CENTER_LEFT);
+
+        Button farmBtn = new Button("Main Farm");
+        farmBtn.setPrefWidth(105);
+        farmBtn.setStyle("-fx-background-color: #2b4c3f; -fx-text-fill: #a2e8c2; -fx-font-weight: bold; -fx-font-size: 12px; -fx-cursor: hand;");
+        farmBtn.setOnAction(e -> {
+            if (Project1Game.Main.getInstance() != null) {
+                Project1Game.Main.getInstance().updateLevel("Main_level.tmx", 1792, 1024);
+            }
+        });
+
+        Button houseBtn = new Button("Player House");
+        houseBtn.setPrefWidth(105);
+        houseBtn.setStyle("-fx-background-color: #1e3a47; -fx-text-fill: #92d4f5; -fx-font-weight: bold; -fx-font-size: 12px; -fx-cursor: hand;");
+        houseBtn.setOnAction(e -> {
+            if (Project1Game.Main.getInstance() != null) {
+                Project1Game.Main.getInstance().updateLevel("Main_house.tmx", 550, 350);
+            }
+        });
+
+        teleportButtons.getChildren().addAll(farmBtn, houseBtn);
+
+        // 4. Survival Stats Block
+        Text survivalTitle = new Text("Survival Stats:");
+        survivalTitle.setFill(Color.WHITE);
+        survivalTitle.setFont(Font.font(GameFont.GAME_FONT, FontWeight.BOLD, 14));
+
+        Button restoreStatsBtn = new Button("Restore HP & Hunger (100%)");
+        restoreStatsBtn.setPrefWidth(220);
+        restoreStatsBtn.setStyle("-fx-background-color: #2b6c3f; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 11px; -fx-cursor: hand;");
+        restoreStatsBtn.setOnAction(e -> {
+            if (Project1Game.Main.getInstance() != null && Project1Game.Main.getInstance().getStatusBarsView() != null) {
+                Project1Game.Main.getInstance().getStatusBarsView().setHealth(Project1Game.Main.getInstance().getStatusBarsView().getMaxHealth());
+                Project1Game.Main.getInstance().getStatusBarsView().setHunger(Project1Game.Main.getInstance().getStatusBarsView().getMaxHunger());
+            }
+        });
+
+        Button drainStatsBtn = new Button("Drain HP to 0 (Test Faint/Death)");
+        drainStatsBtn.setPrefWidth(220);
+        drainStatsBtn.setStyle("-fx-background-color: #d9383a; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 11px; -fx-cursor: hand;");
+        drainStatsBtn.setOnAction(e -> {
+            if (Project1Game.Main.getInstance() != null && Project1Game.Main.getInstance().getStatusBarsView() != null) {
+                Project1Game.Main.getInstance().getStatusBarsView().setHealth(0);
+            }
+        });
+
+        // 5. Quests Control Block
+        Text questsTitle = new Text("Quests Control:");
+        questsTitle.setFill(Color.WHITE);
+        questsTitle.setFont(Font.font(GameFont.GAME_FONT, FontWeight.BOLD, 14));
+
+        Button acceptAllBtn = new Button("Accept All Quests");
+        acceptAllBtn.setPrefWidth(220);
+        acceptAllBtn.setStyle("-fx-background-color: #3e3e4a; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 12px; -fx-cursor: hand;");
+        acceptAllBtn.setOnAction(e -> {
+            Project1Game.quest.QuestManager.getInstance().getAllNPCs().forEach(npc -> {
+                npc.getQuests().forEach(q -> {
+                    if (q.getStatus() == Project1Game.quest.QuestStatus.NOT_STARTED) {
+                        q.start();
+                    }
+                });
+            });
+            Project1Game.system.NotificationManager.pushNotification("All NOT_STARTED quests have been accepted!");
+        });
+
+        Button completeObjectivesBtn = new Button("Complete Objectives (Instant)");
+        completeObjectivesBtn.setPrefWidth(220);
+        completeObjectivesBtn.setStyle("-fx-background-color: #eccb58; -fx-text-fill: #12121c; -fx-font-weight: bold; -fx-font-size: 12px; -fx-cursor: hand;");
+        completeObjectivesBtn.setOnAction(e -> {
+            Project1Game.quest.QuestManager.getInstance().getAllNPCs().forEach(npc -> {
+                npc.getQuests().forEach(q -> {
+                    if (q.getStatus() == Project1Game.quest.QuestStatus.IN_PROGRESS) {
+                        q.getObjectives().forEach(obj -> {
+                            obj.setCurrent(obj.getRequired());
+                        });
+                        q.setStatus(Project1Game.quest.QuestStatus.COMPLETED);
+                    }
+                });
+            });
+            Project1Game.system.NotificationManager.pushNotification("All objectives completed!");
+        });
+
+        cheatsCol.getChildren().addAll(
+            cheatsColTitle,
+            weatherCtrlTitle, weatherButtons,
+            timeCtrlTitle, timeShortcutButtons,
+            mapTeleportTitle, teleportButtons,
+            survivalTitle, restoreStatsBtn, drainStatsBtn,
+            questsTitle, acceptAllBtn, completeObjectivesBtn
+        );
+
+        columns.getChildren().addAll(statsCol, itemsCol, cheatsCol);
 
         // Bottom control close button
         Button closeBtn = new Button("CLOSE CONSOLE");

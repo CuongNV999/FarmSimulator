@@ -2,15 +2,34 @@ package Project1Game.system;
 
 import com.almasb.fxgl.dsl.FXGL;
 import com.almasb.fxgl.entity.Entity;
+import com.almasb.fxgl.physics.PhysicsComponent;
 import Project1Game.Main;
 import Project1Game.component.player.PlayerComponent;
 import Project1Game.ui.StatusBarsView;
 import Project1Game.ui.DialogView;
+import Project1Game.ui.FaintOverlay;
 
 public class PlayerStateManager {
     private double lastHungerDrainTime = -1;
     private double lastStarveHPTime = -1;
     private boolean isHPDepletionEnabled = true;
+    private boolean isFainted = false;
+    private boolean isDead = false;
+
+    public boolean isFainted() {
+        return isFainted || isDead;
+    }
+
+    public boolean isDead() {
+        return isDead;
+    }
+
+    public void setDead(boolean dead) {
+        this.isDead = dead;
+        if (!dead) {
+            this.isFainted = false;
+        }
+    }
 
     public void toggleHPDepletion() {
         this.isHPDepletionEnabled = !this.isHPDepletionEnabled;
@@ -28,6 +47,9 @@ public class PlayerStateManager {
     }
 
     public void updatePlayerStats(double tpf, TimeSystem timeSystem, StatusBarsView statusBarsView, Entity player, DialogView dialogView, LevelManager levelManager) {
+        // Freeze stats updates when player is fainted or dead
+        if (isFainted()) return;
+
         if (timeSystem != null && statusBarsView != null) {
             double currentMins = timeSystem.getGameTime();
 
@@ -75,43 +97,57 @@ public class PlayerStateManager {
     }
 
     public void handlePlayerFaint(TimeSystem timeSystem, Entity player, StatusBarsView statusBarsView, DialogView dialogView, LevelManager levelManager) {
-        System.out.println("--- Player Fainted! ---");
-        if (timeSystem != null) {
-            timeSystem.advanceToNextDay();
-            // Cache the guider and trader reappearance at 6:00 AM morning
-            levelManager.getPendingNPCSpawns().clear();
-            levelManager.getPendingNPCSpawns().add(new LevelManager.NPCSpawnConfig("Guider", 1792, 1024, false));
-            levelManager.getPendingNPCSpawns().add(new LevelManager.NPCSpawnConfig("Trader", 1600, 1024, false));
-            System.out.println("[NPC Cache] Cached morning transitions via faint: NPCs are visible");
-        }
-
-        if (player != null) {
-            PlayerComponent pc = player.getComponent(PlayerComponent.class);
-            if (pc != null) {
-                int newMoney = Math.max(0, pc.getMoney() - 100);
-                pc.setMoney(newMoney);
-            }
-        }
-
-        if (statusBarsView != null) {
-            statusBarsView.setHealth(statusBarsView.getMaxHealth() * 0.5);
-            statusBarsView.setHunger(statusBarsView.getMaxHunger() * 0.5);
-        }
-
-        lastHungerDrainTime = -1;
-        lastStarveHPTime = -1;
+        if (isFainted || isDead) return;
 
         if (dialogView != null && dialogView.isOpen()) {
             dialogView.hide();
         }
-        
-        Main app = Main.getInstance();
-        app.updateLevel("Main_house.tmx", 550, 350);
 
-        if (dialogView != null) {
-            dialogView.setDialog("Thông báo", "Bạn đã bị kiệt sức và ngất xỉu!", "Bác nông dân đã đưa bạn về nhà.",
-                    "Phạt viện phí: 100 G. Sức khỏe phục hồi 50%.");
-            dialogView.show();
+        PlayerComponent pc = (player != null) ? player.getComponent(PlayerComponent.class) : null;
+        int currentGold = (pc != null) ? pc.getMoney() : 0;
+
+        Main app = Main.getInstance();
+
+        if (currentGold >= 100) {
+            isFainted = true;
+            System.out.println("--- Player Fainted! Deducting 100 G ---");
+            if (pc != null) {
+                pc.setMoney(currentGold - 100);
+            }
+
+            FaintOverlay faintOverlay = new FaintOverlay(false, () -> {
+                if (timeSystem != null) {
+                    timeSystem.advanceToNextDay();
+                    levelManager.getPendingNPCSpawns().clear();
+                    levelManager.getPendingNPCSpawns().add(new LevelManager.NPCSpawnConfig("Guider", 1792, 1024, false));
+                    levelManager.getPendingNPCSpawns().add(new LevelManager.NPCSpawnConfig("Trader", 1600, 1024, false));
+                    System.out.println("[NPC Cache] Cached morning transitions via faint: NPCs are visible");
+                }
+
+                if (statusBarsView != null) {
+                    statusBarsView.setHealth(statusBarsView.getMaxHealth() * 0.5);
+                    statusBarsView.setHunger(statusBarsView.getMaxHunger() * 0.5);
+                }
+
+                lastHungerDrainTime = -1;
+                lastStarveHPTime = -1;
+
+                app.updateLevel("Main_house.tmx", 550, 350);
+                isFainted = false;
+            });
+            faintOverlay.show();
+        } else {
+            isDead = true;
+            System.out.println("--- Player Permanent Death / Bankruptcy! ---");
+
+            // Block movement immediately
+            if (player != null && player.hasComponent(PhysicsComponent.class)) {
+                player.getComponent(PhysicsComponent.class).setVelocityX(0);
+                player.getComponent(PhysicsComponent.class).setVelocityY(0);
+            }
+
+            FaintOverlay faintOverlay = new FaintOverlay(true, null);
+            faintOverlay.show();
         }
     }
 

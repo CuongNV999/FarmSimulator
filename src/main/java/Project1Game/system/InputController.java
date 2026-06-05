@@ -21,6 +21,8 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.ScrollEvent;
+import java.util.Map;
+import java.util.HashMap;
 
 public class InputController {
     private static boolean shiftHeld = false;
@@ -28,6 +30,53 @@ public class InputController {
     private double lastMouseY;
     private boolean isDraggingCamera = false;
     private String lastFarmedCell = "";
+
+    private static final Map<String, KeyCode> keybindings = new HashMap<>();
+
+    static {
+        keybindings.put("Move Right", KeyCode.D);
+        keybindings.put("Move Left", KeyCode.A);
+        keybindings.put("Move Up", KeyCode.W);
+        keybindings.put("Move Down", KeyCode.S);
+        keybindings.put("Interact Action Key", KeyCode.E);
+        keybindings.put("Follow Animal", KeyCode.G);
+        keybindings.put("Use Tool Keyboard", KeyCode.F);
+    }
+
+    public static KeyCode getKey(String action) {
+        return keybindings.getOrDefault(action, KeyCode.UNDEFINED);
+    }
+
+    public static Map<String, KeyCode> getKeybindings() {
+        return keybindings;
+    }
+
+    public static void rebind(String actionName, KeyCode newKey) {
+        Input input = FXGL.getInput();
+        UserAction action = input.getActionByName(actionName);
+        if (action != null && newKey != KeyCode.UNDEFINED) {
+            String duplicateActionName = null;
+            for (var entry : keybindings.entrySet()) {
+                if (entry.getValue() == newKey && !entry.getKey().equals(actionName)) {
+                    duplicateActionName = entry.getKey();
+                    break;
+                }
+            }
+
+            if (duplicateActionName != null) {
+                KeyCode oldKey = keybindings.get(actionName);
+                keybindings.put(duplicateActionName, oldKey);
+                UserAction duplicateAction = input.getActionByName(duplicateActionName);
+                if (duplicateAction != null) {
+                    input.rebind(duplicateAction, oldKey);
+                }
+            }
+
+            input.rebind(action, newKey);
+            keybindings.put(actionName, newKey);
+            System.out.println("[Rebind] Action '" + actionName + "' bound to: " + newKey);
+        }
+    }
 
     public static boolean isShiftHeld() {
         return shiftHeld;
@@ -37,11 +86,19 @@ public class InputController {
         Input input = FXGL.getInput();
 
         input.addEventFilter(javafx.scene.input.KeyEvent.KEY_PRESSED, e -> {
+            if (app.getPlayerStateManager().isFainted()) {
+                e.consume();
+                return;
+            }
             if (e.getCode() == KeyCode.SHIFT) {
                 shiftHeld = true;
             }
         });
         input.addEventFilter(javafx.scene.input.KeyEvent.KEY_RELEASED, e -> {
+            if (app.getPlayerStateManager().isFainted()) {
+                e.consume();
+                return;
+            }
             if (e.getCode() == KeyCode.SHIFT) {
                 shiftHeld = false;
             }
@@ -66,7 +123,7 @@ public class InputController {
             protected void onActionEnd() {
                 app.getPlayer().getComponent(PhysicsComponent.class).setVelocityX(0);
             }
-        }, KeyCode.D);
+        }, keybindings.get("Move Right"));
 
         input.addAction(new UserAction("Move Left") {
             @Override
@@ -86,7 +143,7 @@ public class InputController {
             protected void onActionEnd() {
                 app.getPlayer().getComponent(PhysicsComponent.class).setVelocityX(0);
             }
-        }, KeyCode.A);
+        }, keybindings.get("Move Left"));
 
         input.addAction(new UserAction("Move Up") {
             @Override
@@ -106,7 +163,7 @@ public class InputController {
             protected void onActionEnd() {
                 app.getPlayer().getComponent(PhysicsComponent.class).setVelocityY(0);
             }
-        }, KeyCode.W);
+        }, keybindings.get("Move Up"));
 
         input.addAction(new UserAction("Move Down") {
             @Override
@@ -126,7 +183,7 @@ public class InputController {
             protected void onActionEnd() {
                 app.getPlayer().getComponent(PhysicsComponent.class).setVelocityY(0);
             }
-        }, KeyCode.S);
+        }, keybindings.get("Move Down"));
 
         // 2. PHÍM TƯƠNG TÁC ĐA NĂNG
         input.addAction(new UserAction("Interact Action Key") {
@@ -213,7 +270,7 @@ public class InputController {
                     }
                 }
             }
-        }, KeyCode.E);
+        }, keybindings.get("Interact Action Key"));
 
         // PHÍM CHO ĐỘNG VẬT ĐI THEO NGƯỜI CHƠI (KeyCode.G)
         input.addAction(new UserAction("Follow Animal") {
@@ -260,7 +317,7 @@ public class InputController {
                     }
                 }
             }
-        }, KeyCode.G);
+        }, keybindings.get("Follow Animal"));
 
         // 3. SỬ DỤNG CÔNG CỤ
         input.addAction(new UserAction("Use Tool Keyboard") {
@@ -268,7 +325,7 @@ public class InputController {
             protected void onActionBegin() {
                 handleUseItem(app);
             }
-        }, KeyCode.F);
+        }, keybindings.get("Use Tool Keyboard"));
 
         input.addAction(new UserAction("Use Tool Mouse") {
             @Override
