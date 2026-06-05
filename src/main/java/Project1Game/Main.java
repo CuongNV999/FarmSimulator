@@ -248,6 +248,7 @@ public class Main extends GameApplication {
     private String currentMap = "Main_level.tmx"; // Bản đồ hiện tại
     private Map<String, SaveData> mapStates = new HashMap<>(); // Lưu trạng thái các bản đồ
     private boolean shouldLoadSaveOnStart = false; // Flag to load save game on startup
+    private boolean isLevelTransitioning = false; // Guard to prevent input race conditions during map changes
     private Point2D lastOutdoorPosition = null;
 
     // --- TMX Map for Overhead querying ---
@@ -594,159 +595,164 @@ public class Main extends GameApplication {
      * Phương thức hỗ trợ nạp map và cấu hình lại toàn bộ hệ thống (Player, Camera)
      */
     private void updateLevel(String newMapName, double x, double y) {
-        int tempMoney = 1000;
-        String tempSkin = PlayerComponent.SELECTED_SKIN;
-        if (player != null && player.isActive() && player.hasComponent(PlayerComponent.class)) {
-            PlayerComponent pc = player.getComponent(PlayerComponent.class);
-            tempMoney = pc.getMoney();
-            tempSkin = pc.getCurrentSkin();
-        }
-
-        // 1. LƯU TRẠNG THÁI BẢN ĐỒ HIỆN TẠI (nếu có)
-        // CHỈ LƯU NẾU PLAYER ĐÃ TỒN TẠI (không phải lần tải map đầu tiên)
-        if (player != null && currentMap != null) {
-            SaveData currentMapState = new SaveData();
-            saveLoadSystem.save(currentMapState, true); // Lưu trạng thái các thực thể động của bản đồ hiện tại (truyền
-                                                        // true cho chuyển cảnh)
-            mapStates.put(currentMap, currentMapState); // Lưu vào mapStates
-            System.out.println("Đã lưu trạng thái bản đồ: " + currentMap);
-        }
-
-        // 2. TẢI BẢN ĐỒ MỚI
-        currentMap = newMapName; // Cập nhật bản đồ hiện tại
-        FXGL.setLevelFromMap(newMapName);
-
-        // Load the TMX map details to query overhead tiles
-        try (java.io.InputStream is = FXGL.getAssetLoader().getStream("levels/" + newMapName)) {
-            com.almasb.fxgl.entity.level.tiled.TMXLevelLoader loader = new com.almasb.fxgl.entity.level.tiled.TMXLevelLoader();
-            currentTMXMap = loader.parse(is);
-            overheadLayerData = null;
-            if (currentTMXMap != null) {
-                currentTMXMapWidth = currentTMXMap.getWidth();
-                currentTMXMapHeight = currentTMXMap.getHeight();
-                for (com.almasb.fxgl.entity.level.tiled.Layer layer : currentTMXMap.getLayers()) {
-                    if (layer.getName().equalsIgnoreCase("OverheadLayer")) {
-                        overheadLayerData = layer.getData();
-                        break;
-                    }
-                }
+        isLevelTransitioning = true;
+        try {
+            int tempMoney = 1000;
+            String tempSkin = PlayerComponent.SELECTED_SKIN;
+            if (player != null && player.isActive() && player.hasComponent(PlayerComponent.class)) {
+                PlayerComponent pc = player.getComponent(PlayerComponent.class);
+                tempMoney = pc.getMoney();
+                tempSkin = pc.getCurrentSkin();
             }
-        } catch (Exception e) {
-            System.err.println("Error loading TMX map details: " + e.getMessage());
-            currentTMXMap = null;
-            overheadLayerData = null;
-        }
-        overheadLayerEntity = null;
 
-        // Clear hidden NPCs from the previous level
-        Project1Game.component.npc.NPCBehaviorComponent.clearHiddenNPCs();
-
-        // Configure weather visuals and night lighting based on the environment
-        if (newMapName.equals("Main_house.tmx")) {
-            WeatherSystem.getInstance().setVisualsEnabled(false);
-            if (nightOverlay != null) {
-                nightOverlay.setEnabled(false);
+            // 1. LƯU TRẠNG THÁI BẢN ĐỒ HIỆN TẠI (nếu có)
+            // CHỈ LƯU NẾU PLAYER ĐÃ TỒN TẠI (không phải lần tải map đầu tiên)
+            if (player != null && currentMap != null) {
+                SaveData currentMapState = new SaveData();
+                saveLoadSystem.save(currentMapState, true); // Lưu trạng thái các thực thể động của bản đồ hiện tại (truyền
+                                                            // true cho chuyển cảnh)
+                mapStates.put(currentMap, currentMapState); // Lưu vào mapStates
+                System.out.println("Đã lưu trạng thái bản đồ: " + currentMap);
             }
-        } else {
-            WeatherSystem.getInstance().setVisualsEnabled(true);
-            if (nightOverlay != null) {
-                nightOverlay.setEnabled(true);
-            }
-        }
 
-        // 3. TÁI TẠO PLAYER VÀ SELECTOR
-        player = FXGL.getGameWorld().getSingleton(EntityType.PLAYER);
-        if (player.hasComponent(PhysicsComponent.class)) {
-            player.getComponent(PhysicsComponent.class).overwritePosition(new Point2D(x, y));
-        } else {
-            player.setPosition(new Point2D(x, y));
-        }
+            // 2. TẢI BẢN ĐỒ MỚI
+            currentMap = newMapName; // Cập nhật bản đồ hiện tại
+            FXGL.setLevelFromMap(newMapName);
 
-        PlayerComponent newPc = player.getComponent(PlayerComponent.class);
-        if (newPc != null) {
-            newPc.setMoney(tempMoney);
-            newPc.changeSkin(tempSkin);
-        }
-
-        if (tradingView != null) {
-            FXGL.getGameScene().removeUINode(tradingView);
-        }
-        if (adminView != null) {
-            FXGL.getGameScene().removeUINode(adminView);
-        }
-        tradingView = new TradingView(inventory, newPc);
-        FXGL.getGameScene().addUINode(tradingView);
-
-        adminView = new AdminView(inventory, newPc);
-        FXGL.getGameScene().addUINode(adminView);
-
-        bindPlayerUI();
-        if (selector == null)
-            selector = FXGL.spawn("Selector"); // Đảm bảo selector được spawn nếu chưa có
-
-        // 4. CẤU HÌNH CAMERA & KÍCH THƯỚC BẢN ĐỒ
-        double mapW = 3520;
-        double mapH = 2048;
-        if (newMapName.equals("Main_house.tmx")) {
-            mapW = 1024;
-            mapH = 1024;
-        } else {
-            // Tự động tính toán dựa trên các thực thể có sẵn
-            double maxW = FXGL.getGameWorld().getEntitiesByType(EntityType.FIELD, EntityType.WALL, EntityType.COLLISION)
-                    .stream()
-                    .mapToDouble(e -> e.getRightX()).max().orElse(3520);
-            double maxH = FXGL.getGameWorld().getEntitiesByType(EntityType.FIELD, EntityType.WALL, EntityType.COLLISION)
-                    .stream()
-                    .mapToDouble(e -> e.getBottomY()).max().orElse(2048);
-            mapW = Math.max(mapW, maxW);
-            mapH = Math.max(mapH, maxH);
-        }
-
-        currentMapWidth = mapW;
-        currentMapHeight = mapH;
-
-        FXGL.getGameScene().getViewport().setBounds(0, 0, (int) mapW, (int) mapH);
-        FXGL.getGameScene().getViewport().bindToEntity(player, FXGL.getAppWidth() / 2.0, FXGL.getAppHeight() / 2.0);
-        FXGL.getGameScene().getViewport().setLazy(true);
-
-        // Tạo biên bản đồ (Wall) bao quanh map để chặn người chơi đi ra ngoài
-        FXGL.getGameWorld().getEntitiesByType(EntityType.WALL).forEach(Entity::removeFromWorld);
-        spawnBoundaries((int) mapW, (int) mapH);
-
-        // 5. TẢI TRẠNG THÁI BẢN ĐỒ MỚI (nếu có)
-        if (mapStates.containsKey(newMapName)) {
-            SaveData newMapState = mapStates.get(newMapName);
-            saveLoadSystem.load(newMapState, true); // Tải trạng thái đã lưu cho bản đồ mới (truyền true cho chuyển
-                                                    // cảnh)
-            System.out.println("Đã tải trạng thái bản đồ: " + newMapName);
-        } else {
-            // Nếu chưa có trạng thái lưu, đây là lần đầu tiên tải bản đồ này
-            // Đảm bảo các thực thể SOIL được cập nhật texture
-            FXGL.getGameWorld().getEntitiesByType(EntityType.SOIL)
-                    .forEach(s -> s.getComponent(SoilComponent.class).updateTexture());
-            System.out.println("Tải bản đồ mới lần đầu: " + newMapName);
-            if (newMapName.equals("Main_level.tmx")) {
-                spawnInitialMonsters();
-            }
-        }
-
-        // Apply pending NPC spawns if returning to main level
-        if (newMapName.equals("Main_level.tmx") && !pendingNPCSpawns.isEmpty()) {
-            System.out.println("[NPC Cache] Applying cached spawn configs...");
-            for (NPCSpawnConfig config : pendingNPCSpawns) {
-                EntityType type = config.type.equalsIgnoreCase("Guider") ? EntityType.GUIDER : EntityType.TRADER;
-                FXGL.getGameWorld().getEntitiesByType(type).forEach(npc -> {
-                    NPCBehaviorComponent ai = npc.getComponentOptional(NPCBehaviorComponent.class).orElse(null);
-                    if (ai != null) {
-                        if (config.isHidden) {
-                            ai.disappear();
-                        } else {
-                            ai.reappear();
+            // Load the TMX map details to query overhead tiles
+            try (java.io.InputStream is = FXGL.getAssetLoader().getStream("levels/" + newMapName)) {
+                com.almasb.fxgl.entity.level.tiled.TMXLevelLoader loader = new com.almasb.fxgl.entity.level.tiled.TMXLevelLoader();
+                currentTMXMap = loader.parse(is);
+                overheadLayerData = null;
+                if (currentTMXMap != null) {
+                    currentTMXMapWidth = currentTMXMap.getWidth();
+                    currentTMXMapHeight = currentTMXMap.getHeight();
+                    for (com.almasb.fxgl.entity.level.tiled.Layer layer : currentTMXMap.getLayers()) {
+                        if (layer.getName().equalsIgnoreCase("OverheadLayer")) {
+                            overheadLayerData = layer.getData();
+                            break;
                         }
                     }
-                });
+                }
+            } catch (Exception e) {
+                System.err.println("Error loading TMX map details: " + e.getMessage());
+                currentTMXMap = null;
+                overheadLayerData = null;
             }
-            pendingNPCSpawns.clear();
+            overheadLayerEntity = null;
+
+            // Clear hidden NPCs from the previous level
+            Project1Game.component.npc.NPCBehaviorComponent.clearHiddenNPCs();
+
+            // Configure weather visuals and night lighting based on the environment
+            if (newMapName.equals("Main_house.tmx")) {
+                WeatherSystem.getInstance().setVisualsEnabled(false);
+                if (nightOverlay != null) {
+                    nightOverlay.setEnabled(false);
+                }
+            } else {
+                WeatherSystem.getInstance().setVisualsEnabled(true);
+                if (nightOverlay != null) {
+                    nightOverlay.setEnabled(true);
+                }
+            }
+
+            // 3. TÁI TẠO PLAYER VÀ SELECTOR
+            player = FXGL.getGameWorld().getSingleton(EntityType.PLAYER);
+            if (player.hasComponent(PhysicsComponent.class)) {
+                player.getComponent(PhysicsComponent.class).overwritePosition(new Point2D(x, y));
+            } else {
+                player.setPosition(new Point2D(x, y));
+            }
+
+            PlayerComponent newPc = player.getComponent(PlayerComponent.class);
+            if (newPc != null) {
+                newPc.setMoney(tempMoney);
+                newPc.changeSkin(tempSkin);
+            }
+
+            if (tradingView != null) {
+                FXGL.getGameScene().removeUINode(tradingView);
+            }
+            if (adminView != null) {
+                FXGL.getGameScene().removeUINode(adminView);
+            }
+            tradingView = new TradingView(inventory, newPc);
+            FXGL.getGameScene().addUINode(tradingView);
+
+            adminView = new AdminView(inventory, newPc);
+            FXGL.getGameScene().addUINode(adminView);
+
+            bindPlayerUI();
+            if (selector == null)
+                selector = FXGL.spawn("Selector"); // Đảm bảo selector được spawn nếu chưa có
+
+            // 4. CẤU HÌNH CAMERA & KÍCH THƯỚC BẢN ĐỒ
+            double mapW = 3520;
+            double mapH = 2048;
+            if (newMapName.equals("Main_house.tmx")) {
+                mapW = 1024;
+                mapH = 1024;
+            } else {
+                // Tự động tính toán dựa trên các thực thể có sẵn
+                double maxW = FXGL.getGameWorld().getEntitiesByType(EntityType.FIELD, EntityType.WALL, EntityType.COLLISION)
+                        .stream()
+                        .mapToDouble(e -> e.getRightX()).max().orElse(3520);
+                double maxH = FXGL.getGameWorld().getEntitiesByType(EntityType.FIELD, EntityType.WALL, EntityType.COLLISION)
+                        .stream()
+                        .mapToDouble(e -> e.getBottomY()).max().orElse(2048);
+                mapW = Math.max(mapW, maxW);
+                mapH = Math.max(mapH, maxH);
+            }
+
+            currentMapWidth = mapW;
+            currentMapHeight = mapH;
+
+            FXGL.getGameScene().getViewport().setBounds(0, 0, (int) mapW, (int) mapH);
+            FXGL.getGameScene().getViewport().bindToEntity(player, FXGL.getAppWidth() / 2.0, FXGL.getAppHeight() / 2.0);
+            FXGL.getGameScene().getViewport().setLazy(true);
+
+            // Tạo biên bản đồ (Wall) bao quanh map để chặn người chơi đi ra ngoài
+            FXGL.getGameWorld().getEntitiesByType(EntityType.WALL).forEach(Entity::removeFromWorld);
+            spawnBoundaries((int) mapW, (int) mapH);
+
+            // 5. TẢI TRẠNG THÁI BẢN ĐỒ MỚI (nếu có)
+            if (mapStates.containsKey(newMapName)) {
+                SaveData newMapState = mapStates.get(newMapName);
+                saveLoadSystem.load(newMapState, true); // Tải trạng thái đã lưu cho bản đồ mới (truyền true cho chuyển
+                                                        // cảnh)
+                System.out.println("Đã tải trạng thái bản đồ: " + newMapName);
+            } else {
+                // Nếu chưa có trạng thái lưu, đây là lần đầu tiên tải bản đồ này
+                // Đảm bảo các thực thể SOIL được cập nhật texture
+                FXGL.getGameWorld().getEntitiesByType(EntityType.SOIL)
+                        .forEach(s -> s.getComponent(SoilComponent.class).updateTexture());
+                System.out.println("Tải bản đồ mới lần đầu: " + newMapName);
+                if (newMapName.equals("Main_level.tmx")) {
+                    spawnInitialMonsters();
+                }
+            }
+
+            // Apply pending NPC spawns if returning to main level
+            if (newMapName.equals("Main_level.tmx") && !pendingNPCSpawns.isEmpty()) {
+                System.out.println("[NPC Cache] Applying cached spawn configs...");
+                for (NPCSpawnConfig config : pendingNPCSpawns) {
+                    EntityType type = config.type.equalsIgnoreCase("Guider") ? EntityType.GUIDER : EntityType.TRADER;
+                    FXGL.getGameWorld().getEntitiesByType(type).forEach(npc -> {
+                        NPCBehaviorComponent ai = npc.getComponentOptional(NPCBehaviorComponent.class).orElse(null);
+                        if (ai != null) {
+                            if (config.isHidden) {
+                                ai.disappear();
+                            } else {
+                                ai.reappear();
+                            }
+                        }
+                    });
+                }
+                pendingNPCSpawns.clear();
+            }
+        } finally {
+            isLevelTransitioning = false;
         }
     }
 
@@ -826,8 +832,8 @@ public class Main extends GameApplication {
                         if (ai != null && !ai.isGoingHome() && !ai.isHidden()) {
                             FXGL.getGameWorld().getEntitiesByType(EntityType.GUIDER_IN).stream().findFirst()
                                     .ifPresent(target -> {
-                                        nearbyNPC = null;
-                                        ai.goHome(target);
+                                         nearbyNPC = null;
+                                         ai.goHome(target);
                                     });
                         }
                     });
@@ -837,11 +843,11 @@ public class Main extends GameApplication {
                         if (ai != null && !ai.isGoingHome() && !ai.isHidden()) {
                             FXGL.getGameWorld().getEntitiesByType(EntityType.TRADER_IN).stream().findFirst()
                                     .ifPresent(target -> {
-                                        if (tradingView != null && tradingView.isOpen()) {
-                                            tradingView.toggle();
-                                        }
-                                        nearbyNPC = null;
-                                        ai.goHome(target);
+                                         if (tradingView != null && tradingView.isOpen()) {
+                                             tradingView.toggle();
+                                         }
+                                         nearbyNPC = null;
+                                         ai.goHome(target);
                                     });
                         }
                     });
@@ -1070,30 +1076,140 @@ public class Main extends GameApplication {
             }
         }, KeyCode.S);
 
-        // 2. TƯƠNG TÁC TỔNG HỢP (NPC / THU HOẠCH / CỬA)
+        // 2. PHÍM TƯƠNG TÁC ĐA NĂNG (CONTEXTUAL INTERACTION / HARVESTING TRIGGER - KEYCODE.E)
         input.addAction(new UserAction("Interact Action Key") {
             @Override
             protected void onActionBegin() {
-                Entity target = null;
+                if (isLevelTransitioning) return;
+
+                // ƯU TIÊN 1: [Level Transition & Sleep]
+                // Dịch chuyển bản đồ (Door) hoặc Đi ngủ (Sleep)
+                if (nearbyDoor != null && nearbyDoor.isActive()) {
+                    handleDoorInteraction(nearbyDoor);
+                    return;
+                }
+                if (nearbySleep != null && nearbySleep.isActive()) {
+                    handleSleepInteraction();
+                    return;
+                }
+
+                // ƯU TIÊN 2: [Animal Harvesting / Product Collection]
+                // Tìm động vật gần nhất. Nếu trong phạm vi tương tác và đã lớn hoàn toàn (isReadyToHarvest), thực hiện thu hoạch.
+                if (player != null) {
+                    Entity closestAnimal = null;
+                    double closestDist = Double.MAX_VALUE;
+                    double interactionRange = 150.0;
+
+                    java.util.List<Entity> animals = FXGL.getGameWorld().getEntitiesByType(EntityType.ANIMAL);
+                    for (Entity animal : animals) {
+                        double dist = player.getCenter().distance(animal.getCenter());
+                        if (dist < closestDist) {
+                            closestDist = dist;
+                            closestAnimal = animal;
+                        }
+                    }
+
+                    if (closestAnimal != null && closestDist <= interactionRange) {
+                        BaseAnimalComponent bac = closestAnimal.getComponentOptional(BaseAnimalComponent.class).orElse(null);
+                        if (bac != null && bac.isReadyToHarvest()) {
+                            Project1Game.model.Inventory inv = getInventory();
+                            if (inv != null) {
+                                inv.addItem(bac.getAdultItem(), 1);
+                                Project1Game.Main.pushNotification("Đã thu hoạch một " + bac.getAdultName() + "!");
+                                closestAnimal.removeFromWorld();
+                            }
+                            return;
+                        }
+                    }
+                }
+
+                // ƯU TIÊN 3: [Crop Harvesting]
+                // Kiểm tra xem ô chọn đất hiện tại có nông sản chín hay không và thực hiện thu hoạch.
+                if (selector != null && selector.getViewComponent().getOpacity() >= 1.0) {
+                    boolean ripeCropTargeted = false;
+                    for (EntityType t : Project1Game.core.CropRegistry.getInstance().getSupportedCrops()) {
+                        boolean hasRipeCrop = FXGL.getGameWorld().getEntitiesByType(t).stream()
+                                .anyMatch(c -> c.getPosition().distance(selector.getPosition()) < 10
+                                        && c.getComponent(CropComponent.class).isRipe());
+                        if (hasRipeCrop) {
+                            ripeCropTargeted = true;
+                            break;
+                        }
+                    }
+                    if (ripeCropTargeted) {
+                        farmingSystem.handleHarvest(selector);
+                        return;
+                    }
+                }
+
+                // ƯU TIÊN 4: [NPC / General Proximity Interactions]
+                // Tương tác NPC hoặc các thực thể tổng quát khác có InteractableComponent
                 if (player != null) {
                     double radius = 150.0;
                     javafx.geometry.Point2D playerCenter = player.getCenter();
                     javafx.geometry.Rectangle2D range = new javafx.geometry.Rectangle2D(
                             playerCenter.getX() - radius, playerCenter.getY() - radius,
                             radius * 2, radius * 2);
-                    target = FXGL.getGameWorld().getEntitiesInRange(range).stream()
-                            .filter(e -> e.hasComponent(Project1Game.interaction.InteractableComponent.class))
+                    Entity generalTarget = FXGL.getGameWorld().getEntitiesInRange(range).stream()
+                            .filter(e -> e.hasComponent(Project1Game.interaction.InteractableComponent.class)
+                                      && !e.isType(EntityType.ANIMAL)) // Bỏ qua động vật (xử lý riêng bằng G hoặc thu hoạch ở E)
                             .findFirst()
                             .orElse(null);
-                }
 
-                if (target != null) {
-                    target.getComponent(Project1Game.interaction.InteractableComponent.class).interact(player);
-                } else {
-                    farmingSystem.handleHarvest(selector);
+                    if (generalTarget != null) {
+                        generalTarget.getComponent(Project1Game.interaction.InteractableComponent.class).interact(player);
+                    }
                 }
             }
         }, KeyCode.E);
+
+        // PHÍM CHO ĐỘNG VẬT ĐI THEO NGƯỜI CHƠI (KeyCode.G)
+        input.addAction(new UserAction("Follow Animal") {
+            @Override
+            protected void onActionBegin() {
+                if (isLevelTransitioning) return;
+                if (player != null) {
+                    double radius = 150.0;
+                    javafx.geometry.Point2D playerCenter = player.getCenter();
+                    Entity closestAnimal = null;
+                    double closestDist = Double.MAX_VALUE;
+
+                    java.util.List<Entity> animals = FXGL.getGameWorld().getEntitiesByType(EntityType.ANIMAL);
+                    for (Entity animal : animals) {
+                        double dist = playerCenter.distance(animal.getCenter());
+                        if (dist < closestDist) {
+                            closestDist = dist;
+                            closestAnimal = animal;
+                        }
+                    }
+
+                    if (closestAnimal != null && closestDist <= radius) {
+                        BaseAnimalComponent bac = closestAnimal.getComponentOptional(BaseAnimalComponent.class).orElse(null);
+                        if (bac != null) {
+                            // Bật / tắt trạng thái đi theo
+                            bac.setFollowing(!bac.isFollowing());
+
+                            // Nếu động vật dừng lại, triệt tiêu vận tốc vật lý
+                            if (!bac.isFollowing()) {
+                                if (bac.getEntity().hasComponent(PhysicsComponent.class)) {
+                                    PhysicsComponent p = bac.getEntity().getComponent(PhysicsComponent.class);
+                                    p.setVelocityX(0);
+                                    p.setVelocityY(0);
+                                }
+                            }
+
+                            // Phản hồi thông báo
+                            String name = bac.isReadyToHarvest() ? bac.getAdultName() : bac.getBabyName();
+                            if (bac.isFollowing()) {
+                                Project1Game.Main.pushNotification(name + " đang đi theo bạn!");
+                            } else {
+                                Project1Game.Main.pushNotification(name + " đã dừng lại.");
+                            }
+                        }
+                    }
+                }
+            }
+        }, KeyCode.G);
 
         // 3. SỬ DỤNG CÔNG CỤ (F & CLICK CHUỘT)
         input.addAction(new UserAction("Use Tool Keyboard") {
@@ -1138,7 +1254,7 @@ public class Main extends GameApplication {
 
         input.addAction(new UserAction("Test Quick Water") {
             @Override
-            protected void onActionBegin() { // Đã sửa lỗi "void void"
+            protected void onActionBegin() {
                 System.out.println("Test: Ép tưới cây bằng phím Q!");
                 farmingSystem.useWateringCan(selector);
             }
@@ -1351,56 +1467,61 @@ public class Main extends GameApplication {
     }
 
     public void updateLevelFromSave(String newMapName, double x, double y) {
-        currentMap = newMapName;
-        FXGL.setLevelFromMap(newMapName);
-        player = FXGL.getGameWorld().getSingleton(EntityType.PLAYER);
-        if (player.hasComponent(PhysicsComponent.class)) {
-            player.getComponent(PhysicsComponent.class).overwritePosition(new Point2D(x, y));
-        } else {
-            player.setPosition(new Point2D(x, y));
+        isLevelTransitioning = true;
+        try {
+            currentMap = newMapName;
+            FXGL.setLevelFromMap(newMapName);
+            player = FXGL.getGameWorld().getSingleton(EntityType.PLAYER);
+            if (player.hasComponent(PhysicsComponent.class)) {
+                player.getComponent(PhysicsComponent.class).overwritePosition(new Point2D(x, y));
+            } else {
+                player.setPosition(new Point2D(x, y));
+            }
+            PlayerComponent newPc = player.getComponent(PlayerComponent.class);
+            if (tradingView != null) {
+                FXGL.getGameScene().removeUINode(tradingView);
+            }
+            if (adminView != null) {
+                FXGL.getGameScene().removeUINode(adminView);
+            }
+            tradingView = new TradingView(inventory, newPc);
+            FXGL.getGameScene().addUINode(tradingView);
+
+            adminView = new AdminView(inventory, newPc);
+            FXGL.getGameScene().addUINode(adminView);
+
+            bindPlayerUI();
+            if (selector == null)
+                selector = FXGL.spawn("Selector");
+
+            double mapW = 3520;
+            double mapH = 2048;
+            if (newMapName.equals("Main_house.tmx")) {
+                mapW = 1024;
+                mapH = 1024;
+            } else {
+                double maxW = FXGL.getGameWorld().getEntitiesByType(EntityType.FIELD, EntityType.WALL, EntityType.COLLISION)
+                        .stream()
+                        .mapToDouble(e -> e.getRightX()).max().orElse(3520);
+                double maxH = FXGL.getGameWorld().getEntitiesByType(EntityType.FIELD, EntityType.WALL, EntityType.COLLISION)
+                        .stream()
+                        .mapToDouble(e -> e.getBottomY()).max().orElse(2048);
+                mapW = Math.max(mapW, maxW);
+                mapH = Math.max(mapH, maxH);
+            }
+
+            currentMapWidth = mapW;
+            currentMapHeight = mapH;
+
+            FXGL.getGameScene().getViewport().setBounds(0, 0, (int) mapW, (int) mapH);
+            FXGL.getGameScene().getViewport().bindToEntity(player, FXGL.getAppWidth() / 2.0, FXGL.getAppHeight() / 2.0);
+            FXGL.getGameScene().getViewport().setLazy(true);
+
+            FXGL.getGameWorld().getEntitiesByType(EntityType.WALL).forEach(Entity::removeFromWorld);
+            spawnBoundaries((int) mapW, (int) mapH);
+        } finally {
+            isLevelTransitioning = false;
         }
-        PlayerComponent newPc = player.getComponent(PlayerComponent.class);
-        if (tradingView != null) {
-            FXGL.getGameScene().removeUINode(tradingView);
-        }
-        if (adminView != null) {
-            FXGL.getGameScene().removeUINode(adminView);
-        }
-        tradingView = new TradingView(inventory, newPc);
-        FXGL.getGameScene().addUINode(tradingView);
-
-        adminView = new AdminView(inventory, newPc);
-        FXGL.getGameScene().addUINode(adminView);
-
-        bindPlayerUI();
-        if (selector == null)
-            selector = FXGL.spawn("Selector");
-
-        double mapW = 3520;
-        double mapH = 2048;
-        if (newMapName.equals("Main_house.tmx")) {
-            mapW = 1024;
-            mapH = 1024;
-        } else {
-            double maxW = FXGL.getGameWorld().getEntitiesByType(EntityType.FIELD, EntityType.WALL, EntityType.COLLISION)
-                    .stream()
-                    .mapToDouble(e -> e.getRightX()).max().orElse(3520);
-            double maxH = FXGL.getGameWorld().getEntitiesByType(EntityType.FIELD, EntityType.WALL, EntityType.COLLISION)
-                    .stream()
-                    .mapToDouble(e -> e.getBottomY()).max().orElse(2048);
-            mapW = Math.max(mapW, maxW);
-            mapH = Math.max(mapH, maxH);
-        }
-
-        currentMapWidth = mapW;
-        currentMapHeight = mapH;
-
-        FXGL.getGameScene().getViewport().setBounds(0, 0, (int) mapW, (int) mapH);
-        FXGL.getGameScene().getViewport().bindToEntity(player, FXGL.getAppWidth() / 2.0, FXGL.getAppHeight() / 2.0);
-        FXGL.getGameScene().getViewport().setLazy(true);
-
-        FXGL.getGameWorld().getEntitiesByType(EntityType.WALL).forEach(Entity::removeFromWorld);
-        spawnBoundaries((int) mapW, (int) mapH);
     }
 
     public void spawnInitialMonsters() {
