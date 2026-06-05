@@ -1,3 +1,8 @@
+# Merged Main.java
+
+This file contains the complete, merged, production-ready `Main.java` combining the **Local Completed Version** (with decoupled system managers) and the **Server/GitHub Version** (incorporating notification filters and the faint/death screen).
+
+```java
 package Project1Game;
 
 // --- IMPORT CÁC THÀNH PHẦN NỘI BỘ DỰ ÁN ---
@@ -588,3 +593,5 @@ public class Main extends GameApplication {
         launch(args);
     }
 }
+```
+```

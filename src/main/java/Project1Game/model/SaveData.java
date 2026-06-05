@@ -61,9 +61,6 @@ public class SaveData implements Serializable {
         private static final long serialVersionUID = 1L;
         public double x, y;
         public String type; // Boar, Fox, Deer, Hare
-        public boolean isTemporary;
-        public double lifeTimer;
-        public boolean isReturning;
     }
 
     public static class QuestSave implements Serializable {

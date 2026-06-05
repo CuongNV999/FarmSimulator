@@ -378,13 +378,13 @@
  </objectgroup>
  <objectgroup id="34" name="Bush">
   <object id="7285" type="Bush" x="1970" y="1985" width="1579" height="57"/>
-  <object id="7308" type="Bush" x="29" y="1" width="3462" height="54"/>
-  <object id="7309" type="Bush" x="-32" y="0" width="86" height="2037"/>
+  <object id="7308" type="Bush" x="29" y="1" width="3462" height="66"/>
+  <object id="7309" type="Bush" x="-32" y="0" width="98" height="2037"/>
   <object id="7310" type="Bush" x="30" y="1983" width="1698" height="60"/>
   <object id="7311" type="Bush" x="438" y="1142" width="430" height="82"/>
-  <object id="7312" type="Bush" x="430" y="1219" width="99" height="780"/>
-  <object id="7313" type="Bush" x="433" y="910" width="441" height="87"/>
-  <object id="7315" type="Bush" x="3030" y="1244" width="88" height="752"/>
+  <object id="7312" type="Bush" x="428" y="1219" width="101" height="780"/>
+  <object id="7313" type="Bush" x="444" y="910" width="430" height="87"/>
+  <object id="7315" type="Bush" x="3030" y="1244" width="84" height="752"/>
   <object id="7316" type="Bush" x="2750" y="1242" width="286" height="71"/>
   <object id="7317" type="Bush" x="2754" y="1012" width="291" height="76"/>
   <object id="7318" type="Bush" x="3034" y="592" width="75" height="495"/>
@@ -398,7 +398,7 @@
   <object id="7326" type="Bush" x="2315" y="435" width="540" height="47"/>
   <object id="7327" type="Bush" x="2780" y="483" width="75" height="159"/>
   <object id="7328" type="Bush" x="2858" y="597" width="176" height="46"/>
-  <object id="7329" type="Bush" x="3472" y="8" width="74" height="1994"/>
+  <object id="7329" type="Bush" x="3458" y="8" width="88" height="1994"/>
  </objectgroup>
  <group id="31" name="NPC">
   <objectgroup id="28" name="Guider">

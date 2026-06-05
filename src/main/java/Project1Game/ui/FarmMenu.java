@@ -4,13 +4,14 @@ import com.almasb.fxgl.app.scene.FXGLMenu;
 import com.almasb.fxgl.app.scene.MenuType;
 import com.almasb.fxgl.dsl.FXGL;
 import Project1Game.Main;
+import Project1Game.system.InputController;
+import javafx.scene.input.KeyCode;
 
 import javafx.geometry.Pos;
 import javafx.geometry.Insets;
 import javafx.scene.control.Button;
 import javafx.scene.layout.VBox;
 import javafx.scene.layout.StackPane;
-import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.LinearGradient;
 import javafx.scene.paint.Stop;
@@ -213,9 +214,9 @@ public class FarmMenu extends FXGLMenu {
         });
         btnFullscreen[0].setText("Fullscreen: " + (FXGL.getPrimaryStage().isFullScreen() ? "ON" : "OFF"));
 
-        // 5. Controls Button
-        MenuButton btnControls = new MenuButton("Key Controls", () -> {
-            showControlsScreen(menuBox, titleContainer);
+        // 5. Controls Config
+        MenuButton btnControls = new MenuButton("Controls Config", () -> {
+            showKeybindingsScreen(menuBox, titleContainer);
         });
 
         // 6. Back Button
@@ -230,65 +231,60 @@ public class FarmMenu extends FXGLMenu {
         menuBox.getChildren().addAll(btnHpDepletion[0], btnMusic[0], btnSound[0], btnFullscreen[0], btnControls, btnBack);
     }
 
-    private void showControlsScreen(VBox menuBox, VBox titleContainer) {
+    private void showKeybindingsScreen(VBox menuBox, VBox titleContainer) {
         menuBox.getChildren().clear();
         titleContainer.getChildren().clear();
 
-        Text titleText = new Text("GAME CONTROLS");
-        titleText.setFont(GameFont.font(FontWeight.EXTRA_BOLD, 48));
+        Text titleText = new Text("KEYBINDINGS CONFIG");
+        titleText.setFont(GameFont.font(FontWeight.EXTRA_BOLD, 42));
         titleText.setFill(Color.web("#eccb58"));
-        titleText.setEffect(new DropShadow(20, Color.rgb(255, 200, 100, 0.5)));
+        titleContainer.getChildren().add(titleText);
 
-        Text subtitleText = new Text("Keyboard and Mouse Keybindings");
-        subtitleText.setFont(GameFont.font(FontWeight.BOLD, 16));
-        subtitleText.setFill(Color.web("#a0bfa7"));
-        titleContainer.getChildren().addAll(titleText, subtitleText);
+        javafx.scene.layout.GridPane grid = new javafx.scene.layout.GridPane();
+        grid.setHgap(30);
+        grid.setVgap(10);
+        grid.setAlignment(Pos.CENTER);
 
-        VBox controlsList = new VBox(8);
-        controlsList.setAlignment(Pos.CENTER);
-        controlsList.setPadding(new Insets(15));
-        controlsList.setStyle("-fx-background-color: rgba(5, 15, 10, 0.75); -fx-background-radius: 10; -fx-border-color: #355c45; -fx-border-width: 1.5; -fx-border-radius: 10;");
-        controlsList.setMaxWidth(520);
+        int row = 0;
+        for (String actionName : Project1Game.system.InputController.getKeybindings().keySet()) {
+            Text actionLabel = new Text(actionName + ":");
+            actionLabel.setFont(GameFont.font(FontWeight.BOLD, 15));
+            actionLabel.setFill(Color.WHITE);
 
-        String[][] keybindings = {
-            {"W, A, S, D", "Di chuyển nhân vật (Move)"},
-            {"Giữ SHIFT", "Chạy nhanh (Run)"},
-            {"Phím E", "Tương tác (Cửa, Giường, Thu hoạch, Nói chuyện)"},
-            {"Phím F / Chuột trái", "Sử dụng công cụ / Sử dụng vật phẩm"},
-            {"Phím G", "Gọi động vật đi theo / Dừng lại"},
-            {"Phím I / TAB", "Mở / Đóng Kho đồ (Inventory)"},
-            {"Phím R", "Đóng nhanh các cửa sổ giao diện (UI)"},
-            {"Phím ~ (Back Quote)", "Bật bảng Admin Panel (Mã: 1111/hust)"},
-            {"Phím F5 / F9", "Lưu nhanh / Tải nhanh game"}
-        };
+            KeyCode currentKey = Project1Game.system.InputController.getKey(actionName);
+            Button bindBtn = new Button(currentKey.toString());
+            bindBtn.setStyle("-fx-background-color: #254c35; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 13px; -fx-pref-width: 140; -fx-cursor: hand; -fx-background-radius: 5;");
 
-        for (String[] kb : keybindings) {
-            HBox row = new HBox(20);
-            row.setAlignment(Pos.CENTER_LEFT);
-            row.setPrefWidth(480);
-            
-            Text keyText = new Text(kb[0]);
-            keyText.setFont(GameFont.font(FontWeight.BOLD, 14));
-            keyText.setFill(Color.web("#eccb58"));
-            keyText.setWrappingWidth(160);
-            
-            Text descText = new Text(kb[1]);
-            descText.setFont(GameFont.font(FontWeight.NORMAL, 14));
-            descText.setFill(Color.WHITE);
-            descText.setWrappingWidth(300);
-            
-            row.getChildren().addAll(keyText, descText);
-            controlsList.getChildren().add(row);
+            bindBtn.setOnAction(e -> {
+                bindBtn.setText("Press any key...");
+                bindBtn.setStyle("-fx-background-color: #d9383a; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 13px; -fx-pref-width: 140;");
+
+                javafx.scene.Scene scene = bindBtn.getScene();
+                javafx.event.EventHandler<javafx.scene.input.KeyEvent> keyHandler = new javafx.event.EventHandler<>() {
+                    @Override
+                    public void handle(javafx.scene.input.KeyEvent event) {
+                        KeyCode key = event.getCode();
+                        if (key != KeyCode.ESCAPE) {
+                            Project1Game.system.InputController.rebind(actionName, key);
+                            showKeybindingsScreen(menuBox, titleContainer);
+                        } else {
+                            bindBtn.setText(currentKey.toString());
+                            bindBtn.setStyle("-fx-background-color: #254c35; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 13px; -fx-pref-width: 140;");
+                        }
+                        scene.removeEventFilter(javafx.scene.input.KeyEvent.KEY_PRESSED, this);
+                        event.consume();
+                    }
+                };
+                scene.addEventFilter(javafx.scene.input.KeyEvent.KEY_PRESSED, keyHandler);
+            });
+
+            grid.add(actionLabel, 0, row);
+            grid.add(bindBtn, 1, row);
+            row++;
         }
 
-        MenuButton btnBack = new MenuButton("Back", () -> {
-            menuBox.setTranslateY(260); // Khôi phục lại vị trí Y ban đầu của menuBox
-            showOptionsScreen(menuBox, titleContainer);
-        });
-
-        // Điều chỉnh vị trí Y để hiển thị vừa vặn danh sách
-        menuBox.setTranslateY(180);
-        menuBox.getChildren().addAll(controlsList, btnBack);
+        MenuButton btnBack = new MenuButton("Back", () -> showOptionsScreen(menuBox, titleContainer));
+        menuBox.getChildren().addAll(grid, btnBack);
     }
     private void showSkinSelectionScreen(VBox menuBox, VBox titleContainer, Main app, boolean isNewGame) {
         menuBox.getChildren().clear();

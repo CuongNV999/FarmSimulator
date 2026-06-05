@@ -5,6 +5,7 @@ import com.almasb.fxgl.entity.Entity;
 import Project1Game.Main;
 import Project1Game.core.ItemType;
 import Project1Game.ui.StatusBarsView;
+import Project1Game.system.NotificationManager;
 
 public class EatAction implements Usable {
     private final int hungerRestore;
@@ -32,7 +33,7 @@ public class EatAction implements Usable {
         double maxHealth = statusBars.getMaxHealth();
 
         if (currentHunger >= maxHunger && currentHealth >= maxHealth) {
-            Main.pushNotification("Bạn đã đầy bụng và khỏe mạnh, không cần ăn!");
+            NotificationManager.pushNotification("Bạn đã đầy bụng và khỏe mạnh, không cần ăn!");
             return;
         }
 
@@ -44,6 +45,6 @@ public class EatAction implements Usable {
         main.getInventory().removeItem(foodType, 1);
 
         // Phát tín hiệu thông báo
-        Main.pushNotification("Đã ăn " + foodType.getDisplayName() + " (+" + hungerRestore + " Đói, +" + healthRestore + " HP)");
+        NotificationManager.pushNotification("Đã ăn " + foodType.getDisplayName() + " (+" + hungerRestore + " Đói, +" + healthRestore + " HP)");
     }
 }

@@ -8,20 +8,27 @@ import com.almasb.fxgl.entity.components.CollidableComponent;
 import Project1Game.interaction.Interactable;
 import Project1Game.interaction.InteractableComponent;
 import com.almasb.fxgl.entity.Entity;
+
 import java.util.Random;
 import java.util.List;
 import java.util.ArrayList;
 
 public class NPCBehaviorComponent extends Component implements Interactable {
+    
+    public enum NPCActivityState {
+        ROAMING,
+        MOVING_TO_HOUSE,
+        MOVING_TO_WORK,
+        FLEEING
+    }
+
     private PhysicsComponent physics;
     private NPCAnimationComponent animation;
 
     private Point2D spawnPosition;
     private Point2D target = null;
-    private boolean isMovingToHouse = false;
-    private boolean isMovingToWork = false;
+    private NPCActivityState state = NPCActivityState.ROAMING;
     private double speed = 15; // NPC moves slightly slower for natural look
-
 
     private final Random random = new Random();
 
@@ -29,7 +36,6 @@ public class NPCBehaviorComponent extends Component implements Interactable {
     private List<Point2D> pathWaypoints = new ArrayList<>();
 
     // Fleeing variables
-    private boolean isFleeing = false;
     private Point2D fleeTarget = null;
     private List<Point2D> fleePathWaypoints = new ArrayList<>();
     private double fleeCheckTimer = 0.0;
@@ -86,10 +92,7 @@ public class NPCBehaviorComponent extends Component implements Interactable {
 
     private boolean firstFrame = true;
 
-    private boolean movingX = true;
     private double stuckTimer = 0.0;
-    private double escapeTimer = 0.0;
-    private Point2D escapeVelocity = Point2D.ZERO;
     private double totalHomeTimer = 0.0;
 
     @Override
@@ -126,236 +129,231 @@ public class NPCBehaviorComponent extends Component implements Interactable {
             checkForMonsters();
         }
 
-        if (isFleeing) {
-            handleFleeing(tpf);
-            return;
-        }
-
         // Cập nhật trạng thái di chuyển cho animation
         if (physics != null && animation != null) {
             boolean moving = Math.abs(physics.getVelocityX()) > 1.0 || Math.abs(physics.getVelocityY()) > 1.0;
             animation.setMoving(moving);
         }
 
-        if (isMovingToHouse && target != null) {
-            totalHomeTimer += tpf;
-            // Nếu mất quá 25 giây mà chưa về được nhà (do kẹt quá sâu), tự động dịch chuyển
-            // về nhà
-            if (totalHomeTimer > 25.0) {
-                disappear();
-                return;
+        // Dispatch states
+        switch (state) {
+            case FLEEING:
+                handleFleeing(tpf);
+                break;
+            case MOVING_TO_HOUSE:
+                handleMovingToHouse(tpf);
+                break;
+            case MOVING_TO_WORK:
+                handleMovingToWork(tpf);
+                break;
+            case ROAMING:
+            default:
+                handleRoaming(tpf);
+                break;
+        }
+    }
+
+    private void handleMovingToHouse(double tpf) {
+        if (target == null) return;
+        
+        totalHomeTimer += tpf;
+        if (totalHomeTimer > 25.0) {
+            disappear();
+            return;
+        }
+
+        boolean touchesDoor = false;
+        if (homeDoorEntity != null) {
+            touchesDoor = checkIntersection(entity, homeDoorEntity)
+                       || entity.getCenter().distance(homeDoorEntity.getCenter()) < 32
+                       || entity.getPosition().distance(target) < 30;
+        } else {
+            touchesDoor = entity.getPosition().distance(target) < 30;
+        }
+
+        if (touchesDoor) {
+            disappear();
+            return;
+        }
+
+        double distance = entity.getPosition().distance(target);
+
+        if (distance < 60) {
+            if (entity.hasComponent(CollidableComponent.class)) {
+                entity.getComponent(CollidableComponent.class).setValue(false);
             }
+        }
 
-            // Check if NPC's collision box or center touches the door
-            boolean touchesDoor = false;
-            if (homeDoorEntity != null) {
-                touchesDoor = checkIntersection(entity, homeDoorEntity)
-                           || entity.getCenter().distance(homeDoorEntity.getCenter()) < 32
-                           || entity.getPosition().distance(target) < 30;
-            } else {
-                touchesDoor = entity.getPosition().distance(target) < 30;
-            }
-
-            if (touchesDoor) {
-                disappear();
-                return;
-            }
-
-            double distance = entity.getPosition().distance(target);
-
-            // Khi gần đến nhà (khoảng cách < 60 pixel), tắt va chạm vật lý để tránh bị kẹt
-            // tường/cửa
-            if (distance < 60) {
-                if (entity.hasComponent(CollidableComponent.class)) {
-                    entity.getComponent(CollidableComponent.class).setValue(false);
+        if (distance > 15) {
+            if (pathWaypoints == null || pathWaypoints.isEmpty()) {
+                double dx = target.getX() - entity.getX();
+                double dy = target.getY() - entity.getY();
+                double moveSpeed = speed * 15;
+                Point2D velocity;
+                if (Math.abs(dx) > 5) {
+                    physics.setVelocityX(Math.signum(dx) * moveSpeed);
+                    physics.setVelocityY(0);
+                    velocity = new Point2D(Math.signum(dx) * speed, 0);
+                } else {
+                    physics.setVelocityX(0);
+                    physics.setVelocityY(Math.signum(dy) * moveSpeed);
+                    velocity = new Point2D(0, Math.signum(dy) * speed);
                 }
+                updateAnimation(velocity);
+                return;
             }
 
-            if (distance > 15) {
-                if (pathWaypoints == null || pathWaypoints.isEmpty()) {
-                    // Fallback to direct path movement
-                    double dx = target.getX() - entity.getX();
-                    double dy = target.getY() - entity.getY();
-                    double moveSpeed = speed * 15;
-                    Point2D velocity;
-                    if (Math.abs(dx) > 5) {
-                        physics.setVelocityX(Math.signum(dx) * moveSpeed);
-                        physics.setVelocityY(0);
-                        velocity = new Point2D(Math.signum(dx) * speed, 0);
-                    } else {
-                        physics.setVelocityX(0);
-                        physics.setVelocityY(Math.signum(dy) * moveSpeed);
-                        velocity = new Point2D(0, Math.signum(dy) * speed);
-                    }
-                    updateAnimation(velocity);
+            Point2D currentWaypoint = pathWaypoints.get(0);
+            double distToWaypoint = entity.getPosition().distance(currentWaypoint);
+
+            if (distToWaypoint < 12.0) {
+                pathWaypoints.remove(0);
+                if (pathWaypoints.isEmpty()) {
+                    physics.setVelocityX(0);
+                    physics.setVelocityY(0);
                     return;
                 }
+                currentWaypoint = pathWaypoints.get(0);
+            }
 
-                Point2D currentWaypoint = pathWaypoints.get(0);
-                double distToWaypoint = entity.getPosition().distance(currentWaypoint);
+            double dx = currentWaypoint.getX() - entity.getX();
+            double dy = currentWaypoint.getY() - entity.getY();
+            double moveSpeed = speed * 15;
 
-                // If we are close to the waypoint, remove it and target the next
-                if (distToWaypoint < 12.0) {
+            double targetVelX = 0;
+            double targetVelY = 0;
+            Point2D animVelocity = Point2D.ZERO;
+
+            if (Math.abs(dx) > 5) {
+                targetVelX = Math.signum(dx) * moveSpeed;
+                animVelocity = new Point2D(Math.signum(dx) * speed, 0);
+            } else if (Math.abs(dy) > 5) {
+                targetVelY = Math.signum(dy) * moveSpeed;
+                animVelocity = new Point2D(0, Math.signum(dy) * speed);
+            } else {
+                if (!pathWaypoints.isEmpty()) {
                     pathWaypoints.remove(0);
-                    if (pathWaypoints.isEmpty()) {
-                        physics.setVelocityX(0);
-                        physics.setVelocityY(0);
-                        return;
-                    }
-                    currentWaypoint = pathWaypoints.get(0);
                 }
+            }
 
-                // Move towards currentWaypoint
-                double dx = currentWaypoint.getX() - entity.getX();
-                double dy = currentWaypoint.getY() - entity.getY();
-                double moveSpeed = speed * 15;
+            physics.setVelocityX(targetVelX);
+            physics.setVelocityY(targetVelY);
+            updateAnimation(animVelocity);
 
-                double targetVelX = 0;
-                double targetVelY = 0;
-                Point2D animVelocity = Point2D.ZERO;
-
-                if (Math.abs(dx) > 5) {
-                    targetVelX = Math.signum(dx) * moveSpeed;
-                    animVelocity = new Point2D(Math.signum(dx) * speed, 0);
-                } else if (Math.abs(dy) > 5) {
-                    targetVelY = Math.signum(dy) * moveSpeed;
-                    animVelocity = new Point2D(0, Math.signum(dy) * speed);
-                } else {
-                    // If we are close on both axes, skip this waypoint
-                    if (!pathWaypoints.isEmpty()) {
-                        pathWaypoints.remove(0);
-                    }
-                }
-
-                physics.setVelocityX(targetVelX);
-                physics.setVelocityY(targetVelY);
-                updateAnimation(animVelocity);
-
-                // Stuck detection & recalculation
-                boolean isTryingToMove = (targetVelX != 0 || targetVelY != 0);
-                if (isTryingToMove) {
-                    boolean isStuck = (targetVelX != 0 && Math.abs(physics.getVelocityX()) < 5)
-                            || (targetVelY != 0 && Math.abs(physics.getVelocityY()) < 5);
-                    if (isStuck) {
-                        stuckTimer += tpf;
-                        if (stuckTimer > 1.0) {
-                            recalculatePath();
-                            stuckTimer = 0;
-                        }
-                    } else {
+            boolean isTryingToMove = (targetVelX != 0 || targetVelY != 0);
+            if (isTryingToMove) {
+                boolean isStuck = (targetVelX != 0 && Math.abs(physics.getVelocityX()) < 5)
+                        || (targetVelY != 0 && Math.abs(physics.getVelocityY()) < 5);
+                if (isStuck) {
+                    stuckTimer += tpf;
+                    if (stuckTimer > 1.0) {
+                        recalculatePath();
                         stuckTimer = 0;
                     }
                 } else {
                     stuckTimer = 0;
                 }
             } else {
-                // Đã đến cửa, cho NPC biến mất (đi vào nhà)
-                disappear();
-            }
-        } else if (isMovingToWork && target != null) {
-            double distance = entity.getPosition().distance(target);
-
-            // Khi gần đến nơi làm việc (khoảng cách < 60 pixel), tắt va chạm vật lý để tránh kẹt
-            if (distance < 60) {
-                if (entity.hasComponent(CollidableComponent.class)) {
-                    entity.getComponent(CollidableComponent.class).setValue(false);
-                }
-            }
-
-            if (distance > 15) {
-                if (pathWaypoints == null || pathWaypoints.isEmpty()) {
-                    // Fallback to direct path movement
-                    double dx = target.getX() - entity.getX();
-                    double dy = target.getY() - entity.getY();
-                    double moveSpeed = speed * 15;
-                    Point2D velocity;
-                    if (Math.abs(dx) > 5) {
-                        physics.setVelocityX(Math.signum(dx) * moveSpeed);
-                        physics.setVelocityY(0);
-                        velocity = new Point2D(Math.signum(dx) * speed, 0);
-                    } else {
-                        physics.setVelocityX(0);
-                        physics.setVelocityY(Math.signum(dy) * moveSpeed);
-                        velocity = new Point2D(0, Math.signum(dy) * speed);
-                    }
-                    updateAnimation(velocity);
-                    return;
-                }
-
-                Point2D currentWaypoint = pathWaypoints.get(0);
-                double distToWaypoint = entity.getPosition().distance(currentWaypoint);
-
-                // If we are close to the waypoint, remove it and target the next
-                if (distToWaypoint < 12.0) {
-                    pathWaypoints.remove(0);
-                    if (pathWaypoints.isEmpty()) {
-                        physics.setVelocityX(0);
-                        physics.setVelocityY(0);
-                        return;
-                    }
-                    currentWaypoint = pathWaypoints.get(0);
-                }
-
-                // Move towards currentWaypoint
-                double dx = currentWaypoint.getX() - entity.getX();
-                double dy = currentWaypoint.getY() - entity.getY();
-                double moveSpeed = speed * 15;
-
-                double targetVelX = 0;
-                double targetVelY = 0;
-                Point2D animVelocity = Point2D.ZERO;
-
-                if (Math.abs(dx) > 5) {
-                    targetVelX = Math.signum(dx) * moveSpeed;
-                    animVelocity = new Point2D(Math.signum(dx) * speed, 0);
-                } else if (Math.abs(dy) > 5) {
-                    targetVelY = Math.signum(dy) * moveSpeed;
-                    animVelocity = new Point2D(0, Math.signum(dy) * speed);
-                } else {
-                    // If we are close on both axes, skip this waypoint
-                    if (!pathWaypoints.isEmpty()) {
-                        pathWaypoints.remove(0);
-                    }
-                }
-
-                physics.setVelocityX(targetVelX);
-                physics.setVelocityY(targetVelY);
-                updateAnimation(animVelocity);
-
-                // Stuck detection & recalculation
-                boolean isTryingToMove = (targetVelX != 0 || targetVelY != 0);
-                if (isTryingToMove) {
-                    boolean isStuck = (targetVelX != 0 && Math.abs(physics.getVelocityX()) < 5)
-                            || (targetVelY != 0 && Math.abs(physics.getVelocityY()) < 5);
-                    if (isStuck) {
-                        stuckTimer += tpf;
-                        if (stuckTimer > 1.0) {
-                            recalculatePath();
-                            stuckTimer = 0;
-                        }
-                    } else {
-                        stuckTimer = 0;
-                    }
-                } else {
-                    stuckTimer = 0;
-                }
-            } else {
-                // Đã đến nơi làm việc, dừng di chuyển và bật lại va chạm
-                stopMoving();
-                isMovingToWork = false;
-                if (entity.hasComponent(CollidableComponent.class)) {
-                    entity.getComponent(CollidableComponent.class).setValue(true);
-                }
-                System.out.println("NPC " + entity.getString("name") + " đã hoàn thành đi bộ về nơi làm việc.");
+                stuckTimer = 0;
             }
         } else {
-            // Roaming during the day
-            handleRoaming(tpf);
+            disappear();
+        }
+    }
+
+    private void handleMovingToWork(double tpf) {
+        if (target == null) return;
+        
+        double distance = entity.getPosition().distance(target);
+
+        if (distance < 60) {
+            if (entity.hasComponent(CollidableComponent.class)) {
+                entity.getComponent(CollidableComponent.class).setValue(false);
+            }
+        }
+
+        if (distance > 15) {
+            if (pathWaypoints == null || pathWaypoints.isEmpty()) {
+                double dx = target.getX() - entity.getX();
+                double dy = target.getY() - entity.getY();
+                double moveSpeed = speed * 15;
+                Point2D velocity;
+                if (Math.abs(dx) > 5) {
+                    physics.setVelocityX(Math.signum(dx) * moveSpeed);
+                    physics.setVelocityY(0);
+                    velocity = new Point2D(Math.signum(dx) * speed, 0);
+                } else {
+                    physics.setVelocityX(0);
+                    physics.setVelocityY(Math.signum(dy) * moveSpeed);
+                    velocity = new Point2D(0, Math.signum(dy) * speed);
+                }
+                updateAnimation(velocity);
+                return;
+            }
+
+            Point2D currentWaypoint = pathWaypoints.get(0);
+            double distToWaypoint = entity.getPosition().distance(currentWaypoint);
+
+            if (distToWaypoint < 12.0) {
+                pathWaypoints.remove(0);
+                if (pathWaypoints.isEmpty()) {
+                    physics.setVelocityX(0);
+                    physics.setVelocityY(0);
+                    return;
+                }
+                currentWaypoint = pathWaypoints.get(0);
+            }
+
+            double dx = currentWaypoint.getX() - entity.getX();
+            double dy = currentWaypoint.getY() - entity.getY();
+            double moveSpeed = speed * 15;
+
+            double targetVelX = 0;
+            double targetVelY = 0;
+            Point2D animVelocity = Point2D.ZERO;
+
+            if (Math.abs(dx) > 5) {
+                targetVelX = Math.signum(dx) * moveSpeed;
+                animVelocity = new Point2D(Math.signum(dx) * speed, 0);
+            } else if (Math.abs(dy) > 5) {
+                targetVelY = Math.signum(dy) * moveSpeed;
+                animVelocity = new Point2D(0, Math.signum(dy) * speed);
+            } else {
+                if (!pathWaypoints.isEmpty()) {
+                    pathWaypoints.remove(0);
+                }
+            }
+
+            physics.setVelocityX(targetVelX);
+            physics.setVelocityY(targetVelY);
+            updateAnimation(animVelocity);
+
+            boolean isTryingToMove = (targetVelX != 0 || targetVelY != 0);
+            if (isTryingToMove) {
+                boolean isStuck = (targetVelX != 0 && Math.abs(physics.getVelocityX()) < 5)
+                        || (targetVelY != 0 && Math.abs(physics.getVelocityY()) < 5);
+                if (isStuck) {
+                    stuckTimer += tpf;
+                    if (stuckTimer > 1.0) {
+                        recalculatePath();
+                        stuckTimer = 0;
+                    }
+                } else {
+                    stuckTimer = 0;
+                }
+            } else {
+                stuckTimer = 0;
+            }
+        } else {
+            stopMoving();
+            if (entity.hasComponent(CollidableComponent.class)) {
+                entity.getComponent(CollidableComponent.class).setValue(true);
+            }
+            System.out.println("NPC " + entity.getString("name") + " đã hoàn thành đi bộ về nơi làm việc.");
         }
     }
 
     private void handleRoaming(double tpf) {
-        // Vô hiệu hóa roaming: NPC sẽ chỉ đứng yên 1 chỗ (trừ khi đến giờ đi về nhà)
         physics.setVelocityX(0);
         physics.setVelocityY(0);
     }
@@ -379,7 +377,7 @@ public class NPCBehaviorComponent extends Component implements Interactable {
     public void goHome(com.almasb.fxgl.entity.Entity doorEntity) {
         this.homeDoorEntity = doorEntity;
         this.target = doorEntity.getPosition();
-        this.isMovingToHouse = true;
+        this.state = NPCActivityState.MOVING_TO_HOUSE;
         this.totalHomeTimer = 0.0;
         this.stuckTimer = 0.0;
         recalculatePath();
@@ -389,7 +387,7 @@ public class NPCBehaviorComponent extends Component implements Interactable {
     public void goHome(Point2D doorPosition) {
         this.homeDoorEntity = null;
         this.target = doorPosition;
-        this.isMovingToHouse = true;
+        this.state = NPCActivityState.MOVING_TO_HOUSE;
         this.totalHomeTimer = 0.0;
         this.stuckTimer = 0.0;
         recalculatePath();
@@ -425,8 +423,7 @@ public class NPCBehaviorComponent extends Component implements Interactable {
     }
 
     public void stopMoving() {
-        isMovingToHouse = false;
-        isMovingToWork = false;
+        this.state = NPCActivityState.ROAMING;
         physics.setVelocityX(0);
         physics.setVelocityY(0);
         pathWaypoints.clear();
@@ -437,8 +434,7 @@ public class NPCBehaviorComponent extends Component implements Interactable {
 
     public void walkToWork() {
         this.target = spawnPosition;
-        this.isMovingToWork = true;
-        this.isMovingToHouse = false;
+        this.state = NPCActivityState.MOVING_TO_WORK;
         this.stuckTimer = 0.0;
         recalculatePath();
         physics.setLinearVelocity(Point2D.ZERO);
@@ -446,7 +442,7 @@ public class NPCBehaviorComponent extends Component implements Interactable {
     }
 
     public boolean isGoingHome() {
-        return isMovingToHouse;
+        return state == NPCActivityState.MOVING_TO_HOUSE;
     }
 
     public boolean isHidden() {
@@ -483,7 +479,7 @@ public class NPCBehaviorComponent extends Component implements Interactable {
         }
 
         // Reset movement states & trigger walk to work
-        isMovingToHouse = false;
+        state = NPCActivityState.ROAMING;
 
         walkToWork();
         System.out.println("NPC " + entity.getString("name") + " đã xuất hiện trở lại tại " + spawnLoc + " và đang đi bộ về nơi làm việc.");
@@ -508,13 +504,12 @@ public class NPCBehaviorComponent extends Component implements Interactable {
         }
 
         if (monsterNearby) {
-            if (!isFleeing) {
-                isFleeing = true;
+            if (state != NPCActivityState.FLEEING) {
+                state = NPCActivityState.FLEEING;
                 chooseFleeTarget(monsterPos);
             }
         } else {
-            if (isFleeing) {
-                isFleeing = false;
+            if (state == NPCActivityState.FLEEING) {
                 fleeTarget = null;
                 fleePathWaypoints.clear();
                 walkToWork();

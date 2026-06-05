@@ -29,6 +29,7 @@ public class AdminView extends VBox {
 
     private final Inventory inventory;
     private final PlayerComponent playerComponent;
+    private final AdminPresenter presenter;
     private boolean visible = false;
     private boolean authenticated = false;
 
@@ -39,14 +40,14 @@ public class AdminView extends VBox {
     public AdminView(Inventory inventory, PlayerComponent playerComponent) {
         this.inventory = inventory;
         this.playerComponent = playerComponent;
+        this.presenter = new AdminPresenter(inventory, playerComponent);
 
         // Base styles for the admin console panel overlay
-        setPrefSize(FXGL.getAppWidth() * 0.85, FXGL.getAppHeight() * 0.85);
+        setPrefSize(FXGL.getAppWidth() * 0.75, FXGL.getAppHeight() * 0.85);
         setAlignment(Pos.CENTER);
         setPadding(new Insets(20));
         setSpacing(15);
-        setStyle(
-                "-fx-background-color: rgba(18, 18, 24, 0.96); -fx-background-radius: 15; -fx-border-color: #d9383a; -fx-border-width: 3; -fx-border-radius: 15;");
+        setStyle("-fx-background-color: rgba(18, 18, 24, 0.96); -fx-background-radius: 15; -fx-border-color: #d9383a; -fx-border-width: 3; -fx-border-radius: 15;");
 
         container.setAlignment(Pos.CENTER);
         getChildren().add(container);
@@ -70,15 +71,13 @@ public class AdminView extends VBox {
         passcodeField.setPrefWidth(200);
         passcodeField.setMaxWidth(200);
         passcodeField.setAlignment(Pos.CENTER);
-        passcodeField.setStyle(
-                "-fx-background-color: #22222b; -fx-text-fill: white; -fx-border-color: #444; -fx-border-radius: 5; -fx-background-radius: 5; -fx-font-size: 16px;");
+        passcodeField.setStyle("-fx-background-color: #22222b; -fx-text-fill: white; -fx-border-color: #444; -fx-border-radius: 5; -fx-background-radius: 5; -fx-font-size: 16px;");
 
         // Action when pressing enter key
         passcodeField.setOnAction(e -> attemptAuthentication());
 
         Button submitBtn = new Button("AUTHORIZE");
-        submitBtn.setStyle(
-                "-fx-background-color: #d9383a; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 5; -fx-padding: 8 20; -fx-cursor: hand;");
+        submitBtn.setStyle("-fx-background-color: #d9383a; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 5; -fx-padding: 8 20; -fx-cursor: hand;");
         submitBtn.setOnAction(e -> attemptAuthentication());
 
         errorText.setFill(Color.RED);
@@ -89,12 +88,7 @@ public class AdminView extends VBox {
 
     private void attemptAuthentication() {
         String code = passcodeField.getText().trim();
-        if ("1111".equals(code)) {
-            authenticated = true;
-            errorText.setText("");
-            passcodeField.clear();
-            showAdminControls();
-        } else if ("hust".equals(code)) {
+        if (presenter.verifyPasscode(code)) {
             authenticated = true;
             errorText.setText("");
             passcodeField.clear();
@@ -121,8 +115,7 @@ public class AdminView extends VBox {
         statsCol.setPrefWidth(280);
         statsCol.setAlignment(Pos.TOP_LEFT);
         statsCol.setPadding(new Insets(10));
-        statsCol.setStyle(
-                "-fx-background-color: rgba(30, 30, 40, 0.5); -fx-background-radius: 10; -fx-border-color: #444; -fx-border-width: 1; -fx-border-radius: 10;");
+        statsCol.setStyle("-fx-background-color: rgba(30, 30, 40, 0.5); -fx-background-radius: 10; -fx-border-color: #444; -fx-border-width: 1; -fx-border-radius: 10;");
 
         Text statsTitle = new Text("Player Configuration");
         statsTitle.setFont(Font.font(GameFont.GAME_FONT, FontWeight.BOLD, 18));
@@ -135,17 +128,15 @@ public class AdminView extends VBox {
 
         TextField goldInput = new TextField(String.valueOf(playerComponent.getMoney()));
         goldInput.setPrefWidth(120);
-        goldInput.setStyle(
-                "-fx-background-color: #1a1a24; -fx-text-fill: gold; -fx-border-color: #555; -fx-border-radius: 4; -fx-font-weight: bold;");
+        goldInput.setStyle("-fx-background-color: #1a1a24; -fx-text-fill: gold; -fx-border-color: #555; -fx-border-radius: 4; -fx-font-weight: bold;");
 
         Button applyGold = new Button("Set");
         applyGold.setStyle("-fx-background-color: #444; -fx-text-fill: white; -fx-cursor: hand;");
         applyGold.setOnAction(e -> {
             try {
                 int gold = Integer.parseInt(goldInput.getText().trim());
-                playerComponent.setMoney(gold);
-            } catch (NumberFormatException ignored) {
-            }
+                presenter.setGold(gold);
+            } catch (NumberFormatException ignored) {}
         });
 
         HBox goldRow = new HBox(10, goldLabel, goldInput, applyGold);
@@ -153,18 +144,16 @@ public class AdminView extends VBox {
 
         // Shortcut buttons for adding money
         Button add1k = new Button("+1K Gold");
-        add1k.setStyle(
-                "-fx-background-color: #2b4c3f; -fx-text-fill: #a2e8c2; -fx-font-weight: bold; -fx-cursor: hand;");
+        add1k.setStyle("-fx-background-color: #2b4c3f; -fx-text-fill: #a2e8c2; -fx-font-weight: bold; -fx-cursor: hand;");
         add1k.setOnAction(e -> {
-            playerComponent.addMoney(1000);
+            presenter.addGold(1000);
             goldInput.setText(String.valueOf(playerComponent.getMoney()));
         });
 
         Button add10k = new Button("+10K Gold");
-        add10k.setStyle(
-                "-fx-background-color: #1e3a47; -fx-text-fill: #92d4f5; -fx-font-weight: bold; -fx-cursor: hand;");
+        add10k.setStyle("-fx-background-color: #1e3a47; -fx-text-fill: #92d4f5; -fx-font-weight: bold; -fx-cursor: hand;");
         add10k.setOnAction(e -> {
-            playerComponent.addMoney(10000);
+            presenter.addGold(10000);
             goldInput.setText(String.valueOf(playerComponent.getMoney()));
         });
 
@@ -179,17 +168,16 @@ public class AdminView extends VBox {
         skinGrid.setHgap(8);
         skinGrid.setVgap(8);
 
-        String[] skinNames = { "Default", "Skeleton", "Male" };
-        String[] skinPaths = { "Player", "Player_Skeleton", "Player_Male" };
+        String[] skinNames = {"Default", "Skeleton", "Male"};
+        String[] skinPaths = {"Player", "Player_Skeleton", "Player_Male"};
 
         for (int i = 0; i < skinNames.length; i++) {
             final String path = skinPaths[i];
             Button btnSkin = new Button(skinNames[i]);
             btnSkin.setPrefWidth(80);
-            btnSkin.setStyle(
-                    "-fx-background-color: #3e3e4a; -fx-text-fill: white; -fx-cursor: hand; -fx-font-weight: bold; -fx-font-size: 11px;");
+            btnSkin.setStyle("-fx-background-color: #3e3e4a; -fx-text-fill: white; -fx-cursor: hand; -fx-font-weight: bold; -fx-font-size: 11px;");
             btnSkin.setOnAction(e -> {
-                playerComponent.changeSkin(path);
+                presenter.changeSkin(path);
             });
             skinGrid.add(btnSkin, i % 3, i / 3);
         }
@@ -202,20 +190,16 @@ public class AdminView extends VBox {
         HBox timeSpeedButtons = new HBox(6);
         timeSpeedButtons.setAlignment(Pos.CENTER_LEFT);
 
-        double[] presets = { 1.0, 10.0, 20.0 };
-        String[] presetLabels = { "1x", "10x", "20x" };
+        double[] presets = {1.0, 10.0, 20.0};
+        String[] presetLabels = {"1x", "10x", "20x"};
 
         for (int i = 0; i < presets.length; i++) {
             final double val = presets[i];
             Button btnTime = new Button(presetLabels[i]);
             btnTime.setPrefWidth(55);
-            btnTime.setStyle(
-                    "-fx-background-color: #3e3e4a; -fx-text-fill: white; -fx-cursor: hand; -fx-font-weight: bold; -fx-font-size: 11px;");
+            btnTime.setStyle("-fx-background-color: #3e3e4a; -fx-text-fill: white; -fx-cursor: hand; -fx-font-weight: bold; -fx-font-size: 11px;");
             btnTime.setOnAction(e -> {
-                if (Project1Game.Main.getInstance() != null
-                        && Project1Game.Main.getInstance().getTimeSystem() != null) {
-                    Project1Game.Main.getInstance().getTimeSystem().setTimeSpeedMultiplier(val);
-                }
+                presenter.setTimeSpeedMultiplier(val);
             });
             timeSpeedButtons.getChildren().add(btnTime);
         }
@@ -227,30 +211,23 @@ public class AdminView extends VBox {
 
         Button btnMatureAll = new Button("Instant Mature All");
         btnMatureAll.setPrefWidth(160);
-        btnMatureAll.setStyle(
-                "-fx-background-color: #eccb58; -fx-text-fill: #12121c; -fx-cursor: hand; -fx-font-weight: bold; -fx-font-size: 13px;");
+        btnMatureAll.setStyle("-fx-background-color: #eccb58; -fx-text-fill: #12121c; -fx-cursor: hand; -fx-font-weight: bold; -fx-font-size: 13px;");
         btnMatureAll.setOnAction(e -> {
-            if (Project1Game.Main.getInstance() != null) {
-                Project1Game.Main.getInstance().matureAllCropsAndAnimals();
-            }
+            presenter.triggerMatureAllCropsAndAnimals();
         });
 
         Button btnSpawnBushMonster = new Button("Spawn Bush Monster");
         btnSpawnBushMonster.setPrefWidth(160);
-        btnSpawnBushMonster.setStyle(
-                "-fx-background-color: #d9383a; -fx-text-fill: white; -fx-cursor: hand; -fx-font-weight: bold; -fx-font-size: 13px;");
+        btnSpawnBushMonster.setStyle("-fx-background-color: #d9383a; -fx-text-fill: white; -fx-cursor: hand; -fx-font-weight: bold; -fx-font-size: 13px;");
         btnSpawnBushMonster.setOnAction(e -> {
-            if (Project1Game.Main.getInstance() != null) {
-                Project1Game.Main.getInstance().spawnBushMonsterAdmin();
-            }
+            presenter.triggerSpawnBushMonsterAdmin();
         });
 
-        statsCol.getChildren().addAll(statsTitle, goldRow, quickGoldRow, skinTitle, skinGrid, timeTitle,
-                timeSpeedButtons, cheatsTitle, btnMatureAll, btnSpawnBushMonster);
+        statsCol.getChildren().addAll(statsTitle, goldRow, quickGoldRow, skinTitle, skinGrid, timeTitle, timeSpeedButtons, cheatsTitle, btnMatureAll, btnSpawnBushMonster);
 
         // --- SECTION 2: Crop & inventory Adjusters scrollpane ---
         VBox itemsCol = new VBox(10);
-        itemsCol.setPrefWidth(390);
+        itemsCol.setPrefWidth(450);
         itemsCol.setAlignment(Pos.TOP_LEFT);
 
         Text itemsTitle = new Text("Crop & Inventory Adjuster");
@@ -259,14 +236,14 @@ public class AdminView extends VBox {
 
         ScrollPane scrollPane = new ScrollPane();
         scrollPane.setPrefViewportHeight(320);
-        scrollPane.setPrefViewportWidth(380);
+        scrollPane.setPrefViewportWidth(440);
         scrollPane.setFitToWidth(true);
         scrollPane.setStyle("-fx-background: transparent; -fx-background-color: transparent;");
 
         GridPane itemGrid = new GridPane();
-        itemGrid.setHgap(8);
-        itemGrid.setVgap(8);
-        itemGrid.setPadding(new Insets(8));
+        itemGrid.setHgap(10);
+        itemGrid.setVgap(10);
+        itemGrid.setPadding(new Insets(10));
         itemGrid.setStyle("-fx-background-color: rgba(20, 20, 30, 0.6); -fx-background-radius: 10;");
 
         List<ItemType> items = Arrays.asList(
@@ -285,7 +262,8 @@ public class AdminView extends VBox {
                 ItemType.COOKED_DRUMSTICK, ItemType.COOKED_CHICKEN,
                 ItemType.COOKED_MEAT, ItemType.SAUSAGE,
                 ItemType.CHICK, ItemType.CALF, ItemType.LAMB, ItemType.PIGLET, ItemType.TURKEY,
-                ItemType.ROOSTER, ItemType.BULL, ItemType.SHEEP, ItemType.PIG);
+                ItemType.ROOSTER, ItemType.BULL, ItemType.SHEEP, ItemType.PIG
+        );
 
         int row = 0;
         for (ItemType item : items) {
@@ -298,216 +276,191 @@ public class AdminView extends VBox {
         itemsCol.getChildren().addAll(itemsTitle, scrollPane);
 
         // --- SECTION 3: Feature Showcase & Cheats ---
-        VBox showcaseCol = new VBox(12);
-        showcaseCol.setPrefWidth(320);
-        showcaseCol.setAlignment(Pos.TOP_LEFT);
-        showcaseCol.setPadding(new Insets(10));
-        showcaseCol.setStyle(
-                "-fx-background-color: rgba(30, 30, 40, 0.5); -fx-background-radius: 10; -fx-border-color: #444; -fx-border-width: 1; -fx-border-radius: 10;");
+        VBox cheatsCol = new VBox(12);
+        cheatsCol.setPrefWidth(280);
+        cheatsCol.setAlignment(Pos.TOP_LEFT);
+        cheatsCol.setPadding(new Insets(10));
+        cheatsCol.setStyle("-fx-background-color: rgba(30, 30, 40, 0.5); -fx-background-radius: 10; -fx-border-color: #444; -fx-border-width: 1; -fx-border-radius: 10;");
 
-        Text showcaseTitle = new Text("Feature Showcase & Cheats");
-        showcaseTitle.setFont(Font.font(GameFont.GAME_FONT, FontWeight.BOLD, 18));
-        showcaseTitle.setFill(Color.web("#eccb58"));
+        Text cheatsColTitle = new Text("Feature Showcase & Cheats");
+        cheatsColTitle.setFont(Font.font(GameFont.GAME_FONT, FontWeight.BOLD, 18));
+        cheatsColTitle.setFill(Color.web("#eccb58"));
 
-        // 1. Weather Control
-        Text weatherSecTitle = new Text("Weather Control:");
-        weatherSecTitle.setFill(Color.WHITE);
-        weatherSecTitle.setFont(Font.font(GameFont.GAME_FONT, FontWeight.BOLD, 13));
+        // 1. Weather Control Block
+        Text weatherCtrlTitle = new Text("Weather Control:");
+        weatherCtrlTitle.setFill(Color.WHITE);
+        weatherCtrlTitle.setFont(Font.font(GameFont.GAME_FONT, FontWeight.BOLD, 14));
 
-        Button btnSunny = new Button("Sunny");
-        btnSunny.setStyle(
-                "-fx-background-color: #d99a38; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;");
-        btnSunny.setOnAction(e -> Project1Game.system.WeatherSystem.getInstance()
-                .changeWeather(Project1Game.system.WeatherSystem.Weather.SUNNY));
+        HBox weatherButtons = new HBox(6);
+        weatherButtons.setAlignment(Pos.CENTER_LEFT);
 
-        Button btnRainy = new Button("Rainy");
-        btnRainy.setStyle(
-                "-fx-background-color: #3886d9; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;");
-        btnRainy.setOnAction(e -> Project1Game.system.WeatherSystem.getInstance()
-                .changeWeather(Project1Game.system.WeatherSystem.Weather.RAINY));
-
-        Button btnDrought = new Button("Drought");
-        btnDrought.setStyle(
-                "-fx-background-color: #d95e38; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;");
-        btnDrought.setOnAction(e -> Project1Game.system.WeatherSystem.getInstance()
-                .changeWeather(Project1Game.system.WeatherSystem.Weather.DROUGHT));
-
-        HBox weatherBtns = new HBox(8, btnSunny, btnRainy, btnDrought);
-
-        // 2. Time Control
-        Text timeSecTitle = new Text("Time Control:");
-        timeSecTitle.setFill(Color.WHITE);
-        timeSecTitle.setFont(Font.font(GameFont.GAME_FONT, FontWeight.BOLD, 13));
-
-        Button btnMorning = new Button("6 AM");
-        btnMorning.setStyle(
-                "-fx-background-color: #eccb58; -fx-text-fill: black; -fx-font-weight: bold; -fx-cursor: hand;");
-        btnMorning.setOnAction(e -> {
-            if (Project1Game.Main.getInstance() != null && Project1Game.Main.getInstance().getTimeSystem() != null) {
-                Project1Game.Main.getInstance().getTimeSystem().setGameTime(360);
-            }
+        Button sunnyBtn = new Button("Sunny");
+        sunnyBtn.setPrefWidth(70);
+        sunnyBtn.setStyle("-fx-background-color: #e3a81e; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 11px; -fx-cursor: hand;");
+        sunnyBtn.setOnAction(e -> {
+            Project1Game.system.WeatherSystem.getInstance().changeWeather(Project1Game.system.WeatherSystem.Weather.SUNNY);
         });
 
-        Button btnNoon = new Button("12 AM");
-        btnNoon.setStyle(
-                "-fx-background-color: #eccb58; -fx-text-fill: black; -fx-font-weight: bold; -fx-cursor: hand;");
-        btnNoon.setOnAction(e -> {
-            if (Project1Game.Main.getInstance() != null && Project1Game.Main.getInstance().getTimeSystem() != null) {
-                Project1Game.Main.getInstance().getTimeSystem().setGameTime(720);
-            }
+        Button rainyBtn = new Button("Rainy");
+        rainyBtn.setPrefWidth(70);
+        rainyBtn.setStyle("-fx-background-color: #2b70c4; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 11px; -fx-cursor: hand;");
+        rainyBtn.setOnAction(e -> {
+            Project1Game.system.WeatherSystem.getInstance().changeWeather(Project1Game.system.WeatherSystem.Weather.RAINY);
         });
 
-        Button btnEvening = new Button("6 PM");
-        btnEvening.setStyle(
-                "-fx-background-color: #4a5c6e; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;");
-        btnEvening.setOnAction(e -> {
-            if (Project1Game.Main.getInstance() != null && Project1Game.Main.getInstance().getTimeSystem() != null) {
-                Project1Game.Main.getInstance().getTimeSystem().setGameTime(1080);
-            }
+        Button droughtBtn = new Button("Drought");
+        droughtBtn.setPrefWidth(70);
+        droughtBtn.setStyle("-fx-background-color: #d16b28; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 11px; -fx-cursor: hand;");
+        droughtBtn.setOnAction(e -> {
+            Project1Game.system.WeatherSystem.getInstance().changeWeather(Project1Game.system.WeatherSystem.Weather.DROUGHT);
         });
 
-        Button btnNightTime = new Button("10 PM");
-        btnNightTime.setStyle(
-                "-fx-background-color: #1a2a3a; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;");
-        btnNightTime.setOnAction(e -> {
-            if (Project1Game.Main.getInstance() != null && Project1Game.Main.getInstance().getTimeSystem() != null) {
-                Project1Game.Main.getInstance().getTimeSystem().setGameTime(1320);
-            }
-        });
+        weatherButtons.getChildren().addAll(sunnyBtn, rainyBtn, droughtBtn);
 
-        HBox timeBtns = new HBox(6, btnMorning, btnNoon, btnEvening, btnNightTime);
+        // 2. Time Control Block
+        Text timeCtrlTitle = new Text("Time Shortcuts:");
+        timeCtrlTitle.setFill(Color.WHITE);
+        timeCtrlTitle.setFont(Font.font(GameFont.GAME_FONT, FontWeight.BOLD, 14));
 
-        // 3. Map Teleportation
-        Text mapSecTitle = new Text("Map Teleport:");
-        mapSecTitle.setFill(Color.WHITE);
-        mapSecTitle.setFont(Font.font(GameFont.GAME_FONT, FontWeight.BOLD, 13));
+        HBox timeShortcutButtons = new HBox(6);
+        timeShortcutButtons.setAlignment(Pos.CENTER_LEFT);
 
-        Button btnTeleportFarm = new Button("Main Farm");
-        btnTeleportFarm.setPrefWidth(125);
-        btnTeleportFarm.setStyle(
-                "-fx-background-color: #38d99d; -fx-text-fill: black; -fx-font-weight: bold; -fx-cursor: hand;");
-        btnTeleportFarm.setOnAction(e -> {
+        String[] timeLabels = {"6 AM", "12 AM", "6 PM", "10 PM"};
+        double[] timeMinutes = {360, 0, 1080, 1320};
+
+        for (int i = 0; i < timeLabels.length; i++) {
+            final double mins = timeMinutes[i];
+            Button btnTime = new Button(timeLabels[i]);
+            btnTime.setPrefWidth(55);
+            btnTime.setStyle("-fx-background-color: #3e3e4a; -fx-text-fill: white; -fx-cursor: hand; -fx-font-weight: bold; -fx-font-size: 10px;");
+            btnTime.setOnAction(e -> {
+                if (Project1Game.Main.getInstance() != null && Project1Game.Main.getInstance().getTimeSystem() != null) {
+                    Project1Game.Main.getInstance().getTimeSystem().setGameTime(mins);
+                }
+            });
+            timeShortcutButtons.getChildren().add(btnTime);
+        }
+
+        // 3. Map Teleport Block
+        Text mapTeleportTitle = new Text("Map Teleport:");
+        mapTeleportTitle.setFill(Color.WHITE);
+        mapTeleportTitle.setFont(Font.font(GameFont.GAME_FONT, FontWeight.BOLD, 14));
+
+        HBox teleportButtons = new HBox(10);
+        teleportButtons.setAlignment(Pos.CENTER_LEFT);
+
+        Button farmBtn = new Button("Main Farm");
+        farmBtn.setPrefWidth(105);
+        farmBtn.setStyle("-fx-background-color: #2b4c3f; -fx-text-fill: #a2e8c2; -fx-font-weight: bold; -fx-font-size: 12px; -fx-cursor: hand;");
+        farmBtn.setOnAction(e -> {
             if (Project1Game.Main.getInstance() != null) {
                 Project1Game.Main.getInstance().updateLevel("Main_level.tmx", 1792, 1024);
             }
         });
 
-        Button btnTeleportHouse = new Button("Player House");
-        btnTeleportHouse.setPrefWidth(125);
-        btnTeleportHouse.setStyle(
-                "-fx-background-color: #38cbd9; -fx-text-fill: black; -fx-font-weight: bold; -fx-cursor: hand;");
-        btnTeleportHouse.setOnAction(e -> {
+        Button houseBtn = new Button("Player House");
+        houseBtn.setPrefWidth(105);
+        houseBtn.setStyle("-fx-background-color: #1e3a47; -fx-text-fill: #92d4f5; -fx-font-weight: bold; -fx-font-size: 12px; -fx-cursor: hand;");
+        houseBtn.setOnAction(e -> {
             if (Project1Game.Main.getInstance() != null) {
                 Project1Game.Main.getInstance().updateLevel("Main_house.tmx", 550, 350);
             }
         });
 
-        HBox mapBtns = new HBox(10, btnTeleportFarm, btnTeleportHouse);
+        teleportButtons.getChildren().addAll(farmBtn, houseBtn);
 
-        // 4. Survival Stats (Faint/Death Test)
-        Text statsSecTitle = new Text("Survival Stats:");
-        statsSecTitle.setFill(Color.WHITE);
-        statsSecTitle.setFont(Font.font(GameFont.GAME_FONT, FontWeight.BOLD, 13));
+        // 4. Survival Stats Block
+        Text survivalTitle = new Text("Survival Stats:");
+        survivalTitle.setFill(Color.WHITE);
+        survivalTitle.setFont(Font.font(GameFont.GAME_FONT, FontWeight.BOLD, 14));
 
-        Button btnRestoreStats = new Button("Restore HP & Hunger (100%)");
-        btnRestoreStats.setPrefWidth(260);
-        btnRestoreStats.setStyle(
-                "-fx-background-color: #4cd964; -fx-text-fill: black; -fx-font-weight: bold; -fx-cursor: hand;");
-        btnRestoreStats.setOnAction(e -> {
-            if (Project1Game.Main.getInstance() != null
-                    && Project1Game.Main.getInstance().getStatusBarsView() != null) {
-                Project1Game.Main.getInstance().getStatusBarsView()
-                        .setHealth(Project1Game.Main.getInstance().getStatusBarsView().getMaxHealth());
-                Project1Game.Main.getInstance().getStatusBarsView()
-                        .setHunger(Project1Game.Main.getInstance().getStatusBarsView().getMaxHunger());
+        Button restoreStatsBtn = new Button("Restore HP & Hunger (100%)");
+        restoreStatsBtn.setPrefWidth(220);
+        restoreStatsBtn.setStyle("-fx-background-color: #2b6c3f; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 11px; -fx-cursor: hand;");
+        restoreStatsBtn.setOnAction(e -> {
+            if (Project1Game.Main.getInstance() != null && Project1Game.Main.getInstance().getStatusBarsView() != null) {
+                Project1Game.Main.getInstance().getStatusBarsView().setHealth(Project1Game.Main.getInstance().getStatusBarsView().getMaxHealth());
+                Project1Game.Main.getInstance().getStatusBarsView().setHunger(Project1Game.Main.getInstance().getStatusBarsView().getMaxHunger());
             }
         });
 
-        Button btnDrainHP = new Button("Drain HP to 0 (Test Faint/Death)");
-        btnDrainHP.setPrefWidth(260);
-        btnDrainHP.setStyle(
-                "-fx-background-color: #ff3b30; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;");
-        btnDrainHP.setOnAction(e -> {
-            if (Project1Game.Main.getInstance() != null
-                    && Project1Game.Main.getInstance().getStatusBarsView() != null) {
+        Button drainStatsBtn = new Button("Drain HP to 0 (Test Faint/Death)");
+        drainStatsBtn.setPrefWidth(220);
+        drainStatsBtn.setStyle("-fx-background-color: #d9383a; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 11px; -fx-cursor: hand;");
+        drainStatsBtn.setOnAction(e -> {
+            if (Project1Game.Main.getInstance() != null && Project1Game.Main.getInstance().getStatusBarsView() != null) {
                 Project1Game.Main.getInstance().getStatusBarsView().setHealth(0);
             }
         });
 
-        VBox statsBtns = new VBox(8, btnRestoreStats, btnDrainHP);
+        // 5. Quests Control Block
+        Text questsTitle = new Text("Quests Control:");
+        questsTitle.setFill(Color.WHITE);
+        questsTitle.setFont(Font.font(GameFont.GAME_FONT, FontWeight.BOLD, 14));
 
-        // 5. Quests
-        Text questSecTitle = new Text("Quests Control:");
-        questSecTitle.setFill(Color.WHITE);
-        questSecTitle.setFont(Font.font(GameFont.GAME_FONT, FontWeight.BOLD, 13));
-
-        Button btnAcceptAll = new Button("Accept All Quests");
-        btnAcceptAll.setPrefWidth(260);
-        btnAcceptAll.setStyle(
-                "-fx-background-color: #5856d6; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;");
-        btnAcceptAll.setOnAction(e -> {
-            for (Project1Game.quest.NPC npc : Project1Game.quest.QuestManager.getInstance().getAllNPCs()) {
-                for (Project1Game.quest.Quest q : npc.getQuests()) {
+        Button acceptAllBtn = new Button("Accept All Quests");
+        acceptAllBtn.setPrefWidth(220);
+        acceptAllBtn.setStyle("-fx-background-color: #3e3e4a; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 12px; -fx-cursor: hand;");
+        acceptAllBtn.setOnAction(e -> {
+            Project1Game.quest.QuestManager.getInstance().getAllNPCs().forEach(npc -> {
+                npc.getQuests().forEach(q -> {
                     if (q.getStatus() == Project1Game.quest.QuestStatus.NOT_STARTED) {
                         q.start();
                     }
-                }
-            }
-            Project1Game.Main.pushNotification("Đã kích hoạt toàn bộ quest!");
+                });
+            });
+            Project1Game.system.NotificationManager.pushNotification("All NOT_STARTED quests have been accepted!");
         });
 
-        Button btnCompleteAll = new Button("Complete Objectives (Instant)");
-        btnCompleteAll.setPrefWidth(260);
-        btnCompleteAll.setStyle(
-                "-fx-background-color: #ff9500; -fx-text-fill: black; -fx-font-weight: bold; -fx-cursor: hand;");
-        btnCompleteAll.setOnAction(e -> {
-            for (Project1Game.quest.NPC npc : Project1Game.quest.QuestManager.getInstance().getAllNPCs()) {
-                for (Project1Game.quest.Quest q : npc.getQuests()) {
+        Button completeObjectivesBtn = new Button("Complete Objectives (Instant)");
+        completeObjectivesBtn.setPrefWidth(220);
+        completeObjectivesBtn.setStyle("-fx-background-color: #eccb58; -fx-text-fill: #12121c; -fx-font-weight: bold; -fx-font-size: 12px; -fx-cursor: hand;");
+        completeObjectivesBtn.setOnAction(e -> {
+            Project1Game.quest.QuestManager.getInstance().getAllNPCs().forEach(npc -> {
+                npc.getQuests().forEach(q -> {
                     if (q.getStatus() == Project1Game.quest.QuestStatus.IN_PROGRESS) {
-                        for (Project1Game.quest.QuestObjective obj : q.getObjectives()) {
+                        q.getObjectives().forEach(obj -> {
                             obj.setCurrent(obj.getRequired());
-                        }
+                        });
                         q.setStatus(Project1Game.quest.QuestStatus.COMPLETED);
                     }
-                }
-            }
-            Project1Game.Main.pushNotification("Đã hoàn thành các mục tiêu quest!");
+                });
+            });
+            Project1Game.system.NotificationManager.pushNotification("All objectives completed!");
         });
 
-        VBox questBtns = new VBox(8, btnAcceptAll, btnCompleteAll);
+        cheatsCol.getChildren().addAll(
+            cheatsColTitle,
+            weatherCtrlTitle, weatherButtons,
+            timeCtrlTitle, timeShortcutButtons,
+            mapTeleportTitle, teleportButtons,
+            survivalTitle, restoreStatsBtn, drainStatsBtn,
+            questsTitle, acceptAllBtn, completeObjectivesBtn
+        );
 
-        showcaseCol.getChildren().addAll(showcaseTitle,
-                weatherSecTitle, weatherBtns,
-                timeSecTitle, timeBtns,
-                mapSecTitle, mapBtns,
-                statsSecTitle, statsBtns,
-                questSecTitle, questBtns);
-
-        columns.getChildren().addAll(statsCol, itemsCol, showcaseCol);
+        columns.getChildren().addAll(statsCol, itemsCol, cheatsCol);
 
         // Bottom control close button
         Button closeBtn = new Button("CLOSE CONSOLE");
-        closeBtn.setStyle(
-                "-fx-background-color: #d9383a; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 5; -fx-padding: 8 25; -fx-cursor: hand;");
+        closeBtn.setStyle("-fx-background-color: #d9383a; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 5; -fx-padding: 8 25; -fx-cursor: hand;");
         closeBtn.setOnAction(e -> toggle());
 
         container.getChildren().addAll(title, columns, closeBtn);
     }
 
     private HBox createItemAdjustRow(ItemType type) {
-        HBox row = new HBox(6);
+        HBox row = new HBox(12);
         row.setAlignment(Pos.CENTER_LEFT);
-        row.setPadding(new Insets(4, 6, 4, 6));
+        row.setPadding(new Insets(4, 8, 4, 8));
         row.setStyle("-fx-background-color: rgba(40, 40, 50, 0.4); -fx-background-radius: 6;");
-        row.setPrefWidth(370);
+        row.setPrefWidth(420);
 
         // Icon
         Texture icon;
         if (type.getIconName() != null && type.getIconName().startsWith("food:")) {
             icon = new Texture(ItemType.extractFoodImage(type.getIconName()));
         } else if (type.getIconName() != null && type.getIconName().startsWith("Animal/")) {
-            icon = new Texture(Project1Game.component.farming.animal.BaseAnimalComponent
-                    .extractFaceDownIdleImage(type.getIconName()));
+            icon = new Texture(Project1Game.component.farming.animal.BaseAnimalComponent.extractFaceDownIdleImage(type.getIconName()));
         } else if (type.getIconName() != null && !type.getIconName().isEmpty()) {
             icon = FXGL.texture(type.getIconName());
         } else {
@@ -530,34 +483,30 @@ public class AdminView extends VBox {
 
         // Buttons
         Button minus5 = new Button("-5");
-        minus5.setStyle(
-                "-fx-background-color: #d9383a; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 11px; -fx-cursor: hand;");
+        minus5.setStyle("-fx-background-color: #d9383a; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 11px; -fx-cursor: hand;");
         minus5.setOnAction(e -> {
-            inventory.removeItem(type, 5);
+            presenter.removeItem(type, 5);
             qty.setText("Qty: " + inventory.getCount(type));
         });
 
         Button minus1 = new Button("-1");
-        minus1.setStyle(
-                "-fx-background-color: #b05c5c; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 11px; -fx-cursor: hand;");
+        minus1.setStyle("-fx-background-color: #b05c5c; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 11px; -fx-cursor: hand;");
         minus1.setOnAction(e -> {
-            inventory.removeItem(type, 1);
+            presenter.removeItem(type, 1);
             qty.setText("Qty: " + inventory.getCount(type));
         });
 
         Button plus1 = new Button("+1");
-        plus1.setStyle(
-                "-fx-background-color: #5c9eb0; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 11px; -fx-cursor: hand;");
+        plus1.setStyle("-fx-background-color: #5c9eb0; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 11px; -fx-cursor: hand;");
         plus1.setOnAction(e -> {
-            inventory.addItem(type, 1);
+            presenter.addItem(type, 1);
             qty.setText("Qty: " + inventory.getCount(type));
         });
 
         Button plus5 = new Button("+5");
-        plus5.setStyle(
-                "-fx-background-color: #38a6d9; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 11px; -fx-cursor: hand;");
+        plus5.setStyle("-fx-background-color: #38a6d9; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 11px; -fx-cursor: hand;");
         plus5.setOnAction(e -> {
-            inventory.addItem(type, 5);
+            presenter.addItem(type, 5);
             qty.setText("Qty: " + inventory.getCount(type));
         });
 

@@ -2,7 +2,6 @@ package Project1Game.system;
 
 import Project1Game.component.farming.CropComponent;
 import Project1Game.component.farming.SoilComponent;
-import Project1Game.component.farming.monster.BaseMonsterComponent;
 import Project1Game.component.player.PlayerComponent; // Import PlayerComponent
 import Project1Game.core.EntityType;
 import Project1Game.core.ItemType;
@@ -155,15 +154,11 @@ public class SaveLoadSystem {
         data.monsters.clear();
         FXGL.getGameWorld().getEntitiesByType(EntityType.MONSTER).forEach(m -> {
             String spawnName = m.getString("monsterType");
-            BaseMonsterComponent bmc = m.getComponentOptional(BaseMonsterComponent.class).orElse(null);
-            if (spawnName != null && !spawnName.isEmpty() && bmc != null) {
+            if (spawnName != null && !spawnName.isEmpty()) {
                 SaveData.MonsterSaveData msd = new SaveData.MonsterSaveData();
                 msd.x = m.getX();
                 msd.y = m.getY();
                 msd.type = spawnName;
-                msd.isTemporary = bmc.isTemporary();
-                msd.lifeTimer = bmc.getLifeTimer();
-                msd.isReturning = bmc.isReturning();
                 data.monsters.add(msd);
             }
         });
@@ -313,40 +308,21 @@ public class SaveLoadSystem {
         // Tái tạo quái vật
         if (data.monsters != null) {
             for (SaveData.MonsterSaveData msd : data.monsters) {
-                Entity m = FXGL.getGameWorld().spawn(msd.type, msd.x, msd.y);
-                BaseMonsterComponent bmc = m.getComponentOptional(BaseMonsterComponent.class).orElse(null);
-                if (bmc != null && msd.isTemporary) {
-                    bmc.setTemporary(msd.lifeTimer);
-                    if (msd.isReturning) {
-                        bmc.setReturning(true);
-                    }
-                }
+                FXGL.getGameWorld().spawn(msd.type, msd.x, msd.y);
             }
         }
     }
 
     // Phương thức lưu/tải toàn bộ game (vào file)
     public void saveGameToFile() {
-        saveGameToFile("save_game.dat");
-    }
-
-    public void saveGameToFile(String filename) {
         SaveData currentSaveData = new SaveData();
         save(currentSaveData); // Lưu trạng thái hiện tại vào currentSaveData
-        FXGL.getFileSystemService().writeDataTask(currentSaveData, filename).run();
-        System.out.println("Đã lưu game vào file " + filename + " thành công!");
-    }
-
-    public void saveGameToAutosave() {
-        saveGameToFile("autosave.dat");
+        FXGL.getFileSystemService().writeDataTask(currentSaveData, "save_game.dat").run();
+        System.out.println("Đã lưu game vào file thành công!");
     }
 
     public void loadGameFromFile() {
-        loadGameFromFile("save_game.dat");
-    }
-
-    public void loadGameFromFile(String filename) {
-        var task = FXGL.getFileSystemService().<SaveData>readDataTask(filename)
+        var task = FXGL.getFileSystemService().<SaveData>readDataTask("save_game.dat")
                 .onSuccess(data -> {
                     FXGL.getExecutor().startAsyncFX(() -> {
                         Main app = FXGL.getAppCast();
@@ -354,8 +330,7 @@ public class SaveLoadSystem {
                             app.updateLevelFromSave(data.currentMap, data.playerX, data.playerY);
                         }
                         load(data); // Tải dữ liệu từ file vào game
-                        System.out.println("Đã tải game từ file " + filename + " thành công!");
-                        app.hideDeadScreen();
+                        System.out.println("Đã tải game từ file thành công!");
                     });
                 });
         FXGL.getExecutor().execute(() -> task.run());
