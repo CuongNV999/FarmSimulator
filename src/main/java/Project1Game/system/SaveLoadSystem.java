@@ -327,14 +327,26 @@ public class SaveLoadSystem {
 
     // Phương thức lưu/tải toàn bộ game (vào file)
     public void saveGameToFile() {
+        saveGameToFile("save_game.dat");
+    }
+
+    public void saveGameToFile(String filename) {
         SaveData currentSaveData = new SaveData();
         save(currentSaveData); // Lưu trạng thái hiện tại vào currentSaveData
-        FXGL.getFileSystemService().writeDataTask(currentSaveData, "save_game.dat").run();
-        System.out.println("Đã lưu game vào file thành công!");
+        FXGL.getFileSystemService().writeDataTask(currentSaveData, filename).run();
+        System.out.println("Đã lưu game vào file " + filename + " thành công!");
+    }
+
+    public void saveGameToAutosave() {
+        saveGameToFile("autosave.dat");
     }
 
     public void loadGameFromFile() {
-        var task = FXGL.getFileSystemService().<SaveData>readDataTask("save_game.dat")
+        loadGameFromFile("save_game.dat");
+    }
+
+    public void loadGameFromFile(String filename) {
+        var task = FXGL.getFileSystemService().<SaveData>readDataTask(filename)
                 .onSuccess(data -> {
                     FXGL.getExecutor().startAsyncFX(() -> {
                         Main app = FXGL.getAppCast();
@@ -342,7 +354,8 @@ public class SaveLoadSystem {
                             app.updateLevelFromSave(data.currentMap, data.playerX, data.playerY);
                         }
                         load(data); // Tải dữ liệu từ file vào game
-                        System.out.println("Đã tải game từ file thành công!");
+                        System.out.println("Đã tải game từ file " + filename + " thành công!");
+                        app.hideDeadScreen();
                     });
                 });
         FXGL.getExecutor().execute(() -> task.run());

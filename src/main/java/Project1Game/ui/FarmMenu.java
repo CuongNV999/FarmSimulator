@@ -10,6 +10,7 @@ import javafx.geometry.Insets;
 import javafx.scene.control.Button;
 import javafx.scene.layout.VBox;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.LinearGradient;
 import javafx.scene.paint.Stop;
@@ -212,7 +213,12 @@ public class FarmMenu extends FXGLMenu {
         });
         btnFullscreen[0].setText("Fullscreen: " + (FXGL.getPrimaryStage().isFullScreen() ? "ON" : "OFF"));
 
-        // 5. Back Button
+        // 5. Controls Button
+        MenuButton btnControls = new MenuButton("Key Controls", () -> {
+            showControlsScreen(menuBox, titleContainer);
+        });
+
+        // 6. Back Button
         MenuButton btnBack = new MenuButton("Back", () -> {
             if (this.type == MenuType.MAIN_MENU) {
                 showMainMenuScreen(menuBox, titleContainer, app);
@@ -221,7 +227,68 @@ public class FarmMenu extends FXGLMenu {
             }
         });
 
-        menuBox.getChildren().addAll(btnHpDepletion[0], btnMusic[0], btnSound[0], btnFullscreen[0], btnBack);
+        menuBox.getChildren().addAll(btnHpDepletion[0], btnMusic[0], btnSound[0], btnFullscreen[0], btnControls, btnBack);
+    }
+
+    private void showControlsScreen(VBox menuBox, VBox titleContainer) {
+        menuBox.getChildren().clear();
+        titleContainer.getChildren().clear();
+
+        Text titleText = new Text("GAME CONTROLS");
+        titleText.setFont(GameFont.font(FontWeight.EXTRA_BOLD, 48));
+        titleText.setFill(Color.web("#eccb58"));
+        titleText.setEffect(new DropShadow(20, Color.rgb(255, 200, 100, 0.5)));
+
+        Text subtitleText = new Text("Keyboard and Mouse Keybindings");
+        subtitleText.setFont(GameFont.font(FontWeight.BOLD, 16));
+        subtitleText.setFill(Color.web("#a0bfa7"));
+        titleContainer.getChildren().addAll(titleText, subtitleText);
+
+        VBox controlsList = new VBox(8);
+        controlsList.setAlignment(Pos.CENTER);
+        controlsList.setPadding(new Insets(15));
+        controlsList.setStyle("-fx-background-color: rgba(5, 15, 10, 0.75); -fx-background-radius: 10; -fx-border-color: #355c45; -fx-border-width: 1.5; -fx-border-radius: 10;");
+        controlsList.setMaxWidth(520);
+
+        String[][] keybindings = {
+            {"W, A, S, D", "Di chuyển nhân vật (Move)"},
+            {"Giữ SHIFT", "Chạy nhanh (Run)"},
+            {"Phím E", "Tương tác (Cửa, Giường, Thu hoạch, Nói chuyện)"},
+            {"Phím F / Chuột trái", "Sử dụng công cụ / Sử dụng vật phẩm"},
+            {"Phím G", "Gọi động vật đi theo / Dừng lại"},
+            {"Phím I / TAB", "Mở / Đóng Kho đồ (Inventory)"},
+            {"Phím R", "Đóng nhanh các cửa sổ giao diện (UI)"},
+            {"Phím ~ (Back Quote)", "Bật bảng Admin Panel (Mã: 1111/hust)"},
+            {"Phím F5 / F9", "Lưu nhanh / Tải nhanh game"}
+        };
+
+        for (String[] kb : keybindings) {
+            HBox row = new HBox(20);
+            row.setAlignment(Pos.CENTER_LEFT);
+            row.setPrefWidth(480);
+            
+            Text keyText = new Text(kb[0]);
+            keyText.setFont(GameFont.font(FontWeight.BOLD, 14));
+            keyText.setFill(Color.web("#eccb58"));
+            keyText.setWrappingWidth(160);
+            
+            Text descText = new Text(kb[1]);
+            descText.setFont(GameFont.font(FontWeight.NORMAL, 14));
+            descText.setFill(Color.WHITE);
+            descText.setWrappingWidth(300);
+            
+            row.getChildren().addAll(keyText, descText);
+            controlsList.getChildren().add(row);
+        }
+
+        MenuButton btnBack = new MenuButton("Back", () -> {
+            menuBox.setTranslateY(260); // Khôi phục lại vị trí Y ban đầu của menuBox
+            showOptionsScreen(menuBox, titleContainer);
+        });
+
+        // Điều chỉnh vị trí Y để hiển thị vừa vặn danh sách
+        menuBox.setTranslateY(180);
+        menuBox.getChildren().addAll(controlsList, btnBack);
     }
     private void showSkinSelectionScreen(VBox menuBox, VBox titleContainer, Main app, boolean isNewGame) {
         menuBox.getChildren().clear();

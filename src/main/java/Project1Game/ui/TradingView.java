@@ -86,11 +86,11 @@ public class TradingView extends VBox {
     private StackPane foodTabBtn;
 
     private final List<ItemType> buyableAnimals = Arrays.asList(
-            ItemType.CHICK, ItemType.CALF, ItemType.LAMB, ItemType.PIGLET, ItemType.TURKEY, ItemType.BULL
+            ItemType.CHICK, ItemType.CALF, ItemType.LAMB, ItemType.PIGLET, ItemType.BULL
     );
 
     private final List<ItemType> sellableAnimals = Arrays.asList(
-            ItemType.ROOSTER, ItemType.SHEEP, ItemType.PIG, ItemType.TURKEY
+            ItemType.ROOSTER, ItemType.SHEEP, ItemType.PIG, ItemType.BULL
     );
 
     // Inner class representing items in cart

@@ -131,6 +131,16 @@ public class Main extends GameApplication {
 
     public void handlePlayerFaint() {
         System.out.println("--- Player Fainted! ---");
+
+        PlayerComponent pc = player != null ? player.getComponent(PlayerComponent.class) : null;
+        int currentMoney = pc != null ? pc.getMoney() : 0;
+
+        if (currentMoney < 100) {
+            System.out.println("[Player Faint] Player has no money (< 100 G). Entering Death state.");
+            showDeadScreen();
+            return;
+        }
+
         if (timeSystem != null) {
             timeSystem.advanceToNextDay();
             // Cache the guider and trader reappearance at 6:00 AM morning
@@ -140,12 +150,9 @@ public class Main extends GameApplication {
             System.out.println("[NPC Cache] Cached morning transitions via faint: NPCs are visible");
         }
 
-        if (player != null) {
-            PlayerComponent pc = player.getComponent(PlayerComponent.class);
-            if (pc != null) {
-                int newMoney = Math.max(0, pc.getMoney() - 100);
-                pc.setMoney(newMoney);
-            }
+        if (pc != null) {
+            int newMoney = Math.max(0, currentMoney - 100);
+            pc.setMoney(newMoney);
         }
 
         if (statusBarsView != null) {
@@ -163,6 +170,11 @@ public class Main extends GameApplication {
         dialogView.setDialog("Thông báo", "Bạn đã bị kiệt sức và ngất xỉu!", "Bác nông dân đã đưa bạn về nhà.",
                 "Phạt viện phí: 100 G. Sức khỏe phục hồi 50%.");
         dialogView.show();
+
+        // Tự động lưu checkpoint an toàn sau khi hồi phục
+        if (saveLoadSystem != null) {
+            saveLoadSystem.saveGameToAutosave();
+        }
     }
 
     public void handleDoorInteraction(Entity targetDoor) {
@@ -207,6 +219,11 @@ public class Main extends GameApplication {
             dialogView.setDialog("Thông báo", "Bạn đã ngủ một giấc thật ngon.", "Sức khỏe đã được hồi phục!");
             dialogView.show();
             System.out.println("Nhân vật đã đi ngủ.");
+
+            // Tự động lưu checkpoint an toàn sau khi ngủ dậy
+            if (saveLoadSystem != null) {
+                saveLoadSystem.saveGameToAutosave();
+            }
         }
         System.out.println("--- Main: Kết thúc đi ngủ ---");
     }
@@ -231,6 +248,7 @@ public class Main extends GameApplication {
     private Text moneyText; // Thêm Text để hiển thị tiền
     private TradingView tradingView; // Thêm TradingView
     private AdminView adminView; // Thêm AdminView
+    private Project1Game.ui.DeadScreenView deadScreenView; // Thêm DeadScreenView
 
     // --- Các hệ thống logic (Systems) ---
     private TimeSystem timeSystem;
@@ -633,6 +651,10 @@ public class Main extends GameApplication {
         adminView = new AdminView(inventory, player.getComponent(PlayerComponent.class));
         FXGL.getGameScene().addUINode(adminView);
 
+        // Khởi tạo DeadScreenView
+        deadScreenView = new Project1Game.ui.DeadScreenView();
+        FXGL.getGameScene().addUINode(deadScreenView);
+
         if (shouldLoadSaveOnStart) {
             saveLoadSystem.loadGameFromFile();
             shouldLoadSaveOnStart = false;
@@ -644,7 +666,7 @@ public class Main extends GameApplication {
     /**
      * Phương thức hỗ trợ nạp map và cấu hình lại toàn bộ hệ thống (Player, Camera)
      */
-    private void updateLevel(String newMapName, double x, double y) {
+    public void updateLevel(String newMapName, double x, double y) {
         isLevelTransitioning = true;
         try {
             int tempMoney = 1000;
@@ -816,6 +838,14 @@ public class Main extends GameApplication {
 
     @Override
     protected void onUpdate(double tpf) {
+        if (deadScreenView != null && deadScreenView.isVisible()) {
+            if (player != null && player.isActive() && player.hasComponent(PhysicsComponent.class)) {
+                player.getComponent(PhysicsComponent.class).setVelocityX(0);
+                player.getComponent(PhysicsComponent.class).setVelocityY(0);
+            }
+            return;
+        }
+
         // 1. Cập nhật các hệ thống độc lập
         if (timeSystem != null)
             timeSystem.onUpdate(tpf);
@@ -1032,6 +1062,67 @@ public class Main extends GameApplication {
 
     @Override
     protected void initInput() {
+        // Chặn di chuyển và phím bấm khi Dead Screen đang mở
+        FXGL.getGameScene().getRoot().addEventFilter(javafx.scene.input.KeyEvent.ANY, event -> {
+            if (deadScreenView != null && deadScreenView.isVisible()) {
+                if (adminView != null && adminView.isOpen()) {
+                    return; // Cho phép tất cả sự kiện bàn phím khi admin panel đang mở để gõ passcode / phím tắt
+                }
+                if (event.getCode() != KeyCode.F9 && event.getCode() != KeyCode.BACK_QUOTE) {
+                    event.consume();
+                }
+            }
+        });
+        FXGL.getGameScene().getRoot().addEventFilter(javafx.scene.input.MouseEvent.ANY, event -> {
+            if (deadScreenView != null && deadScreenView.isVisible()) {
+                javafx.event.EventTarget target = event.getTarget();
+                if (target instanceof javafx.scene.Node) {
+                    javafx.scene.Node node = (javafx.scene.Node) target;
+                    boolean isDescendantOfDead = false;
+                    boolean isDescendantOfAdmin = false;
+                    javafx.scene.Node p = node;
+                    while (p != null) {
+                        if (p == deadScreenView) {
+                            isDescendantOfDead = true;
+                            break;
+                        }
+                        if (p == adminView) {
+                            isDescendantOfAdmin = true;
+                            break;
+                        }
+                        p = p.getParent();
+                    }
+                    if (!isDescendantOfDead && !(isDescendantOfAdmin && adminView != null && adminView.isOpen())) {
+                        event.consume();
+                    }
+                } else {
+                    event.consume();
+                }
+            }
+        });
+        FXGL.getGameScene().getRoot().addEventFilter(javafx.scene.input.ScrollEvent.ANY, event -> {
+            if (deadScreenView != null && deadScreenView.isVisible()) {
+                javafx.event.EventTarget target = event.getTarget();
+                if (target instanceof javafx.scene.Node) {
+                    javafx.scene.Node node = (javafx.scene.Node) target;
+                    boolean isDescendantOfAdmin = false;
+                    javafx.scene.Node p = node;
+                    while (p != null) {
+                        if (p == adminView) {
+                            isDescendantOfAdmin = true;
+                            break;
+                        }
+                        p = p.getParent();
+                    }
+                    if (!(isDescendantOfAdmin && adminView != null && adminView.isOpen())) {
+                        event.consume();
+                    }
+                } else {
+                    event.consume();
+                }
+            }
+        });
+
         Input input = FXGL.getInput();
 
         input.addEventFilter(javafx.scene.input.KeyEvent.KEY_PRESSED, e -> {
@@ -1163,20 +1254,29 @@ public class Main extends GameApplication {
                         BaseAnimalComponent bac = closestAnimal.getComponentOptional(BaseAnimalComponent.class).orElse(null);
                         if (bac != null) {
                             if (bac.getAdultItem() == ItemType.BULL) {
-                                // Toggle follow state for Bull/Calf
-                                bac.setFollowing(!bac.isFollowing());
-                                if (!bac.isFollowing()) {
-                                    if (bac.getEntity().hasComponent(PhysicsComponent.class)) {
-                                        PhysicsComponent p = bac.getEntity().getComponent(PhysicsComponent.class);
-                                        p.setVelocityX(0);
-                                        p.setVelocityY(0);
+                                if (bac.isReadyToHarvest()) {
+                                    Project1Game.model.Inventory inv = getInventory();
+                                    if (inv != null) {
+                                        inv.addItem(ItemType.BULL, 1);
+                                        Project1Game.Main.pushNotification("Đã thu hoạch Bull vào túi đồ!");
+                                        closestAnimal.removeFromWorld();
                                     }
-                                }
-                                String name = bac.isReadyToHarvest() ? bac.getAdultName() : bac.getBabyName();
-                                if (bac.isFollowing()) {
-                                    Project1Game.Main.pushNotification(name + " đang đi theo bạn!");
                                 } else {
-                                    Project1Game.Main.pushNotification(name + " đã dừng lại.");
+                                    // Toggle follow state for baby Calf
+                                    bac.setFollowing(!bac.isFollowing());
+                                    if (!bac.isFollowing()) {
+                                        if (bac.getEntity().hasComponent(PhysicsComponent.class)) {
+                                            PhysicsComponent p = bac.getEntity().getComponent(PhysicsComponent.class);
+                                            p.setVelocityX(0);
+                                            p.setVelocityY(0);
+                                        }
+                                    }
+                                    String name = bac.getBabyName();
+                                    if (bac.isFollowing()) {
+                                        Project1Game.Main.pushNotification(name + " đang đi theo bạn!");
+                                    } else {
+                                        Project1Game.Main.pushNotification(name + " đã dừng lại.");
+                                    }
                                 }
                                 return;
                             } else if (bac.isReadyToHarvest()) {
@@ -1518,6 +1618,32 @@ public class Main extends GameApplication {
 
     public boolean hasSaveGame() {
         return new java.io.File("save_game.dat").exists();
+    }
+
+    public boolean hasAutosave() {
+        return new java.io.File("autosave.dat").exists();
+    }
+
+    public void showDeadScreen() {
+        if (deadScreenView != null) {
+            deadScreenView.show();
+        }
+    }
+
+    public void hideDeadScreen() {
+        if (deadScreenView != null) {
+            deadScreenView.hide();
+        }
+    }
+
+    public void loadLastSave() {
+        if (saveLoadSystem != null) {
+            if (hasAutosave()) {
+                saveLoadSystem.loadGameFromFile("autosave.dat");
+            } else if (hasSaveGame()) {
+                saveLoadSystem.loadGameFromFile("save_game.dat");
+            }
+        }
     }
 
     private void bindPlayerUI() {
