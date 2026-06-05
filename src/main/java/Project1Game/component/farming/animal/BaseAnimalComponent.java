@@ -1,13 +1,15 @@
 package Project1Game.component.farming.animal;
 
+import Project1Game.config.AnimalConfig;
+
 import Project1Game.Main;
 import Project1Game.core.ItemType;
 import Project1Game.core.EntityType;
 import Project1Game.interaction.Interactable;
 import Project1Game.interaction.InteractableComponent;
 import Project1Game.system.DayNightEvent;
-import Project1Game.system.SteeringComponent;
-import Project1Game.ui.DialogView;
+import Project1Game.component.common.SteeringComponent;
+import Project1Game.ui.view.dialog.DialogView;
 import Project1Game.system.NotificationManager;
 import com.almasb.fxgl.dsl.FXGL;
 import com.almasb.fxgl.entity.Entity;
@@ -158,14 +160,19 @@ public class BaseAnimalComponent extends Component implements Interactable {
         // Listen for day passage
         dayHandler = e -> {
             if (growth != null) {
+                boolean wasMature = growth.isReadyToHarvest();
                 growth.growOneDay();
                 daysGrown = growth.getDaysGrown();
                 System.out.println(config.animalName() + " grew: " + daysGrown + "/" + config.maxGrowthDays());
-                if (growth.isReadyToHarvest()) {
+                if (growth.isReadyToHarvest() && !wasMature) {
+                    // Just matured — reinitialize animation to switch to adult texture & scale
                     if (animation != null) {
                         animation.initAnimation();
                     }
                     System.out.println(config.animalName() + " has matured into adult " + config.adultName() + "!");
+                    if (config.type() == AnimalType.TURKEY) {
+                        NotificationManager.pushNotification("Gà tây của bạn đã trưởng thành! Hãy bắt chúng (Shift + tương tác).");
+                    }
                 }
             }
         };
@@ -224,7 +231,16 @@ public class BaseAnimalComponent extends Component implements Interactable {
             return;
         }
 
-        // Wandering logic
+        // Wandering logic — mature Turkey does NOT wander (stays put)
+        if (config.type() == AnimalType.TURKEY && isReadyToHarvest()) {
+            // Mature turkey stands still; just update idle animation
+            steering.stop();
+            if (animation != null) {
+                animation.updateIdleAnimation();
+            }
+            return;
+        }
+
         double mapW = 3520;
         double mapH = 2048;
         if (Project1Game.Main.getInstance() != null) {
@@ -242,18 +258,21 @@ public class BaseAnimalComponent extends Component implements Interactable {
     @Override
     public void interact(Entity player, Entity target) {
         if (Project1Game.Main.isShiftHeld()) {
+            // HARVEST action (Shift + interact)
             if (isReadyToHarvest()) {
                 Project1Game.model.Inventory inventory = Main.getInstance().getInventory();
                 if (inventory != null) {
                     inventory.addItem(config.adultItem(), 1);
                     NotificationManager.pushNotification("Đã thu hoạch một " + config.adultName() + "!");
+                    // CRITICAL: Remove entity from world to prevent ghost-spawn / duplication
                     entity.removeFromWorld();
                 }
             } else {
+                // Animal is not mature yet — show info dialog
                 int daysRemaining = config.maxGrowthDays() - getDaysGrown();
                 String msg;
                 if (config.type() == AnimalType.TURKEY) {
-                    msg = "Gà tây cần thêm " + daysRemaining + " ngày để sẵn sàng thu hoạch.";
+                    msg = "Gà tây con cần thêm " + daysRemaining + " ngày để sẵn sàng thu hoạch.";
                 } else {
                     msg = config.babyName() + " cần thêm " + daysRemaining + " ngày để lớn lên.";
                 }
@@ -262,6 +281,13 @@ public class BaseAnimalComponent extends Component implements Interactable {
                 dialogView.show();
             }
         } else {
+            // FOLLOW / RELEASE action (normal interact)
+            // Mature turkey CANNOT be released/dropped again — it can only be harvested
+            if (config.type() == AnimalType.TURKEY && isReadyToHarvest()) {
+                NotificationManager.pushNotification("Gà tây trưởng thành! Dùng Shift + tương tác để thu hoạch.");
+                return;
+            }
+
             isFollowing = !isFollowing;
             String name = isReadyToHarvest() ? config.adultName() : config.babyName();
             if (isFollowing) {
@@ -309,7 +335,9 @@ public class BaseAnimalComponent extends Component implements Interactable {
                       ItemType.PIG, 32, 32, 32, 32);
                 break;
             case "turkey":
-                config = new AnimalConfig(AnimalType.TURKEY, "Gà tây", "Gà tây", "Turkey", 3,
+                // Turkey Chick: distinct baby/adult names, grows over 3 days, same sprite sheet
+                // Baby name = "Gà tây con", Adult name = "Gà tây trưởng thành"
+                config = new AnimalConfig(AnimalType.TURKEY, "Gà tây", "Gà tây con", "Gà tây trưởng thành", 3,
                       "Animal/Turkey_animation_with_shadow.png", "Animal/Turkey_animation_with_shadow.png",
                       ItemType.TURKEY, 32, 32, 32, 32);
                 break;

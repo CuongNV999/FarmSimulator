@@ -42,15 +42,19 @@ public class GrowthComponent extends Component {
 
         boolean isMature = isReadyToHarvest();
 
-        // 1. Scale updates
-        if (type == BaseAnimalComponent.AnimalType.TURKEY) {
-            entity.setScaleX(2.4);
-            entity.setScaleY(2.4);
-        } else {
-            double scale = isMature ? 2.6 : 1.8;
-            entity.setScaleX(scale);
-            entity.setScaleY(scale);
+        // 1. Scale updates — Turkey now has distinct chick vs adult scaling
+        double scale;
+        switch (type) {
+            case TURKEY:
+                // Chick is small; mature turkey is normal-sized
+                scale = isMature ? 1.8 : 1.0;
+                break;
+            default:
+                scale = isMature ? 2.6 : 1.8;
+                break;
         }
+        entity.setScaleX(scale);
+        entity.setScaleY(scale);
 
         entity.getTransformComponent().setScaleOrigin(new Point2D(frameW / 2.0, frameH / 2.0));
         entity.getTransformComponent().setRotationOrigin(new Point2D(frameW / 2.0, frameH / 2.0));
@@ -89,7 +93,12 @@ public class GrowthComponent extends Component {
                     }
                     break;
                 case TURKEY:
-                    hitbox = new HitBox("ANIMAL_BODY", new Point2D(6, 6), BoundingShape.box(20, 20));
+                    // Chick: tiny hitbox; mature: normal hitbox
+                    if (isMature) {
+                        hitbox = new HitBox("ANIMAL_BODY", new Point2D(6, 6), BoundingShape.box(20, 20));
+                    } else {
+                        hitbox = new HitBox("ANIMAL_BODY", new Point2D(8, 8), BoundingShape.box(16, 16));
+                    }
                     break;
                 default:
                     hitbox = new HitBox("ANIMAL_BODY", BoundingShape.box(frameW, frameH));

@@ -1,5 +1,7 @@
 package Project1Game.ui;
 
+import Project1Game.ui.view.menu.FarmMenu;
+
 import com.almasb.fxgl.app.scene.FXGLMenu;
 import com.almasb.fxgl.app.scene.MenuType;
 import com.almasb.fxgl.app.scene.SceneFactory;

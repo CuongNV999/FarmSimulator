@@ -7,7 +7,7 @@ import Project1Game.core.EntityType;
 import Project1Game.core.ItemType;
 import Project1Game.model.Inventory;
 import Project1Game.model.SaveData;
-import Project1Game.ui.StatusBarsView;
+import Project1Game.ui.view.hud.StatusBarsView;
 import com.almasb.fxgl.dsl.FXGL;
 import com.almasb.fxgl.entity.Entity;
 
@@ -62,7 +62,7 @@ public class SaveLoadSystem {
 
             // Save Quests
             data.npcQuests.clear();
-            for (Project1Game.quest.NPC npc : Project1Game.quest.QuestManager.getInstance().getAllNPCs()) {
+            for (Project1Game.quest.QuestGiver npc : Project1Game.quest.QuestManager.getInstance().getAllNPCs()) {
                 SaveData.NPCSave npcSave = new SaveData.NPCSave();
                 npcSave.npcName = npc.getName();
                 for (Project1Game.quest.Quest q : npc.getQuests()) {
@@ -200,7 +200,7 @@ public class SaveLoadSystem {
             // Load Quests
             if (data.npcQuests != null) {
                 for (SaveData.NPCSave npcSave : data.npcQuests) {
-                    Project1Game.quest.NPC npc = Project1Game.quest.QuestManager.getInstance().getNPC(npcSave.npcName);
+                    Project1Game.quest.QuestGiver npc = Project1Game.quest.QuestManager.getInstance().getNPC(npcSave.npcName);
                     if (npc != null) {
                         for (SaveData.QuestSave questSave : npcSave.quests) {
                             Project1Game.quest.Quest q = npc.getQuests().stream()

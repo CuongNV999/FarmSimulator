@@ -1,9 +1,14 @@
-# Merged Main.java
-
-Below is the complete, merged, and production-ready `Main.java` code, based strictly on the `feature/monster` branch architecture with integrated notification rules.
-
-```java
 package Project1Game;
+
+import Project1Game.ui.view.hud.*;
+import Project1Game.ui.view.menu.*;
+import Project1Game.ui.view.dialog.*;
+import Project1Game.ui.view.shop.*;
+import Project1Game.ui.view.admin.*;
+import Project1Game.ui.view.inventory.*;
+import Project1Game.ui.view.overlay.*;
+import Project1Game.ui.utility.GameFont;
+import Project1Game.ui.presenter.*;
 
 // --- IMPORT CÁC THÀNH PHẦN NỘI BỘ DỰ ÁN ---
 import Project1Game.component.farming.CropComponent;
@@ -362,13 +367,13 @@ public class Main extends GameApplication {
         nightOverlay = new NightLightingOverlay(FXGL.getAppWidth(), FXGL.getAppHeight());
 
         clockText = new Text();
-        clockText.setFont(Project1Game.ui.GameFont.font(FontWeight.BOLD, 20));
+        clockText.setFont(Project1Game.ui.utility.GameFont.font(FontWeight.BOLD, 20));
         clockText.setStroke(Color.BLACK);
         clockText.setStrokeWidth(0.5);
 
         // Khởi tạo Text hiển thị tiền
         moneyText = new Text();
-        moneyText.setFont(Project1Game.ui.GameFont.font(FontWeight.BOLD, 18));
+        moneyText.setFont(Project1Game.ui.utility.GameFont.font(FontWeight.BOLD, 18));
         moneyText.setFill(Color.GOLD); // Màu chữ
         moneyText.setStroke(Color.BLACK);
         moneyText.setStrokeWidth(0.3);
@@ -403,10 +408,12 @@ public class Main extends GameApplication {
 
         // Khởi tạo TradingView
         tradingView = new TradingView(inventory, player.getComponent(PlayerComponent.class));
+        new TradingPresenter(tradingView, inventory, player.getComponent(PlayerComponent.class));
         FXGL.getGameScene().addUINode(tradingView);
 
         // Khởi tạo AdminView
         adminView = new AdminView(inventory, player.getComponent(PlayerComponent.class));
+        new AdminPresenter(inventory, player.getComponent(PlayerComponent.class));
         FXGL.getGameScene().addUINode(adminView);
 
         if (shouldLoadSaveOnStart) {
@@ -562,4 +569,3 @@ public class Main extends GameApplication {
         launch(args);
     }
 }
-```

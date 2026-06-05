@@ -5,9 +5,9 @@ import com.almasb.fxgl.entity.Entity;
 import com.almasb.fxgl.physics.PhysicsComponent;
 import Project1Game.Main;
 import Project1Game.component.player.PlayerComponent;
-import Project1Game.ui.StatusBarsView;
-import Project1Game.ui.DialogView;
-import Project1Game.ui.FaintOverlay;
+import Project1Game.ui.view.hud.StatusBarsView;
+import Project1Game.ui.view.dialog.DialogView;
+import Project1Game.ui.view.overlay.FaintOverlay;
 
 public class PlayerStateManager {
     private double lastHungerDrainTime = -1;

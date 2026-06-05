@@ -1,7 +1,7 @@
 package Project1Game.system;
 
 import Project1Game.core.EntityType;
-import Project1Game.ui.DialogView;
+import Project1Game.ui.view.dialog.DialogView;
 import com.almasb.fxgl.dsl.FXGL;
 import com.almasb.fxgl.physics.CollisionHandler;
 import com.almasb.fxgl.entity.Entity;

@@ -1,16 +1,21 @@
 package Project1Game.component.farming;
 
+import com.almasb.fxgl.dsl.FXGL;
 import com.almasb.fxgl.entity.component.Component;
-import Project1Game.component.farming.state.SoilState;
-import Project1Game.component.farming.state.TilledDryState;
-import Project1Game.component.farming.state.TilledWetState;
+import com.almasb.fxgl.texture.Texture;
+import javafx.scene.effect.ColorAdjust;
 
 public class SoilComponent extends Component {
+    public enum State {
+        TILLED_DRY,
+        TILLED_WET
+    }
+
     private boolean hasPlant = false;
-    private SoilState currentState = new TilledDryState();
+    private State state = State.TILLED_DRY;
 
     public boolean canPlant() {
-        return !hasPlant && currentState.canPlant();
+        return !hasPlant;
     }
 
     public void setHasPlant(boolean hasPlant) {
@@ -22,30 +27,34 @@ public class SoilComponent extends Component {
     }
 
     public boolean isWet() {
-        return currentState.isWet() || (Project1Game.system.WeatherSystem.getCurrentWeather() == Project1Game.system.WeatherSystem.Weather.RAINY);
+        return state == State.TILLED_WET || (Project1Game.system.WeatherSystem.getCurrentWeather() == Project1Game.system.WeatherSystem.Weather.RAINY);
     }
 
     public void setWet(boolean wet) {
         if (wet) {
-            SoilState newState = currentState.water();
-            if (newState != null) {
-                currentState = newState;
-                System.out.println("Soil watered: State changed to " + currentState.getClass().getSimpleName());
-            }
+            state = State.TILLED_WET;
+            System.out.println("Soil watered: State changed to TILLED_WET");
         } else {
-            currentState = new TilledDryState();
+            state = State.TILLED_DRY;
         }
-        updateTexture(); // Cập nhật lại hình ảnh ngay khi tưới
+        updateTexture();
     }
 
     public void updateTexture() {
         if (entity == null) return;
         entity.getViewComponent().clearChildren();
+
+        int gridX = (int) Math.round(entity.getX() / 32.0);
+        String textureName = (gridX % 2 == 0) ? "Crops/soil_1.png" : "Crops/soil_2.png";
+        Texture texture = FXGL.texture(textureName);
+
         if (isWet()) {
-            entity.getViewComponent().addChild(new Project1Game.component.farming.state.TilledWetState().getTexture(entity.getX()));
-        } else {
-            entity.getViewComponent().addChild(currentState.getTexture(entity.getX()));
+            ColorAdjust darken = new ColorAdjust();
+            darken.setBrightness(-0.4);
+            darken.setContrast(0.2);
+            texture.setEffect(darken);
         }
+        entity.getViewComponent().addChild(texture);
     }
 
     private javafx.event.EventHandler<Project1Game.system.DayNightEvent> dayHandler;
@@ -60,13 +69,13 @@ public class SoilComponent extends Component {
                 setWet(false);
             }
         };
-        com.almasb.fxgl.dsl.FXGL.getEventBus().addEventHandler(Project1Game.system.DayNightEvent.SET_DAY, dayHandler);
+        FXGL.getEventBus().addEventHandler(Project1Game.system.DayNightEvent.SET_DAY, dayHandler);
     }
 
     @Override
     public void onRemoved() {
         if (dayHandler != null) {
-            com.almasb.fxgl.dsl.FXGL.getEventBus().removeEventHandler(Project1Game.system.DayNightEvent.SET_DAY, dayHandler);
+            FXGL.getEventBus().removeEventHandler(Project1Game.system.DayNightEvent.SET_DAY, dayHandler);
         }
     }
 }

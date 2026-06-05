@@ -607,7 +607,7 @@ public class NPCBehaviorComponent extends Component implements Interactable {
             target.getComponent(TraderComponent.class).interact(player, target);
         } else {
             String npcName = target.getProperties().keys().contains("name") ? target.getString("name") : "";
-            Project1Game.quest.NPC npc = Project1Game.quest.QuestManager.getInstance().getNPC(npcName);
+            Project1Game.quest.QuestGiver npc = Project1Game.quest.QuestManager.getInstance().getNPC(npcName);
             if (npc != null) {
                 System.out.println("Tương tác với NPC: " + npcName);
                 String text = npc.interact();

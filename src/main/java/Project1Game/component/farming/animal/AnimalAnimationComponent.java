@@ -1,17 +1,14 @@
 package Project1Game.component.farming.animal;
 
+import Project1Game.config.AnimalConfig;
+
+import Project1Game.component.common.DirectionalAnimationComponent;
 import com.almasb.fxgl.dsl.FXGL;
-import com.almasb.fxgl.entity.component.Component;
-import com.almasb.fxgl.texture.AnimatedTexture;
-import com.almasb.fxgl.texture.AnimationChannel;
 import javafx.geometry.Point2D;
 import javafx.util.Duration;
 
-public class AnimalAnimationComponent extends Component {
+public class AnimalAnimationComponent extends DirectionalAnimationComponent {
     private final AnimalConfig config;
-    private AnimatedTexture texture;
-    private AnimationChannel animWalkDown, animWalkUp, animWalkLeft, animWalkRight;
-    private AnimationChannel animIdleDown, animIdleUp, animIdleLeft, animIdleRight;
     private GrowthComponent growth;
 
     public AnimalAnimationComponent(AnimalConfig config) {
@@ -32,87 +29,48 @@ public class AnimalAnimationComponent extends Component {
 
         boolean isBull = currentTexture.contains("Bull");
 
-        animWalkDown  = new AnimationChannel(FXGL.image(currentTexture), 6, frameW, frameH, Duration.seconds(0.8), 0, 5);
-        animWalkUp    = new AnimationChannel(FXGL.image(currentTexture), 6, frameW, frameH, Duration.seconds(0.8), 6, 11);
-        animWalkLeft  = new AnimationChannel(FXGL.image(currentTexture), 6, frameW, frameH, Duration.seconds(0.8), 12, 17);
-        animWalkRight = new AnimationChannel(FXGL.image(currentTexture), 6, frameW, frameH, Duration.seconds(0.8), 18, 23);
-        
+        int idleDownMin, idleDownMax;
+        int idleUpMin, idleUpMax;
+        int idleLeftMin, idleLeftMax;
+        int idleRightMin, idleRightMax;
+
         if (isBull) {
-            animIdleDown  = new AnimationChannel(FXGL.image(currentTexture), 6, frameW, frameH, Duration.seconds(1.0), 0, 0);
-            animIdleUp    = new AnimationChannel(FXGL.image(currentTexture), 6, frameW, frameH, Duration.seconds(1.0), 6, 6);
-            animIdleLeft  = new AnimationChannel(FXGL.image(currentTexture), 6, frameW, frameH, Duration.seconds(1.0), 12, 12);
-            animIdleRight = new AnimationChannel(FXGL.image(currentTexture), 6, frameW, frameH, Duration.seconds(1.0), 18, 18);
+            idleDownMin = 0; idleDownMax = 0;
+            idleUpMin = 6; idleUpMax = 6;
+            idleLeftMin = 12; idleLeftMax = 12;
+            idleRightMin = 18; idleRightMax = 18;
         } else {
-            animIdleDown  = new AnimationChannel(FXGL.image(currentTexture), 6, frameW, frameH, Duration.seconds(1.0), 24, 27);
-            animIdleUp    = new AnimationChannel(FXGL.image(currentTexture), 6, frameW, frameH, Duration.seconds(1.0), 30, 33);
-            animIdleLeft  = new AnimationChannel(FXGL.image(currentTexture), 6, frameW, frameH, Duration.seconds(1.0), 36, 39);
-            animIdleRight = new AnimationChannel(FXGL.image(currentTexture), 6, frameW, frameH, Duration.seconds(1.0), 42, 45);
+            idleDownMin = 24; idleDownMax = 27;
+            idleUpMin = 30; idleUpMax = 33;
+            idleLeftMin = 36; idleLeftMax = 39;
+            idleRightMin = 42; idleRightMax = 45;
         }
 
-        if (texture == null) {
-            texture = new AnimatedTexture(animIdleDown);
-            entity.getViewComponent().addChild(texture);
-            texture.loop();
-        } else {
-            texture.loopAnimationChannel(animIdleDown);
-        }
+        setup(FXGL.image(currentTexture), 6, frameW, frameH, Duration.seconds(0.8), Duration.seconds(1.0),
+              0, 5,    // Walk Down
+              6, 11,   // Walk Up
+              12, 17,  // Walk Left
+              18, 23,  // Walk Right
+              idleDownMin, idleDownMax,
+              idleUpMin, idleUpMax,
+              idleLeftMin, idleLeftMax,
+              idleRightMin, idleRightMax
+        );
 
-        // Handle visual scaling and hitboxes via GrowthComponent
         if (growth != null) {
             growth.updateHitboxAndScale(entity, config.type(), frameW, frameH);
         } else {
-            // Fallback scaling to distinguish age before GrowthComponent is added
+            double scale;
             if (config.type() == BaseAnimalComponent.AnimalType.TURKEY) {
-                entity.setScaleX(2.4);
-                entity.setScaleY(2.4);
+                // Turkey chick = small (1.0), mature turkey = normal (1.8)
+                scale = isMature ? 1.8 : 1.0;
             } else {
-                double scale = isMature ? 2.6 : 1.8;
-                entity.setScaleX(scale);
-                entity.setScaleY(scale);
+                scale = isMature ? 2.6 : 1.8;
             }
+            entity.setScaleX(scale);
+            entity.setScaleY(scale);
             entity.getTransformComponent().setScaleOrigin(new Point2D(frameW / 2.0, frameH / 2.0));
             entity.getTransformComponent().setRotationOrigin(new Point2D(frameW / 2.0, frameH / 2.0));
         }
-    }
-
-    public void setAnimationChannel(AnimationChannel channel) {
-        if (texture != null && texture.getAnimationChannel() != channel) {
-            texture.loopAnimationChannel(channel);
-        }
-    }
-
-    public void updateWalkAnimation(Point2D dir) {
-        if (dir.magnitude() > 0.01) {
-            if (Math.abs(dir.getX()) > Math.abs(dir.getY())) {
-                if (dir.getX() > 0) setAnimationChannel(animWalkRight);
-                else setAnimationChannel(animWalkLeft);
-            } else {
-                if (dir.getY() > 0) setAnimationChannel(animWalkDown);
-                else setAnimationChannel(animWalkUp);
-            }
-        } else {
-            updateIdleAnimation();
-        }
-    }
-
-    public void updateIdleAnimation() {
-        if (texture == null) return;
-        AnimationChannel current = texture.getAnimationChannel();
-        if (current == animWalkRight) setAnimationChannel(animIdleRight);
-        else if (current == animWalkLeft) setAnimationChannel(animIdleLeft);
-        else if (current == animWalkUp) setAnimationChannel(animIdleUp);
-        else if (current == animWalkDown) setAnimationChannel(animIdleDown);
-    }
-    
-    public void playIdleInRandomDirection() {
-        int dir = new java.util.Random().nextInt(4);
-        if (dir == 0) setAnimationChannel(animIdleDown);
-        else if (dir == 1) setAnimationChannel(animIdleUp);
-        else if (dir == 2) setAnimationChannel(animIdleLeft);
-        else setAnimationChannel(animIdleRight);
-    }
-
-    public AnimatedTexture getTexture() {
-        return texture;
     }
 }

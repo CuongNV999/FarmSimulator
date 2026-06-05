@@ -4,17 +4,14 @@ import com.almasb.fxgl.dsl.FXGL;
 import com.almasb.fxgl.entity.Entity;
 import com.almasb.fxgl.entity.component.Component;
 import Project1Game.core.EntityType;
-import Project1Game.system.SteeringComponent;
-import Project1Game.system.AStarPathfinder;
+import Project1Game.component.common.SteeringComponent;
 import javafx.geometry.Point2D;
 import java.util.List;
-import java.util.ArrayList;
 import java.util.Random;
 
 public class FleeBehaviorComponent extends Component {
     private boolean isFleeing = false;
     private Point2D fleeTarget = null;
-    private List<Point2D> fleePathWaypoints = new ArrayList<>();
     private double fleeCheckTimer = 0.0;
     private final Random random = new Random();
 
@@ -73,9 +70,9 @@ public class FleeBehaviorComponent extends Component {
             if (isFleeing) {
                 isFleeing = false;
                 fleeTarget = null;
-                fleePathWaypoints.clear();
                 if (steering != null) {
-                    steering.clearPath();
+                    steering.clearTarget();
+                    steering.setSpeed(50.0); // Reset speed to normal wander speed
                 }
                 if (animation != null) {
                     animation.updateIdleAnimation();
@@ -113,39 +110,28 @@ public class FleeBehaviorComponent extends Component {
         }
 
         fleeTarget = candidate;
-        double h = entity.getHeight() > 0 ? entity.getHeight() : 32.0;
-        fleePathWaypoints = AStarPathfinder.findPath(entity.getPosition(), fleeTarget, mapW, mapH, h);
-        if (fleePathWaypoints.isEmpty()) {
-            fleePathWaypoints = new ArrayList<>();
-            fleePathWaypoints.add(fleeTarget);
-        }
         if (steering != null) {
-            steering.setPathWaypoints(fleePathWaypoints);
+            steering.setSpeed(80.0); // Flee speed
+            steering.setTarget(fleeTarget);
         }
     }
 
     private void handleFleeing(double tpf) {
         if (steering == null) return;
         
-        if (fleeTarget == null || fleePathWaypoints == null || fleePathWaypoints.isEmpty()) {
+        if (fleeTarget == null || steering.getTargetPosition() == null || steering.getPathWaypoints().isEmpty()) {
             chooseFleeTarget(null);
             return;
         }
 
-        double fleeSpeed = 60.0;
-        steering.followPath(tpf, fleeSpeed);
-        fleePathWaypoints = steering.getPathWaypoints();
-
-        if (fleePathWaypoints.isEmpty()) {
-            chooseFleeTarget(null);
-            return;
+        Point2D velocity = Point2D.ZERO;
+        com.almasb.fxgl.physics.PhysicsComponent physics = entity.getComponentOptional(com.almasb.fxgl.physics.PhysicsComponent.class).orElse(null);
+        if (physics != null) {
+            velocity = new Point2D(physics.getVelocityX(), physics.getVelocityY());
         }
-
-        Point2D currentWaypoint = fleePathWaypoints.get(0);
-        Point2D dir = currentWaypoint.subtract(entity.getPosition());
-        if (dir.magnitude() > 0.01) {
+        if (velocity.magnitude() > 0.01) {
             if (animation != null) {
-                animation.updateWalkAnimation(dir.normalize());
+                animation.updateWalkAnimation(velocity.normalize());
             }
         }
     }

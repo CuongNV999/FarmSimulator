@@ -9,10 +9,10 @@ import Project1Game.component.npc.NPCBehaviorComponent;
 import Project1Game.component.farming.monster.BaseMonsterComponent;
 import Project1Game.component.farming.SoilComponent;
 import Project1Game.model.SaveData;
-import Project1Game.ui.TradingView;
-import Project1Game.ui.AdminView;
-import Project1Game.ui.NightLightingOverlay;
-import Project1Game.ui.DialogView;
+import Project1Game.ui.view.shop.TradingView;
+import Project1Game.ui.view.admin.AdminView;
+import Project1Game.ui.view.overlay.NightLightingOverlay;
+import Project1Game.ui.view.dialog.DialogView;
 import javafx.geometry.Point2D;
 import java.util.HashMap;
 import java.util.Map;
@@ -146,7 +146,10 @@ public class LevelManager {
             FXGL.setLevelFromMap(newMapName);
 
             // Load the TMX map details to query overhead tiles
-            try (java.io.InputStream is = FXGL.getAssetLoader().getStream("levels/" + newMapName)) {
+            try (java.io.InputStream is = LevelManager.class.getResourceAsStream("/assets/levels/" + newMapName)) {
+                if (is == null) {
+                    throw new java.io.FileNotFoundException("Resource not found on classpath: /assets/levels/" + newMapName);
+                }
                 com.almasb.fxgl.entity.level.tiled.TMXLevelLoader loader = new com.almasb.fxgl.entity.level.tiled.TMXLevelLoader();
                 currentTMXMap = loader.parse(is);
                 overheadLayerData = null;

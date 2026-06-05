@@ -6,7 +6,7 @@ import com.almasb.fxgl.entity.component.Component;
 import com.almasb.fxgl.physics.PhysicsComponent;
 import Project1Game.core.EntityType;
 import Project1Game.component.farming.animal.BaseAnimalComponent;
-import Project1Game.system.SteeringComponent;
+import Project1Game.component.common.SteeringComponent;
 import Project1Game.system.NotificationManager;
 import javafx.geometry.Point2D;
 

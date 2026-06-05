@@ -5,13 +5,13 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Singleton quản lý toàn bộ hệ thống Quest và NPC.
+ * Singleton quản lý toàn bộ hệ thống Quest và QuestGiver.
  */
 public class QuestManager {
 
     private static QuestManager instance;
 
-    private final List<NPC> npcs = new ArrayList<>();
+    private final List<QuestGiver> npcs = new ArrayList<>();
 
     private QuestManager() {}
 
@@ -25,14 +25,14 @@ public class QuestManager {
     }
 
     /**
-     * Khởi tạo toàn bộ NPC và đăng ký quest cho họ.
+     * Khởi tạo toàn bộ QuestGiver và đăng ký quest cho họ.
      * Gọi một lần duy nhất trong {@code initGame()} của Main.
      */
     public void init() {
         npcs.clear();
 
         // --- NPC: Bác Nông Dân ---
-        NPC bacNongDan = new NPC(
+        QuestGiver bacNongDan = new QuestGiver(
             "Bác Nông Dân",
             "Mùa màng bội thu là nhờ công cháu đấy! Cảm ơn cháu nhiều lắm."
         );
@@ -51,27 +51,27 @@ public class QuestManager {
      * Phát sóng sự kiện game tới tất cả NPC (và qua đó tới mọi quest đang chạy).
      */
     public void broadcast(QuestContext ctx) {
-        for (NPC npc : npcs) {
+        for (QuestGiver npc : npcs) {
             npc.notifyEvent(ctx);
         }
     }
 
-    /** Lấy NPC theo tên (trả null nếu không tìm thấy). */
-    public NPC getNPC(String name) {
+    /** Lấy QuestGiver theo tên (trả null nếu không tìm thấy). */
+    public QuestGiver getNPC(String name) {
         return npcs.stream()
                    .filter(n -> n.getName().equals(name))
                    .findFirst()
                    .orElse(null);
     }
 
-    public List<NPC> getAllNPCs() {
+    public List<QuestGiver> getAllNPCs() {
         return Collections.unmodifiableList(npcs);
     }
 
     /** Tóm tắt trạng thái tất cả quest trong toàn game (debug). */
     public void printAllQuestStatus() {
         System.out.println("===== QUEST STATUS =====");
-        for (NPC npc : npcs) {
+        for (QuestGiver npc : npcs) {
             System.out.println("NPC: " + npc.getName());
             for (Quest q : npc.getQuests()) {
                 System.out.println("  " + q);

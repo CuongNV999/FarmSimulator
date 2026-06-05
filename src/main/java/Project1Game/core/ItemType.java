@@ -1,11 +1,16 @@
 package Project1Game.core;
 
+import Project1Game.model.item.tool.*;
+import Project1Game.model.item.seed.*;
+import Project1Game.model.item.food.*;
+import Project1Game.model.item.animal.*;
+
 import Project1Game.model.item.Usable;
-import Project1Game.model.item.HoeAction;
-import Project1Game.model.item.WateringCanAction;
-import Project1Game.model.item.PlantCropAction;
-import Project1Game.model.item.PlaceAnimalAction;
-import Project1Game.model.item.EatAction;
+
+
+
+
+
 import com.almasb.fxgl.entity.Entity;
 import com.almasb.fxgl.dsl.FXGL;
 import javafx.scene.image.Image;

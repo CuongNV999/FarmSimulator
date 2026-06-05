@@ -1,10 +1,14 @@
 package Project1Game.system;
 
+import Project1Game.ui.view.shop.TradingView.CartItem;
+
+import Project1Game.ui.view.shop.TradingView;
+
 import Project1Game.component.player.PlayerComponent;
 import Project1Game.component.npc.TraderComponent;
 import Project1Game.model.Inventory;
 import Project1Game.model.InventorySlot;
-import Project1Game.ui.TradingView.CartItem;
+
 
 import java.util.List;
 

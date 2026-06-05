@@ -1,5 +1,7 @@
 package Project1Game.component.player;
 
+import Project1Game.config.AnimalConfig;
+
 import com.almasb.fxgl.dsl.FXGL;
 import com.almasb.fxgl.entity.component.Component;
 import com.almasb.fxgl.physics.PhysicsComponent;

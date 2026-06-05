@@ -6,7 +6,7 @@ import com.almasb.fxgl.physics.CollisionHandler;
 import Project1Game.core.EntityType;
 import Project1Game.component.farming.animal.BaseAnimalComponent;
 import Project1Game.component.farming.monster.BaseMonsterComponent;
-import Project1Game.ui.DialogView;
+import Project1Game.ui.view.dialog.DialogView;
 
 public class CollisionManager {
     private Entity nearbyNPC = null;

@@ -1,5 +1,7 @@
 package Project1Game.system;
 
+import Project1Game.ui.utility.GameFont;
+
 import com.almasb.fxgl.dsl.FXGL;
 import Project1Game.Main;
 import Project1Game.component.farming.SoilComponent;
@@ -119,7 +121,7 @@ public class WeatherSystem {
 
         // Initialize UI Nodes
         weatherText = new Text("Thời tiết: Nắng");
-        weatherText.setFont(Font.font(Project1Game.ui.GameFont.GAME_FONT, FontWeight.BOLD, 18));
+        weatherText.setFont(Font.font(Project1Game.ui.utility.GameFont.GAME_FONT, FontWeight.BOLD, 18));
         weatherText.setStroke(Color.BLACK);
         weatherText.setStrokeWidth(0.3);
         weatherText.setFill(Color.GOLD);
