@@ -26,8 +26,6 @@ public abstract class BaseMonsterComponent extends Component {
         CARNIVORE, HERBIVORE
     }
 
-
-
     protected double fleeRadius;
     protected final MonsterClassification classification;
 
@@ -127,8 +125,6 @@ public abstract class BaseMonsterComponent extends Component {
                 isReturning = true;
                 targetEntity = findClosestBush();
                 recalculatePath();
-                String name = getClass().getSimpleName().replace("Component", "");
-                Project1Game.Main.pushNotification("Quái vật " + name + " đang quay lại bụi cây!");
                 System.out.println("[BaseMonsterComponent] Monster " + getClass().getSimpleName() + " life expired. Returning to closest bush: " 
                         + (targetEntity != null ? targetEntity.getPosition() : "none") + " | spawnProtectionTimer=" + spawnProtectionTimer);
             }
@@ -210,34 +206,12 @@ public abstract class BaseMonsterComponent extends Component {
 
         followPath(tpf, baseSpeed);
 
-        Point2D targetPos = getTargetPosition();
-        double dist = targetPos != null ? entity.getPosition().distance(targetPos) : Double.MAX_VALUE;
-
-        // Check if bounding boxes overlap
-        boolean overlaps = false;
-        if (targetEntity != null) {
-            double mx = entity.getX();
-            double my = entity.getY();
-            double mw = entity.getWidth() > 0 ? entity.getWidth() : 32.0;
-            double mh = entity.getHeight() > 0 ? entity.getHeight() : 32.0;
-
-            double bx = targetEntity.getX();
-            double by = targetEntity.getY();
-            double bw = targetEntity.getWidth() > 0 ? targetEntity.getWidth() : 32.0;
-            double bh = targetEntity.getHeight() > 0 ? targetEntity.getHeight() : 32.0;
-
-            overlaps = (mx < bx + bw && mx + mw > bx && my < by + bh && my + mh > by);
-        }
-
-        if (dist < 16.0 || overlaps) {
+        // Sử dụng center distance ổn định hơn để quay về bụi cây
+        if (entity.getCenter().distance(targetEntity.getCenter()) < 16.0) {
             if (spawnProtectionTimer <= 0) {
-                if (entity.isActive()) {
-                    String name = getClass().getSimpleName().replace("Component", "");
-                    Project1Game.Main.pushNotification("Quái vật " + name + " đã ẩn nấp vào bụi cây!");
-                    System.out.println("[BaseMonsterComponent] Removed monster " + getClass().getSimpleName() + " at " + entity.getPosition() 
-                            + ": returned to bush " + targetEntity.getPosition() + " | spawnProtectionTimer=" + spawnProtectionTimer);
-                    entity.removeFromWorld();
-                }
+                System.out.println("[BaseMonsterComponent] Removed monster " + getClass().getSimpleName() + " at " + entity.getPosition() 
+                        + ": returned to bush " + targetEntity.getPosition() + " | spawnProtectionTimer=" + spawnProtectionTimer);
+                entity.removeFromWorld();
             }
         }
     }
@@ -287,6 +261,14 @@ public abstract class BaseMonsterComponent extends Component {
     }
 
     private void handleNormalSeekingState(double tpf) {
+        // Bỏ qua mục tiêu là động vật đang đi theo người chơi
+        if (targetEntity != null && targetEntity.getType() == EntityType.ANIMAL) {
+            BaseAnimalComponent bac = targetEntity.getComponentOptional(BaseAnimalComponent.class).orElse(null);
+            if (bac != null && bac.isFollowing()) {
+                targetEntity = null;
+            }
+        }
+
         targetScanTimer += tpf;
         if (targetScanTimer >= 0.5) {
             targetScanTimer = 0.0;
@@ -302,7 +284,8 @@ public abstract class BaseMonsterComponent extends Component {
             recalculatePath();
         }
 
-        boolean canSeekDirectly = targetEntity != null && entity.distance(targetEntity) < 48.0;
+        // Sử dụng khoảng cách tâm để tối ưu hóa va chạm / di chuyển tầm gần
+        boolean canSeekDirectly = targetEntity != null && entity.getCenter().distance(targetEntity.getCenter()) < 90.0;
         if (targetEntity != null && (!pathWaypoints.isEmpty() || canSeekDirectly)) {
             pathTimer += tpf;
             if (pathTimer >= 1.0) {
@@ -354,9 +337,8 @@ public abstract class BaseMonsterComponent extends Component {
 
     private void followPath(double tpf, double speedToUse) {
         if (pathWaypoints == null || pathWaypoints.isEmpty()) {
-            Point2D targetPos = getTargetPosition();
-            if (targetPos != null) {
-                Point2D dir = targetPos.subtract(entity.getPosition());
+            if (targetEntity != null) {
+                Point2D dir = targetEntity.getPosition().subtract(entity.getPosition());
                 if (dir.magnitude() > 0.01) dir = dir.normalize();
                 move(dir.multiply(speedToUse), tpf);
             } else {
@@ -400,19 +382,26 @@ public abstract class BaseMonsterComponent extends Component {
             return;
         }
 
-        double dist = entity.distance(targetEntity);
-        if (dist < 48.0) {
+        double centerDist = entity.getCenter().distance(targetEntity.getCenter());
+        
+        // Tính toán khoảng cách tấn công động dựa trên kích thước của quái vật và con mồi
+        double entityWidthSum = (entity.getWidth() * Math.abs(entity.getScaleX()) + targetEntity.getWidth() * Math.abs(targetEntity.getScaleX()));
+        double attackRange = Math.max(80.0, entityWidthSum / 2.0 + 16.0);
+        
+        if (centerDist <= attackRange) {
             BaseAnimalComponent bac = targetEntity.getComponentOptional(BaseAnimalComponent.class).orElse(null);
-            if (classification == MonsterClassification.CARNIVORE && targetEntity.isType(EntityType.ANIMAL) && (bac == null || !bac.isFollowing())) {
-                System.out.println("[BaseMonsterComponent] CARNIVORE " + getClass().getSimpleName() + " ate animal " + targetEntity + " at " + targetEntity.getPosition());
-                targetEntity.removeFromWorld();
-                Project1Game.Main.pushNotification("Quái vật đã ăn thịt động vật của bạn!");
-                targetEntity = null;
-                damageCooldown = 2.0;
-            } else if (classification == MonsterClassification.HERBIVORE && targetEntity.getType() instanceof EntityType && isCrop((EntityType) targetEntity.getType())) {
+            if (classification == MonsterClassification.CARNIVORE && targetEntity.getType() == EntityType.ANIMAL) {
+                if (bac == null || !bac.isFollowing()) {
+                    System.out.println("[BaseMonsterComponent] CARNIVORE " + getClass().getSimpleName() + " ate animal " + targetEntity + " at " + targetEntity.getPosition());
+                    targetEntity.removeFromWorld();
+                    Project1Game.Main.pushNotification("Cảnh báo: Quái vật đã ăn thịt động vật của bạn!");
+                    targetEntity = null;
+                    damageCooldown = 2.0;
+                }
+            } else if (classification == MonsterClassification.HERBIVORE && Project1Game.core.CropRegistry.getInstance().isCrop((EntityType) targetEntity.getType())) {
                 System.out.println("[BaseMonsterComponent] HERBIVORE " + getClass().getSimpleName() + " destroyed crop " + targetEntity.getType() + " at " + targetEntity.getPosition());
                 targetEntity.removeFromWorld();
-                Project1Game.Main.pushNotification("Quái vật đã phá hoại mùa màng của bạn!");
+                Project1Game.Main.pushNotification("Cảnh báo: Quái vật đã phá hoại mùa màng của bạn!");
                 targetEntity = null;
                 damageCooldown = 2.0;
             }
@@ -425,16 +414,10 @@ public abstract class BaseMonsterComponent extends Component {
             return;
         }
 
-        Point2D targetPos = getTargetPosition();
-        if (targetPos == null) {
-            pathWaypoints.clear();
-            return;
-        }
-
         // TỐI ƯU HÓA TỐC ĐỘ: Sử dụng kích thước bản đồ đã được lưu trong bộ đệm (O(1)) và truyền chiều cao thực thể
         double h = entity.getHeight() > 0 ? entity.getHeight() : 32.0;
         this.pathWaypoints = Project1Game.system.AStarPathfinder.findPath(entity.getPosition(),
-                targetPos, cachedMapWidth, cachedMapHeight, h);
+                targetEntity.getPosition(), cachedMapWidth, cachedMapHeight, h);
     }
 
     protected Entity findClosestTarget() {
@@ -448,7 +431,7 @@ public abstract class BaseMonsterComponent extends Component {
                 if (bac != null && bac.isFollowing()) {
                     continue;
                 }
-                double dist = entity.distance(animal);
+                double dist = entity.getCenter().distance(animal.getCenter());
                 if (dist < minDist) {
                     minDist = dist;
                     closest = animal;
@@ -459,7 +442,7 @@ public abstract class BaseMonsterComponent extends Component {
             for (EntityType cropType : Project1Game.core.CropRegistry.getInstance().getSupportedCrops()) {
                 List<Entity> crops = FXGL.getGameWorld().getEntitiesByType(cropType);
                 for (Entity crop : crops) {
-                    double dist = entity.distance(crop);
+                    double dist = entity.getCenter().distance(crop.getCenter());
                     if (dist < minDist) {
                         minDist = dist;
                         closest = crop;
@@ -540,34 +523,6 @@ public abstract class BaseMonsterComponent extends Component {
 
     public boolean isAlerted() {
         return isAlerted;
-    }
-
-    public double getSpawnProtectionTimer() {
-        return spawnProtectionTimer;
-    }
-
-    public boolean isTemporary() {
-        return isTemporary;
-    }
-
-    public double getLifeTimer() {
-        return lifeTimer;
-    }
-
-    public void setReturning(boolean returning) {
-        this.isReturning = returning;
-    }
-
-    private Point2D getTargetPosition() {
-        if (targetEntity == null) return null;
-        if (targetEntity.getType() == EntityType.BUSH) {
-            double mx = entity.getX() + (entity.getWidth() > 0 ? entity.getWidth() : 32.0) / 2;
-            double my = entity.getY() + (entity.getHeight() > 0 ? entity.getHeight() : 32.0) / 2;
-            double px = Math.max(targetEntity.getX(), Math.min(mx, targetEntity.getX() + targetEntity.getWidth()));
-            double py = Math.max(targetEntity.getY(), Math.min(my, targetEntity.getY() + targetEntity.getHeight()));
-            return new Point2D(px, py);
-        }
-        return targetEntity.getPosition();
     }
 
     public void forceNewDirection() {

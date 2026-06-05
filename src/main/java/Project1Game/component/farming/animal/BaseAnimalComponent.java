@@ -107,6 +107,18 @@ public class BaseAnimalComponent extends Component implements Interactable {
         return daysGrown >= maxGrowthDays;
     }
 
+    public ItemType getAdultItem() {
+        return adultItem;
+    }
+
+    public String getAdultName() {
+        return adultName;
+    }
+
+    public String getBabyName() {
+        return babyName;
+    }
+
     public int getMaxGrowthDays() {
         return maxGrowthDays;
     }
