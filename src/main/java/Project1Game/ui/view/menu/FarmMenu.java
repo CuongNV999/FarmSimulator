@@ -306,9 +306,9 @@ public class FarmMenu extends FXGLMenu {
         javafx.scene.layout.HBox skinsRow = new javafx.scene.layout.HBox(15);
         skinsRow.setAlignment(Pos.CENTER);
 
-        String[] skinNames = {"Default", "Skeleton", "Male"};
-        String[] skinPaths = {"Player", "Player_Skeleton", "Player_Male"};
-        String[] skinDescs = {"Classic farmer", "Undead skeleton", "Classic male"};
+        String[] skinNames = {"Default", "Skeleton", "Male", "Spongebob", "Messi"};
+        String[] skinPaths = {"Player", "Player_Skeleton", "Player_Male", "Player_Spongebob", "Player_Messi"};
+        String[] skinDescs = {"Classic farmer", "Undead skeleton", "Classic male", "SpongeBob SquarePants", "Lionel Messi"};
 
         for (int i = 0; i < skinNames.length; i++) {
             final String path = skinPaths[i];
@@ -333,8 +333,14 @@ public class FarmMenu extends FXGLMenu {
 
             // Sprite preview (greyed out if locked)
             com.almasb.fxgl.texture.Texture preview;
-            if (path.equals("Player_Skeleton") || path.equals("Player_Male")) {
-                String imageName = path + "/" + (path.equals("Player_Skeleton") ? "BODY_skeleton.png" : "BODY_male.png");
+            if (path.equals("Player_Skeleton") || path.equals("Player_Male")
+                    || path.equals("Player_Spongebob") || path.equals("Player_Messi")
+                    || path.equals("Player_Ronaldo")) {
+                String imgName = path.equals("Player_Skeleton") ? "BODY_skeleton.png" :
+                                 path.equals("Player_Male") ? "BODY_male.png" :
+                                 path.equals("Player_Spongebob") ? "BODY_spongebob.png" :
+                                 path.equals("Player_Messi") ? "BODY_messi.png" : "BODY_ronaldo.png";
+                String imageName = path + "/" + imgName;
                 preview = FXGL.texture(imageName).subTexture(new javafx.geometry.Rectangle2D(0, 128, 64, 64));
                 preview.setFitWidth(48);
                 preview.setFitHeight(48);

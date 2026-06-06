@@ -46,10 +46,19 @@ public class PlayerComponent extends Component {
         money.set(1000);
     }
 
+    private boolean isLPCSkin(String skinFolder) {
+        return skinFolder.equals("Player_Skeleton") || skinFolder.equals("Player_Male")
+                || skinFolder.equals("Player_Spongebob") || skinFolder.equals("Player_Messi")
+                || skinFolder.equals("Player_Ronaldo");
+    }
+
     private void loadSkin(String skinFolder, double frameDuration) {
-        if (skinFolder.equals("Player_Skeleton") || skinFolder.equals("Player_Male")) {
-            String imageName = skinFolder + "/"
-                    + (skinFolder.equals("Player_Skeleton") ? "BODY_skeleton.png" : "BODY_male.png");
+        if (isLPCSkin(skinFolder)) {
+            String imgName = skinFolder.equals("Player_Skeleton") ? "BODY_skeleton.png" :
+                             skinFolder.equals("Player_Male") ? "BODY_male.png" :
+                             skinFolder.equals("Player_Spongebob") ? "BODY_spongebob.png" :
+                             skinFolder.equals("Player_Messi") ? "BODY_messi.png" : "BODY_ronaldo.png";
+            String imageName = skinFolder + "/" + imgName;
             javafx.scene.image.Image img = FXGL.image(imageName);
             int framesPerRow = 9;
             int frameW = 64;
@@ -111,7 +120,7 @@ public class PlayerComponent extends Component {
         texture.loopAnimationChannel(idleDown);
 
         if (entity != null) {
-            double scale = (skinFolder.equals("Player_Skeleton") || skinFolder.equals("Player_Male")) ? 1.2 : 1.8;
+            double scale = isLPCSkin(skinFolder) ? 1.2 : 1.8;
             entity.setScaleX(scale);
             entity.setScaleY(scale);
         }
@@ -124,7 +133,7 @@ public class PlayerComponent extends Component {
     @Override
     public void onAdded() {
         entity.getViewComponent().addChild(texture);
-        double scale = (currentSkin.equals("Player_Skeleton") || currentSkin.equals("Player_Male")) ? 1.2 : 1.8;
+        double scale = isLPCSkin(currentSkin) ? 1.2 : 1.8;
         entity.setScaleX(scale);
         entity.setScaleY(scale);
     }
