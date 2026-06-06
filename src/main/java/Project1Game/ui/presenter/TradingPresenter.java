@@ -24,9 +24,34 @@ public class TradingPresenter {
         registerHandlers();
     }
 
+    private TradingView getActiveView() {
+        Project1Game.Main app = Project1Game.Main.getInstance();
+        if (app != null) {
+            TradingView v = app.getTradingView();
+            if (v != null) {
+                return v;
+            }
+        }
+        return this.view;
+    }
+
+    private PlayerComponent getActivePlayerComponent() {
+        Project1Game.Main app = Project1Game.Main.getInstance();
+        if (app != null && app.getPlayer() != null) {
+            PlayerComponent pc = app.getPlayer().getComponent(PlayerComponent.class);
+            if (pc != null) {
+                return pc;
+            }
+        }
+        return this.playerComponent;
+    }
+
     public void checkout(TraderComponent currentTrader, List<TradingView.CartItem> cartItems, int netCost) {
+        TradingView activeView = getActiveView();
+        PlayerComponent activePlayer = getActivePlayerComponent();
+
         TradeService.CheckoutResult result = TradeService.executeCheckout(
-            inventory, playerComponent, currentTrader, cartItems, netCost
+            inventory, activePlayer, currentTrader, cartItems, netCost
         );
 
         NotificationManager.pushNotification(result.message);
@@ -36,10 +61,10 @@ public class TradingPresenter {
         }
 
         if (result.success) {
-            view.clearCart();
+            activeView.clearCart();
         }
 
-        view.refreshAfterTrade();
+        activeView.refreshAfterTrade();
     }
 
     public void negotiate(TraderComponent currentTrader, int requestedPercent) {
@@ -54,7 +79,7 @@ public class TradingPresenter {
         }
 
         boolean success = currentTrader.tryNegotiateWithSlider(requestedPercent);
-        view.displayNegotiationResult(success, requestedPercent);
+        getActiveView().displayNegotiationResult(success, requestedPercent);
     }
 
     private void registerHandlers() {
