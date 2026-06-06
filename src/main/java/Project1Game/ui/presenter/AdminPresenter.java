@@ -17,20 +17,31 @@ public class AdminPresenter {
         registerHandlers();
     }
 
+    private PlayerComponent getActivePlayerComponent() {
+        Main app = Main.getInstance();
+        if (app != null && app.getPlayer() != null) {
+            PlayerComponent pc = app.getPlayer().getComponent(PlayerComponent.class);
+            if (pc != null) {
+                return pc;
+            }
+        }
+        return this.playerComponent;
+    }
+
     public boolean verifyPasscode(String code) {
         return "1111".equals(code);
     }
 
     public void setGold(int amount) {
-        playerComponent.setMoney(amount);
+        getActivePlayerComponent().setMoney(amount);
     }
 
     public void addGold(int amount) {
-        playerComponent.addMoney(amount);
+        getActivePlayerComponent().addMoney(amount);
     }
 
     public void changeSkin(String path) {
-        playerComponent.changeSkin(path);
+        getActivePlayerComponent().changeSkin(path);
     }
 
     public void setTimeSpeedMultiplier(double speed) {

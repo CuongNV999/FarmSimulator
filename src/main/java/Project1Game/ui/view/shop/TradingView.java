@@ -307,10 +307,7 @@ public class TradingView extends VBox {
         negotiationSlider.setDisable(true);
 
         // Làm mới giá trên các item slots (giá đã thay đổi)
-        buySectionContainer.getChildren().clear();
-        buySectionContainer.getChildren().add(createBuySection());
-        sellSectionContainer.getChildren().clear();
-        sellSectionContainer.getChildren().add(createSellSection());
+        refreshTabs();
 
         // Cập nhật lại giỏ hàng (giá đã thay đổi)
         updateCartUI();
@@ -344,11 +341,7 @@ public class TradingView extends VBox {
         updateNegotiationPanelState();
 
         // Tái tạo nội dung mua/bán với giá đã điều chỉnh
-        buySectionContainer.getChildren().clear();
-        buySectionContainer.getChildren().add(createBuySection());
-
-        sellSectionContainer.getChildren().clear();
-        sellSectionContainer.getChildren().add(createSellSection());
+        refreshTabs();
 
         // Cập nhật giao diện giỏ hàng
         updateCartUI();
@@ -436,12 +429,13 @@ public class TradingView extends VBox {
             items = buyableFood;
         }
 
+        int maxCols = (currentTab == ShopTab.FOOD) ? 6 : 3;
         int col = 0;
         int row = 0;
         for (ItemType item : items) {
             buyGrid.add(createTradingItemSlot(item, true), col, row);
             col++;
-            if (col >= 3) { // 3 cột
+            if (col >= maxCols) {
                 col = 0;
                 row++;
             }
@@ -450,19 +444,23 @@ public class TradingView extends VBox {
         ScrollPane scroll = new ScrollPane(buyGrid);
         scroll.setPrefHeight(320);
         scroll.setFitToWidth(true);
+        scroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         scroll.setStyle("-fx-background: transparent; -fx-background-color: transparent; -fx-viewport-background: transparent; -fx-bar-color: #5C2E0B;");
 
         return new VBox(10, buyTitle, scroll);
     }
 
     private VBox createSellSection() {
+        if (currentTab == ShopTab.FOOD) {
+            return new VBox();
+        }
+
         String titleText;
         if (currentTab == ShopTab.CROPS_AND_SEEDS) {
             titleText = "Bán Nông sản";
-        } else if (currentTab == ShopTab.ANIMALS) {
-            titleText = "Bán Động vật (Trưởng thành)";
         } else {
-            titleText = "Bán Thực phẩm & Đồ ăn";
+            titleText = "Bán Động vật (Trưởng thành)";
         }
         Text sellTitle = new Text(titleText);
         sellTitle.setFont(Font.font(GameFont.GAME_FONT, FontWeight.BOLD, 22));
@@ -476,10 +474,8 @@ public class TradingView extends VBox {
         List<ItemType> items;
         if (currentTab == ShopTab.CROPS_AND_SEEDS) {
             items = sellableItems;
-        } else if (currentTab == ShopTab.ANIMALS) {
-            items = sellableAnimals;
         } else {
-            items = sellableFood;
+            items = sellableAnimals;
         }
 
         int col = 0;
@@ -496,6 +492,8 @@ public class TradingView extends VBox {
         ScrollPane scroll = new ScrollPane(sellGrid);
         scroll.setPrefHeight(320);
         scroll.setFitToWidth(true);
+        scroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         scroll.setStyle("-fx-background: transparent; -fx-background-color: transparent; -fx-viewport-background: transparent; -fx-bar-color: #5C2E0B;");
 
         return new VBox(10, sellTitle, scroll);
@@ -595,6 +593,12 @@ public class TradingView extends VBox {
             return;
         }
 
+        // Không cho phép bán thực phẩm
+        if (!isBuying && (sellableFood.contains(itemType) || buyableFood.contains(itemType))) {
+            NotificationManager.pushNotification("Trader không thu mua thực phẩm!");
+            return;
+        }
+
         // Kiểm tra xem đã có trong giỏ hàng chưa
         for (CartItem ci : cartItems) {
             if (ci.itemType == itemType && ci.isBuying == isBuying) {
@@ -667,6 +671,8 @@ public class TradingView extends VBox {
         ScrollPane scrollPane = new ScrollPane(itemsBox);
         scrollPane.setPrefHeight(220);
         scrollPane.setFitToWidth(true);
+        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         scrollPane.setStyle("-fx-background: transparent; -fx-background-color: transparent; -fx-viewport-background: transparent; -fx-bar-color: #5C2E0B;");
         cartSectionContainer.getChildren().add(scrollPane);
 
@@ -902,6 +908,10 @@ public class TradingView extends VBox {
 
     private void refreshTabs() {
         updateTabButtonVisuals();
+        
+        boolean isFoodTab = (currentTab == ShopTab.FOOD);
+        sellSectionContainer.setVisible(!isFoodTab);
+        sellSectionContainer.setManaged(!isFoodTab);
         
         buySectionContainer.getChildren().clear();
         buySectionContainer.getChildren().add(createBuySection());
