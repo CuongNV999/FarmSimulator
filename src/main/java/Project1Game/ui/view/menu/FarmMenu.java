@@ -334,12 +334,10 @@ public class FarmMenu extends FXGLMenu {
             // Sprite preview (greyed out if locked)
             com.almasb.fxgl.texture.Texture preview;
             if (path.equals("Player_Skeleton") || path.equals("Player_Male")
-                    || path.equals("Player_Spongebob") || path.equals("Player_Messi")
-                    || path.equals("Player_Ronaldo")) {
+                    || path.equals("Player_Spongebob") || path.equals("Player_Messi")) {
                 String imgName = path.equals("Player_Skeleton") ? "BODY_skeleton.png" :
                                  path.equals("Player_Male") ? "BODY_male.png" :
-                                 path.equals("Player_Spongebob") ? "BODY_spongebob.png" :
-                                 path.equals("Player_Messi") ? "BODY_messi.png" : "BODY_ronaldo.png";
+                                 path.equals("Player_Spongebob") ? "BODY_spongebob.png" : "BODY_messi.png";
                 String imageName = path + "/" + imgName;
                 preview = FXGL.texture(imageName).subTexture(new javafx.geometry.Rectangle2D(0, 128, 64, 64));
                 preview.setFitWidth(48);

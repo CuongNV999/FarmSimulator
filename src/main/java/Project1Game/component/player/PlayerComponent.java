@@ -48,16 +48,14 @@ public class PlayerComponent extends Component {
 
     private boolean isLPCSkin(String skinFolder) {
         return skinFolder.equals("Player_Skeleton") || skinFolder.equals("Player_Male")
-                || skinFolder.equals("Player_Spongebob") || skinFolder.equals("Player_Messi")
-                || skinFolder.equals("Player_Ronaldo");
+                || skinFolder.equals("Player_Spongebob") || skinFolder.equals("Player_Messi");
     }
 
     private void loadSkin(String skinFolder, double frameDuration) {
         if (isLPCSkin(skinFolder)) {
             String imgName = skinFolder.equals("Player_Skeleton") ? "BODY_skeleton.png" :
                              skinFolder.equals("Player_Male") ? "BODY_male.png" :
-                             skinFolder.equals("Player_Spongebob") ? "BODY_spongebob.png" :
-                             skinFolder.equals("Player_Messi") ? "BODY_messi.png" : "BODY_ronaldo.png";
+                             skinFolder.equals("Player_Spongebob") ? "BODY_spongebob.png" : "BODY_messi.png";
             String imageName = skinFolder + "/" + imgName;
             javafx.scene.image.Image img = FXGL.image(imageName);
             int framesPerRow = 9;
