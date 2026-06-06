@@ -133,7 +133,17 @@ public class PlayerComponent extends Component {
     public void onUpdate(double tpf) {
         PhysicsComponent physics = entity.getComponent(PhysicsComponent.class);
 
-        // 1. TRIỆT TIÊU HOÀN TOÀN LỰC XOAY VẬT LÝ
+        // CHỐNG TRÔI BẰNG CÁCH KHỬ NHIỄU VẬT LÝ
+        if (physics != null) {
+            if (Math.abs(physics.getVelocityX()) > 0 && Math.abs(physics.getVelocityX()) < 15) {
+                physics.setVelocityX(0);
+            }
+            if (Math.abs(physics.getVelocityY()) > 0 && Math.abs(physics.getVelocityY()) < 15) {
+                physics.setVelocityY(0);
+            }
+        }
+
+        // TRIỆT TIÊU HOÀN TOÀN LỰC XOAY VẬT LÝ
         if (entity != null) {
             entity.setRotation(0); // Ép cứng góc đồ họa về 0
 
@@ -143,11 +153,10 @@ public class PlayerComponent extends Component {
             }
         }
 
-        // 1. TỰ ĐỘNG LẤY VẬN TỐC TỪ HỆ THỐNG VẬT LÝ
+        // TỰ ĐỘNG LẤY VẬN TỐC TỪ HỆ THỐNG VẬT LÝ
         Point2D velocity = physics != null ? new Point2D(physics.getVelocityX(), physics.getVelocityY()) : Point2D.ZERO;
 
-        // Kiểm tra xem nhân vật có đang thực sự di chuyển không (ngưỡng 5 để tránh
-        // nhiễu)
+        // Kiểm tra xem nhân vật có đang thực sự di chuyển không (ngưỡng 5 để tránh nhiễu)
         if (velocity.magnitude() > 5) {
             isMoving = true;
             direction = velocity; // Cập nhật hướng theo vận tốc
@@ -163,7 +172,7 @@ public class PlayerComponent extends Component {
             isMoving = false;
         }
 
-        // 2. CHỌN ANIMATION PHÙ HỢP
+        // CHỌN ANIMATION PHÙ HỢP
         AnimationChannel next;
 
         if (isMoving) {
@@ -190,7 +199,7 @@ public class PlayerComponent extends Component {
             }
         }
 
-        // 3. CẬP NHẬT ĐỒ HỌA
+        // CẬP NHẬT ĐỒ HỌA
         texture.setScaleX(lastDirectionX); // Lật ảnh
         if (texture.getAnimationChannel() != next) {
             texture.loopAnimationChannel(next);

@@ -93,44 +93,8 @@ public class Main extends GameApplication {
         return inventory;
     }
 
-    public ToolbarView getToolbarView() {
-        return toolbarView;
-    }
-
-    public DialogView getDialogView() {
-        return dialogView;
-    }
-
-    public TradingView getTradingView() {
-        return tradingView;
-    }
-
-    public StatusBarsView getStatusBarsView() {
-        return statusBarsView;
-    }
-
-    public InventoryView getInventoryView() {
-        return inventoryView;
-    }
-
-    public AdminView getAdminView() {
-        return adminView;
-    }
-
-    public void setTradingView(TradingView tradingView) {
-        this.tradingView = tradingView;
-    }
-
-    public void setAdminView(AdminView adminView) {
-        this.adminView = adminView;
-    }
-
     public FarmingSystem getFarmingSystem() {
         return farmingSystem;
-    }
-
-    public NightLightingOverlay getNightLightingOverlay() {
-        return nightOverlay;
     }
 
     public Entity getPlayer() {
@@ -149,67 +113,32 @@ public class Main extends GameApplication {
         this.selector = selector;
     }
 
-    // --- Notification Rules and Filter logic ---
-    public static boolean isAllowedNotification(String message) {
-        if (message == null) {
-            return false;
-        }
-        String msg = message.toLowerCase();
-
-        // Ăn (Eat)
-        if (msg.contains("ăn") || msg.contains("đầy bụng") || msg.contains("đói") || msg.contains("thức ăn")
-                || msg.contains("eat")) {
-            return true;
-        }
-
-        // Mua / Bán / Giao dịch (Buy / Sell / Trade / Negotiate)
-        if (msg.contains("giao dịch") || msg.contains("tiền") || msg.contains("mua") ||
-                msg.contains("bán") || msg.contains("kho đồ") || msg.contains("giỏ hàng") ||
-                msg.contains("trader") || msg.contains("thương lượng") || msg.contains("giá") || msg.contains("shop")) {
-            return true;
-        }
-
-        // Ngủ (Sleep)
-        if (msg.contains("ngủ") || msg.contains("sleep") || msg.contains("hồi phục") || msg.contains("ngon")) {
-            return true;
-        }
-
-        return false;
-    }
-
-    public static void pushNotification(String message) {
-        if (isAllowedNotification(message)) {
-            com.almasb.fxgl.dsl.FXGL.getNotificationService().pushNotification(message);
-        }
-    }
-
     public void registerWeatherText(Text weatherText) {
-        if (hudContainer != null && weatherText != null) {
-            if (!hudContainer.getChildren().contains(weatherText)) {
-                int moneyIndex = hudContainer.getChildren().indexOf(moneyText);
-                if (moneyIndex >= 0) {
-                    hudContainer.getChildren().add(moneyIndex, weatherText);
-                } else {
-                    hudContainer.getChildren().add(weatherText);
-                }
-            }
+        if (hudManager != null) {
+            hudManager.registerWeatherText(weatherText);
         }
     }
 
     public void drainHungerForWork(double amount) {
-        playerStateManager.drainHungerForWork(amount, statusBarsView);
+        if (hudManager != null && hudManager.getStatusBarsView() != null) {
+            playerStateManager.drainHungerForWork(amount, hudManager.getStatusBarsView());
+        }
     }
 
     public void handlePlayerFaint() {
-        playerStateManager.handlePlayerFaint(timeSystem, player, statusBarsView, dialogView, levelManager);
+        if (hudManager != null) {
+            playerStateManager.handlePlayerFaint(timeSystem, player, hudManager.getStatusBarsView(), hudManager.getDialogView(), levelManager);
+        }
     }
 
     public void handleDoorInteraction(Entity targetDoor) {
-        levelManager.handleDoorInteraction(targetDoor, dialogView, collisionManager, saveLoadSystem);
+        levelManager.handleDoorInteraction(targetDoor, hudManager.getDialogView(), collisionManager, saveLoadSystem);
     }
 
     public void handleSleepInteraction() {
-        playerStateManager.handleSleepInteraction(timeSystem, statusBarsView, dialogView, levelManager);
+        if (hudManager != null) {
+            playerStateManager.handleSleepInteraction(timeSystem, hudManager.getStatusBarsView(), hudManager.getDialogView(), levelManager);
+        }
     }
 
     public void toggleHPDepletion() {
@@ -224,32 +153,20 @@ public class Main extends GameApplication {
     private Entity player;
     private Entity selector;
     private Inventory inventory;
-    private javafx.beans.property.IntegerProperty boundMoneyProperty = null;
-    private javafx.beans.value.ChangeListener<Number> moneyListener = null;
     private final java.util.Random rng = new java.util.Random();
-    private javafx.event.EventHandler<DayNightEvent> dayNightHandler = null;
 
-    // --- Các lớp giao diện (UI) ---
-    private ToolbarView toolbarView;
-    private InventoryView inventoryView;
-    private StatusBarsView statusBarsView;
-    private DialogView dialogView;
-    private MinimapView minimap;
-    private Text moneyText;
-    private TradingView tradingView;
-    private AdminView adminView;
+    // --- HUD Manager ---
+    private HUDManager hudManager;
+
+    // --- Offline World Growth Simulator ---
+    private OfflineWorldGrowthManager offlineWorldGrowthManager;
 
     // --- Các hệ thống logic (Systems) ---
     private TimeSystem timeSystem;
     private SaveLoadSystem saveLoadSystem;
     private FarmingSystem farmingSystem;
 
-    // --- Node UI đặc thù phục vụ System ---
-    private NightLightingOverlay nightOverlay;
-    private Text clockText;
-
     private boolean shouldLoadSaveOnStart = false;
-    private VBox hudContainer;
 
     @Override
     protected void initSettings(GameSettings gameSettings) {
@@ -271,7 +188,7 @@ public class Main extends GameApplication {
 
     @Override
     protected void initPhysics() {
-        collisionManager.initCollisionHandlers(dialogView);
+        collisionManager.initCollisionHandlers(hudManager != null ? hudManager.getDialogView() : null);
     }
 
     @Override
@@ -293,109 +210,25 @@ public class Main extends GameApplication {
         QuestManager.getInstance().reset();
         QuestManager.getInstance().init();
 
-        // Listen to DayNightEvent.SET_DAY to grow animals in inactive maps
-        if (dayNightHandler != null) {
-            FXGL.getEventBus().removeEventHandler(DayNightEvent.SET_DAY, dayNightHandler);
-        }
-        dayNightHandler = e -> {
-            for (SaveData state : levelManager.getMapStates().values()) {
-                if (state.animals != null) {
-                    for (SaveData.AnimalSaveData asd : state.animals) {
-                        int maxDays = 0;
-                        if (asd.type != null) {
-                            switch (asd.type.toUpperCase()) {
-                                case "CHICKEN":
-                                    maxDays = 4;
-                                    break;
-                                case "COW":
-                                    maxDays = 7;
-                                    break;
-                                case "SHEEP":
-                                    maxDays = 5;
-                                    break;
-                                case "PIG":
-                                    maxDays = 6;
-                                    break;
-                                case "TURKEY":
-                                    maxDays = 3;
-                                    break;
-                            }
-                            if (asd.daysGrown < maxDays) {
-                                asd.daysGrown++;
-                                System.out.println("[Main] Inactive animal " + asd.type + " grew to " + asd.daysGrown
-                                        + "/" + maxDays);
-                            }
-                        }
-                    }
-                }
-            }
-        };
-        FXGL.getEventBus().addEventHandler(DayNightEvent.SET_DAY, dayNightHandler);
+        // 3. Khởi tạo Offline Growth Simulator
+        offlineWorldGrowthManager = new OfflineWorldGrowthManager();
+        offlineWorldGrowthManager.init();
 
-        // 3. Nạp Map và Factory
+        // 4. Nạp Map và Factory
         FXGL.getGameWorld().addEntityFactory(new GameEntityFactory());
-
-        // Khởi tạo SaveLoadSystem trước khi gọi updateLevel lần đầu
-        // (cần statusBarsView và timeSystem đã được khởi tạo trong initUI)
-        // Tạm thời khởi tạo ở đây, sẽ chuyển sang initUI sau khi UI sẵn sàng
     }
 
     @Override
     protected void initUI() {
         FXGL.getGameScene().setBackgroundColor(Color.BLACK);
-        // Khởi tạo các thành phần View
-        toolbarView = new ToolbarView(inventory);
-        toolbarView.setLayoutX((FXGL.getAppWidth() - 9 * 86) / 2.0);
-        toolbarView.setLayoutY(FXGL.getAppHeight() - 100);
 
-        inventoryView = new InventoryView(inventory);
-        inventoryView.setLayoutX((FXGL.getAppWidth() - 620) / 2.0);
-        inventoryView.setLayoutY((FXGL.getAppHeight() - 300) / 2.0);
-
-        dialogView = new DialogView(FXGL.getAppWidth(), FXGL.getAppHeight());
-
-        statusBarsView = new StatusBarsView();
-        statusBarsView.setLayoutX(20);
-        statusBarsView.setLayoutY(20);
-
-        minimap = new MinimapView();
-        double minimapHeight = 150;
-        minimap.setLayoutX(10);
-        minimap.setLayoutY(FXGL.getAppHeight() - minimapHeight - 10);
-
-        // Khởi tạo UI đặc thù cho Thời gian
-        nightOverlay = new NightLightingOverlay(FXGL.getAppWidth(), FXGL.getAppHeight());
-
-        clockText = new Text();
-        clockText.setFont(Project1Game.ui.utility.GameFont.font(FontWeight.BOLD, 20));
-        clockText.setStroke(Color.BLACK);
-        clockText.setStrokeWidth(0.5);
-
-        // Khởi tạo Text hiển thị tiền
-        moneyText = new Text();
-        moneyText.setFont(Project1Game.ui.utility.GameFont.font(FontWeight.BOLD, 18));
-        moneyText.setFill(Color.GOLD); // Màu chữ
-        moneyText.setStroke(Color.BLACK);
-        moneyText.setStrokeWidth(0.3);
-
-        double hudContainerWidth = 220;
-        hudContainer = new VBox(6);
-        hudContainer.setPadding(new Insets(10, 15, 10, 15));
-        hudContainer.setPrefWidth(hudContainerWidth);
-        hudContainer.setStyle(
-                "-fx-background-color: rgba(0, 0, 0, 0.45); -fx-background-radius: 8; -fx-border-color: rgba(255, 255, 255, 0.15); -fx-border-width: 1; -fx-border-radius: 8;");
-        hudContainer.setAlignment(Pos.TOP_RIGHT);
-        hudContainer.setLayoutX(FXGL.getAppWidth() - hudContainerWidth - 15);
-        hudContainer.setLayoutY(15);
-        hudContainer.getChildren().addAll(clockText, moneyText);
-
-        // Đưa tất cả UI vào màn hình
-        FXGL.getGameScene().addUINodes(nightOverlay, toolbarView, inventoryView, dialogView, statusBarsView, minimap,
-                hudContainer);
+        // Khởi tạo HUD Manager
+        hudManager = new HUDManager();
+        hudManager.initializeHUD(this);
 
         // Khởi tạo các System phụ thuộc UI
-        timeSystem = new TimeSystem(nightOverlay, clockText);
-        saveLoadSystem = new SaveLoadSystem(inventory, statusBarsView, timeSystem);
+        timeSystem = new TimeSystem(hudManager.getNightOverlay(), hudManager.getClockText());
+        saveLoadSystem = new SaveLoadSystem(inventory, hudManager.getStatusBarsView(), timeSystem);
 
         // Khởi tạo WeatherSystem
         WeatherSystem.getInstance().init();
@@ -407,12 +240,14 @@ public class Main extends GameApplication {
         bindPlayerUI();
 
         // Khởi tạo TradingView
-        tradingView = new TradingView(inventory, player.getComponent(PlayerComponent.class));
+        TradingView tradingView = new TradingView(inventory, player.getComponent(PlayerComponent.class));
+        hudManager.setTradingView(tradingView);
         new TradingPresenter(tradingView, inventory, player.getComponent(PlayerComponent.class));
         FXGL.getGameScene().addUINode(tradingView);
 
         // Khởi tạo AdminView
-        adminView = new AdminView(inventory, player.getComponent(PlayerComponent.class));
+        AdminView adminView = new AdminView(inventory, player.getComponent(PlayerComponent.class));
+        hudManager.setAdminView(adminView);
         new AdminPresenter(inventory, player.getComponent(PlayerComponent.class));
         FXGL.getGameScene().addUINode(adminView);
 
@@ -433,35 +268,28 @@ public class Main extends GameApplication {
         if (timeSystem != null)
             timeSystem.onUpdate(tpf);
         WeatherSystem.getInstance().onUpdate(tpf);
-        if (minimap != null)
-            minimap.update();
 
-        if (nightOverlay != null && player != null && player.isActive() && player.hasComponent(PlayerComponent.class)) {
+        if (hudManager != null) {
+            hudManager.refresh();
+        }
+
+        if (hudManager != null && hudManager.getNightOverlay() != null && player != null && player.isActive() && player.hasComponent(PlayerComponent.class)) {
             PlayerComponent pc = player.getComponent(PlayerComponent.class);
-            nightOverlay.update(player.getCenter(), pc.getDirection());
+            hudManager.getNightOverlay().update(player.getCenter(), pc.getDirection());
         }
 
         // --- Cập nhật chỉ số đói và máu của người chơi ---
-        playerStateManager.updatePlayerStats(tpf, timeSystem, statusBarsView, player, dialogView, levelManager);
+        if (hudManager != null) {
+            playerStateManager.updatePlayerStats(tpf, timeSystem, hudManager.getStatusBarsView(), player, hudManager.getDialogView(), levelManager);
+        }
 
         // AI: Đi vào nhà lúc 8:00 PM và xuất hiện lại lúc 6:00 AM
-        levelManager.handleNPCTransitions(tpf, timeSystem, tradingView, collisionManager);
+        if (hudManager != null) {
+            levelManager.handleNPCTransitions(tpf, timeSystem, hudManager.getTradingView(), collisionManager);
+        }
 
         // Spawning Bush Monsters periodically
         levelManager.handleBushMonsterSpawning(tpf);
-
-        // --- ĐOẠN SỬA MỚI: CHỐNG TRÔI BẰNG CÁCH KHỬ NHIỄU VẬT LÝ ---
-        if (player != null) {
-            PhysicsComponent physics = player.getComponent(PhysicsComponent.class);
-            if (physics != null) {
-                if (Math.abs(physics.getVelocityX()) > 0 && Math.abs(physics.getVelocityX()) < 15) {
-                    physics.setVelocityX(0);
-                }
-                if (Math.abs(physics.getVelocityY()) > 0 && Math.abs(physics.getVelocityY()) < 15) {
-                    physics.setVelocityY(0);
-                }
-            }
-        }
 
         // 2. Cập nhật bộ chọn ô đất và đồng bộ chuyển động nhân vật
         if (farmingSystem != null)
@@ -513,18 +341,9 @@ public class Main extends GameApplication {
     }
 
     public void bindPlayerUI() {
-        if (player == null || !player.isActive() || !player.hasComponent(PlayerComponent.class) || moneyText == null)
-            return;
-        PlayerComponent playerComponent = player.getComponent(PlayerComponent.class);
-        if (boundMoneyProperty != null && moneyListener != null) {
-            boundMoneyProperty.removeListener(moneyListener);
+        if (hudManager != null) {
+            hudManager.bindPlayerUI(player);
         }
-        boundMoneyProperty = playerComponent.moneyProperty();
-        moneyListener = (obs, old, newV) -> {
-            moneyText.setText("Tiền: " + newV + " G");
-        };
-        boundMoneyProperty.addListener(moneyListener);
-        moneyText.setText("Tiền: " + playerComponent.getMoney() + " G");
     }
 
     public void updateLevelFromSave(String newMapName, double x, double y) {
@@ -556,13 +375,55 @@ public class Main extends GameApplication {
         levelManager.spawnBushMonsterAdmin();
     }
 
-    public static boolean isShiftHeld() {
-        return InputController.isShiftHeld();
-    }
-
     public static boolean isDayTime() {
         Main app = (Main) FXGL.getApp();
         return app.timeSystem != null && app.timeSystem.isDayTime();
+    }
+
+    // --- Delegation methods for backward compatibility ---
+
+    public ToolbarView getToolbarView() {
+        return hudManager != null ? hudManager.getToolbarView() : null;
+    }
+
+    public DialogView getDialogView() {
+        return hudManager != null ? hudManager.getDialogView() : null;
+    }
+
+    public TradingView getTradingView() {
+        return hudManager != null ? hudManager.getTradingView() : null;
+    }
+
+    public StatusBarsView getStatusBarsView() {
+        return hudManager != null ? hudManager.getStatusBarsView() : null;
+    }
+
+    public InventoryView getInventoryView() {
+        return hudManager != null ? hudManager.getInventoryView() : null;
+    }
+
+    public AdminView getAdminView() {
+        return hudManager != null ? hudManager.getAdminView() : null;
+    }
+
+    public void setTradingView(TradingView tradingView) {
+        if (hudManager != null) {
+            hudManager.setTradingView(tradingView);
+        }
+    }
+
+    public void setAdminView(AdminView adminView) {
+        if (hudManager != null) {
+            hudManager.setAdminView(adminView);
+        }
+    }
+
+    public NightLightingOverlay getNightLightingOverlay() {
+        return hudManager != null ? hudManager.getNightOverlay() : null;
+    }
+
+    public HUDManager getHudManager() {
+        return hudManager;
     }
 
     public static void main(String[] args) {

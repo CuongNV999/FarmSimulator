@@ -173,9 +173,8 @@ public class TutorialSystem {
             case 1:
                 stepTitleText.setText("Bước 1: Di chuyển & Cơ bản (Movement)");
                 descText.setText(
-                    "Sử dụng các phím W, A, S, D hoặc các Phím Mũi Tên để di chuyển nhân vật xung quanh trang trại.\n" +
-                    "Giữ phím Shift trong khi di chuyển để chạy nhanh hơn.\n\n" +
-                    "Use W, A, S, D or Arrow Keys to walk around. Hold Shift to run."
+                    "Sử dụng các phím W, A, S, D hoặc các Phím Mũi Tên để di chuyển nhân vật xung quanh trang trại.\n\n" +
+                    "Use W, A, S, D or Arrow Keys to walk around."
                 );
                 break;
             case 2:

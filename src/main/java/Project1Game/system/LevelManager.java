@@ -422,6 +422,9 @@ public class LevelManager {
 
     public void handleBushMonsterSpawning(double tpf) {
         if (currentMap.equals("Main_level.tmx")) {
+            if (FXGL.getGameWorld().getEntitiesByType(EntityType.MONSTER).size() >= 15) {
+                return;
+            }
             bushMonsterSpawnTimer += tpf;
             if (bushMonsterSpawnTimer >= 15.0) {
                 bushMonsterSpawnTimer = 0.0;

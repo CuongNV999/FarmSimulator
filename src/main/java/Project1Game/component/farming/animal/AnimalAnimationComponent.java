@@ -62,13 +62,16 @@ public class AnimalAnimationComponent extends DirectionalAnimationComponent {
         } else {
             double scale;
             if (config.type() == BaseAnimalComponent.AnimalType.TURKEY) {
-                // Turkey chick = small (1.0), mature turkey = normal (1.8)
-                scale = isMature ? 1.8 : 1.0;
+                // Turkey chick = small (0.5), mature turkey = normal (1.0)
+                scale = isMature ? 1.0 : 0.5;
             } else {
                 scale = isMature ? 2.6 : 1.8;
             }
             entity.setScaleX(scale);
             entity.setScaleY(scale);
+            if (config.type() == BaseAnimalComponent.AnimalType.TURKEY) {
+                entity.setScaleUniform(scale);
+            }
             entity.getTransformComponent().setScaleOrigin(new Point2D(frameW / 2.0, frameH / 2.0));
             entity.getTransformComponent().setRotationOrigin(new Point2D(frameW / 2.0, frameH / 2.0));
         }

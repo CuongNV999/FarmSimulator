@@ -32,6 +32,7 @@ public class SaveLoadSystem {
     public void save(SaveData data, boolean isMapTransition) {
         if (!isMapTransition) {
             data.gameTime = timeSystem.getGameTime(); // Lấy từ TimeSystem
+            data.dayCount = timeSystem.getDayCount();
             data.health = statusBarsView.getHealth();
             data.hunger = statusBarsView.getHunger();
 
@@ -146,6 +147,7 @@ public class SaveLoadSystem {
                 asd.y = a.getY();
                 asd.type = bac.getType().name();
                 asd.daysGrown = bac.getDaysGrown();
+                asd.isMature = bac.isReadyToHarvest();
                 data.animals.add(asd);
             }
         });
@@ -171,6 +173,7 @@ public class SaveLoadSystem {
     public void load(SaveData data, boolean isMapTransition) {
         if (!isMapTransition) {
             timeSystem.setGameTime(data.gameTime); // Gán lại cho TimeSystem
+            timeSystem.setDayCount(data.dayCount);
             statusBarsView.setHealth(data.health);
             statusBarsView.setHunger(data.hunger);
 
@@ -285,10 +288,14 @@ public class SaveLoadSystem {
                 String typeName = asd.type;
                 String spawnName = "";
                 if (typeName.equals("CHICKEN")) spawnName = "Chick";
-                else if (typeName.equals("COW")) spawnName = "Calf";
+                else if (typeName.equals("COW")) {
+                    spawnName = (asd.isMature || asd.daysGrown >= 7) ? "Bull" : "Calf";
+                }
                 else if (typeName.equals("SHEEP")) spawnName = "Lamb";
                 else if (typeName.equals("PIG")) spawnName = "Piglet";
-                else if (typeName.equals("TURKEY")) spawnName = "Turkey";
+                else if (typeName.equals("TURKEY")) {
+                    spawnName = (asd.isMature || asd.daysGrown >= 3) ? "Turkey" : "TurkeyChick";
+                }
 
                 if (!spawnName.isEmpty()) {
                     Entity a = FXGL.getGameWorld().spawn(spawnName, new com.almasb.fxgl.entity.SpawnData(asd.x, asd.y).put("fromSave", true));

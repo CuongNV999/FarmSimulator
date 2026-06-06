@@ -25,7 +25,6 @@ import java.util.Map;
 import java.util.HashMap;
 
 public class InputController {
-    private static boolean shiftHeld = false;
     private double lastMouseX;
     private double lastMouseY;
     private boolean isDraggingCamera = false;
@@ -78,31 +77,8 @@ public class InputController {
         }
     }
 
-    public static boolean isShiftHeld() {
-        return shiftHeld;
-    }
-
     public void initInputBindings(Main app) {
         Input input = FXGL.getInput();
-
-        input.addEventFilter(javafx.scene.input.KeyEvent.KEY_PRESSED, e -> {
-            if (app.getPlayerStateManager().isFainted()) {
-                e.consume();
-                return;
-            }
-            if (e.getCode() == KeyCode.SHIFT) {
-                shiftHeld = true;
-            }
-        });
-        input.addEventFilter(javafx.scene.input.KeyEvent.KEY_RELEASED, e -> {
-            if (app.getPlayerStateManager().isFainted()) {
-                e.consume();
-                return;
-            }
-            if (e.getCode() == KeyCode.SHIFT) {
-                shiftHeld = false;
-            }
-        });
 
         // 1. DI CHUYỂN
         input.addAction(new UserAction("Move Right") {
@@ -115,7 +91,7 @@ public class InputController {
 
             @Override
             protected void onAction() {
-                double speed = isShiftHeld() ? 300 : 200;
+                double speed = 200.0;
                 app.getPlayer().getComponent(PhysicsComponent.class).setVelocityX(speed);
             }
 
@@ -135,7 +111,7 @@ public class InputController {
 
             @Override
             protected void onAction() {
-                double speed = isShiftHeld() ? 300 : 200;
+                double speed = 200.0;
                 app.getPlayer().getComponent(PhysicsComponent.class).setVelocityX(-speed);
             }
 
@@ -155,7 +131,7 @@ public class InputController {
 
             @Override
             protected void onAction() {
-                double speed = isShiftHeld() ? 300 : 200;
+                double speed = 200.0;
                 app.getPlayer().getComponent(PhysicsComponent.class).setVelocityY(-speed);
             }
 
@@ -175,7 +151,7 @@ public class InputController {
 
             @Override
             protected void onAction() {
-                double speed = isShiftHeld() ? 300 : 200;
+                double speed = 200.0;
                 app.getPlayer().getComponent(PhysicsComponent.class).setVelocityY(speed);
             }
 
@@ -203,7 +179,7 @@ public class InputController {
                     return;
                 }
 
-                // ƯU TIÊN 2: [Animal Harvesting / Product Collection]
+                // ƯU TIÊN 2: [Animal Harvesting / Interaction]
                 Entity player = app.getPlayer();
                 if (player != null) {
                     Entity closestAnimal = null;
@@ -221,12 +197,11 @@ public class InputController {
 
                     if (closestAnimal != null && closestDist <= interactionRange) {
                         BaseAnimalComponent bac = closestAnimal.getComponentOptional(BaseAnimalComponent.class).orElse(null);
-                        if (bac != null && bac.isReadyToHarvest()) {
-                            Project1Game.model.Inventory inv = app.getInventory();
-                            if (inv != null) {
-                                inv.addItem(bac.getAdultItem(), 1);
-                                NotificationManager.pushNotification("Đã thu hoạch một " + bac.getAdultName() + "!");
-                                closestAnimal.removeFromWorld();
+                        if (bac != null) {
+                            if (closestAnimal.hasComponent(Project1Game.interaction.InteractableComponent.class)) {
+                                closestAnimal.getComponent(Project1Game.interaction.InteractableComponent.class).interact(player);
+                            } else {
+                                bac.interact(player, closestAnimal);
                             }
                             return;
                         }
@@ -361,14 +336,6 @@ public class InputController {
                 lastFarmedCell = "";
             }
         }, MouseButton.PRIMARY);
-
-        input.addAction(new UserAction("Test Quick Water") {
-            @Override
-            protected void onActionBegin() {
-                System.out.println("Test: Ép tưới cây bằng phím Q!");
-                app.getFarmingSystem().useWateringCan(app.getSelector());
-            }
-        }, KeyCode.Q);
 
         // 4. HỆ THỐNG GIAO DIỆN
         input.addAction(new UserAction("Close UI Window") {

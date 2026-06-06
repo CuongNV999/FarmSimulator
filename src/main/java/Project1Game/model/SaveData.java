@@ -11,6 +11,7 @@ public class SaveData implements Serializable {
     private static final long serialVersionUID = 1L;
 
     public double gameTime;
+    public int dayCount = 1;
     public double health;
     public double hunger;
     public int playerMoney; // Thêm trường để lưu tiền của người chơi
@@ -52,6 +53,7 @@ public class SaveData implements Serializable {
         public double x, y;
         public String type; // CHICKEN, COW, etc.
         public int daysGrown;
+        public boolean isMature;
     }
 
     // Dynamic monster serialization data list

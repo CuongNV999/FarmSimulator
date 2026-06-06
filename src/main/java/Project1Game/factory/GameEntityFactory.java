@@ -370,9 +370,20 @@ public class GameEntityFactory implements EntityFactory {
         return createAnimal(data, "piglet", 32, 32);
     }
 
+    @Spawns("TurkeyChick")
+    public Entity spawnTurkeyChick(SpawnData data) {
+        return createAnimal(data, "turkeychick", 32, 32);
+    }
+
     @Spawns("Turkey")
     public Entity spawnTurkey(SpawnData data) {
-        return createAnimal(data, "turkey", 32, 32);
+        Entity turkey = createAnimal(data, "turkey", 32, 32);
+        BaseAnimalComponent bac = turkey.getComponent(BaseAnimalComponent.class);
+        if (bac != null) {
+            bac.setDaysGrown(bac.getMaxGrowthDays());
+            bac.initAnimation();
+        }
+        return turkey;
     }
 
     @Spawns("Bull")

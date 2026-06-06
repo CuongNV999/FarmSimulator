@@ -7,18 +7,13 @@ import Project1Game.model.item.animal.*;
 
 import Project1Game.model.item.Usable;
 
-
-
-
-
 import com.almasb.fxgl.entity.Entity;
 import com.almasb.fxgl.dsl.FXGL;
 import javafx.scene.image.Image;
 import javafx.scene.image.WritableImage;
 
 public enum ItemType implements Usable {
-    // Định nghĩa: Tên hiển thị, Icon, Tên Entity Spawn, Giá mua, Giá bán, Hành động
-    // sử dụng
+    // Định nghĩa: Tên hiển thị, Icon, Tên Entity Spawn, Giá mua, Giá bán, Hành động sử dụng
     HOE("Cuốc", "Tool/hoe.png", null, 0, 0, new HoeAction()),
     WATERING_CAN("Bình tưới", "Tool/watering_can.png", null, 0, 0, new WateringCanAction()),
 
@@ -78,11 +73,8 @@ public enum ItemType implements Usable {
 
     // Thịt (Thực phẩm)
     COOKED_DRUMSTICK("Đùi gà chín", "food:25:1", null, 40, 22, new EatAction(25, 3)),
-
     COOKED_CHICKEN("Thịt gà chín", "food:25:2", null, 90, 50, new EatAction(45, 6)),
-
     COOKED_MEAT("Thịt bò chín", "food:25:5", null, 120, 75, new EatAction(60, 8)),
-
     SAUSAGE("Xúc xích", "food:25:6", null, 45, 25, new EatAction(30, 4)),
 
     // Baby Animals (Buyable)
@@ -90,7 +82,7 @@ public enum ItemType implements Usable {
     CALF("Bê", "Animal/Calf_animation_with_shadow.png", "Calf", 300, 0, new PlaceAnimalAction("Calf")),
     LAMB("Cừu non", "Animal/Lamb_animation_with_shadow.png", "Lamb", 150, 0, new PlaceAnimalAction("Lamb")),
     PIGLET("Heo con", "Animal/Piglet_animation_with_shadow.png", "Piglet", 200, 0, new PlaceAnimalAction("Piglet")),
-    TURKEY("Gà tây", "Animal/Turkey_animation_with_shadow.png", "Turkey", 100, 220, new PlaceAnimalAction("Turkey")),
+    TURKEY_CHICK("Gà tây con", "Animal/Turkey_animation_with_shadow.png", "TurkeyChick", 100, 0, new PlaceAnimalAction("TurkeyChick")),
 
     // Mature Animals (Harvested and Sellable)
     ROOSTER("Gà trống", "Animal/Rooster_animation_with_shadow.png", null, 0, 120, (player, target) -> {
@@ -99,6 +91,8 @@ public enum ItemType implements Usable {
     SHEEP("Cừu trưởng thành", "Animal/Sheep_animation_with_shadow.png", null, 0, 350, (player, target) -> {
     }),
     PIG("Heo trưởng thành", "Animal/Piglet_animation_with_shadow.png", null, 0, 480, (player, target) -> {
+    }),
+    TURKEY("Gà tây trưởng thành", "Animal/Turkey_animation_with_shadow.png", null, 0, 220, (player, target) -> {
     }),
 
     // Các ô trống (có thể bỏ qua giá mua/bán)

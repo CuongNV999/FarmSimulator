@@ -46,8 +46,8 @@ public class GrowthComponent extends Component {
         double scale;
         switch (type) {
             case TURKEY:
-                // Chick is small; mature turkey is normal-sized
-                scale = isMature ? 1.8 : 1.0;
+                // Chick is small (0.5); mature turkey is normal-sized (1.0)
+                scale = isMature ? 1.0 : 0.5;
                 break;
             default:
                 scale = isMature ? 2.6 : 1.8;
@@ -55,6 +55,9 @@ public class GrowthComponent extends Component {
         }
         entity.setScaleX(scale);
         entity.setScaleY(scale);
+        if (type == BaseAnimalComponent.AnimalType.TURKEY) {
+            entity.setScaleUniform(scale);
+        }
 
         entity.getTransformComponent().setScaleOrigin(new Point2D(frameW / 2.0, frameH / 2.0));
         entity.getTransformComponent().setRotationOrigin(new Point2D(frameW / 2.0, frameH / 2.0));

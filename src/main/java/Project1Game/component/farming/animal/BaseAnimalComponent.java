@@ -1,6 +1,7 @@
 package Project1Game.component.farming.animal;
 
 import Project1Game.config.AnimalConfig;
+import Project1Game.config.AnimalConfigRegistry;
 
 import Project1Game.Main;
 import Project1Game.core.ItemType;
@@ -32,6 +33,7 @@ public class BaseAnimalComponent extends Component implements Interactable {
     private int daysGrown = 0;
     private Point2D initialSpawnPos = null;
     private boolean isFollowing = false;
+    private String internalIdentifier;
 
     private SteeringComponent steering;
     private GrowthComponent growth;
@@ -157,6 +159,9 @@ public class BaseAnimalComponent extends Component implements Interactable {
 
         initialSpawnPos = entity.getPosition();
 
+        this.internalIdentifier = config.type() == AnimalType.TURKEY ? (growth.isReadyToHarvest() ? "Turkey" : "TurkeyChick") : config.animalName();
+        entity.setProperty("internalIdentifier", this.internalIdentifier);
+
         // Listen for day passage
         dayHandler = e -> {
             if (growth != null) {
@@ -171,7 +176,9 @@ public class BaseAnimalComponent extends Component implements Interactable {
                     }
                     System.out.println(config.animalName() + " has matured into adult " + config.adultName() + "!");
                     if (config.type() == AnimalType.TURKEY) {
-                        NotificationManager.pushNotification("Gà tây của bạn đã trưởng thành! Hãy bắt chúng (Shift + tương tác).");
+                        this.internalIdentifier = "Turkey";
+                        entity.setProperty("internalIdentifier", "Turkey");
+                        NotificationManager.pushNotification("Gà tây của bạn đã trưởng thành! Nhấn E để thu hoạch.");
                     }
                 }
             }
@@ -257,93 +264,33 @@ public class BaseAnimalComponent extends Component implements Interactable {
 
     @Override
     public void interact(Entity player, Entity target) {
-        if (Project1Game.Main.isShiftHeld()) {
-            // HARVEST action (Shift + interact)
-            if (isReadyToHarvest()) {
-                Project1Game.model.Inventory inventory = Main.getInstance().getInventory();
-                if (inventory != null) {
-                    inventory.addItem(config.adultItem(), 1);
-                    NotificationManager.pushNotification("Đã thu hoạch một " + config.adultName() + "!");
-                    // CRITICAL: Remove entity from world to prevent ghost-spawn / duplication
-                    entity.removeFromWorld();
-                }
-            } else {
-                // Animal is not mature yet — show info dialog
-                int daysRemaining = config.maxGrowthDays() - getDaysGrown();
-                String msg;
-                if (config.type() == AnimalType.TURKEY) {
-                    msg = "Gà tây con cần thêm " + daysRemaining + " ngày để sẵn sàng thu hoạch.";
-                } else {
-                    msg = config.babyName() + " cần thêm " + daysRemaining + " ngày để lớn lên.";
-                }
-                DialogView dialogView = Main.getInstance().getDialogView();
-                dialogView.setDialog(config.animalName(), msg);
-                dialogView.show();
+        if (isReadyToHarvest()) {
+            Project1Game.model.Inventory inventory = Main.getInstance().getInventory();
+            if (inventory != null) {
+                inventory.addItem(config.adultItem(), 1);
+                NotificationManager.pushNotification("Đã thu hoạch một " + config.adultName() + "!");
+                // CRITICAL: Remove entity from world to prevent ghost-spawn / duplication
+                entity.removeFromWorld();
+                Entity selector = null; // Clear active selector reference
             }
         } else {
-            // FOLLOW / RELEASE action (normal interact)
-            // Mature turkey CANNOT be released/dropped again — it can only be harvested
-            if (config.type() == AnimalType.TURKEY && isReadyToHarvest()) {
-                NotificationManager.pushNotification("Gà tây trưởng thành! Dùng Shift + tương tác để thu hoạch.");
-                return;
-            }
-
-            isFollowing = !isFollowing;
-            String name = isReadyToHarvest() ? config.adultName() : config.babyName();
-            if (isFollowing) {
-                NotificationManager.pushNotification(name + " đang đi theo bạn!");
+            // Animal is not mature yet — show info dialog
+            int daysRemaining = config.maxGrowthDays() - getDaysGrown();
+            String msg;
+            if (config.type() == AnimalType.TURKEY) {
+                msg = "Gà tây con cần thêm " + daysRemaining + " ngày để sẵn sàng thu hoạch.";
             } else {
-                if (steering != null) {
-                    steering.stop();
-                }
-                initialSpawnPos = entity.getPosition();
-                if (animation != null) {
-                    animation.updateIdleAnimation();
-                }
-                NotificationManager.pushNotification(name + " đã dừng lại.");
+                msg = config.babyName() + " cần thêm " + daysRemaining + " ngày để lớn lên.";
             }
+            DialogView dialogView = Main.getInstance().getDialogView();
+            dialogView.setDialog(config.animalName(), msg);
+            dialogView.show();
         }
     }
 
     public static BaseAnimalComponent create(String typeName) {
-        AnimalConfig config = null;
-        switch (typeName.toLowerCase()) {
-            case "chick":
-            case "chicken":
-            case "rooster":
-                config = new AnimalConfig(AnimalType.CHICKEN, "Gà", "Gà con", "Rooster", 4,
-                      "Animal/Chick_animation_with_shadow.png", "Animal/Rooster_animation_with_shadow.png",
-                      ItemType.ROOSTER, 16, 16, 32, 32);
-                break;
-            case "calf":
-            case "cow":
-            case "bull":
-                config = new AnimalConfig(AnimalType.COW, "Bò", "Bê", "Bull", 7,
-                      "Animal/Calf_animation_with_shadow.png", "Animal/Bull_animation_with_shadow.png",
-                      ItemType.BULL, 64, 64, 64, 64);
-                break;
-            case "lamb":
-            case "sheep":
-                config = new AnimalConfig(AnimalType.SHEEP, "Cừu", "Cừu non", "Sheep", 5,
-                      "Animal/Lamb_animation_with_shadow.png", "Animal/Sheep_animation_with_shadow.png",
-                      ItemType.SHEEP, 32, 32, 32, 32);
-                break;
-            case "piglet":
-            case "pig":
-                config = new AnimalConfig(AnimalType.PIG, "Heo", "Heo con", "Pig", 6,
-                      "Animal/Piglet_animation_with_shadow.png", "Animal/Piglet_animation_with_shadow.png",
-                      ItemType.PIG, 32, 32, 32, 32);
-                break;
-            case "turkey":
-                // Turkey Chick: distinct baby/adult names, grows over 3 days, same sprite sheet
-                // Baby name = "Gà tây con", Adult name = "Gà tây trưởng thành"
-                config = new AnimalConfig(AnimalType.TURKEY, "Gà tây", "Gà tây con", "Gà tây trưởng thành", 3,
-                      "Animal/Turkey_animation_with_shadow.png", "Animal/Turkey_animation_with_shadow.png",
-                      ItemType.TURKEY, 32, 32, 32, 32);
-                break;
-            default:
-                throw new IllegalArgumentException("Unknown animal type: " + typeName);
-        }
+        AnimalConfig config = AnimalConfigRegistry.getInstance().getConfig(typeName)
+                .orElseThrow(() -> new IllegalArgumentException("Unknown animal type: " + typeName));
         return new BaseAnimalComponent(config);
     }
 }

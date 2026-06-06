@@ -68,6 +68,18 @@ public class QuestManager {
         return Collections.unmodifiableList(npcs);
     }
 
+    public List<Quest> getActiveQuests() {
+        List<Quest> active = new ArrayList<>();
+        for (QuestGiver npc : npcs) {
+            for (Quest q : npc.getQuests()) {
+                if (q.getStatus() == QuestStatus.IN_PROGRESS || q.getStatus() == QuestStatus.COMPLETED) {
+                    active.add(q);
+                }
+            }
+        }
+        return active;
+    }
+
     /** Tóm tắt trạng thái tất cả quest trong toàn game (debug). */
     public void printAllQuestStatus() {
         System.out.println("===== QUEST STATUS =====");

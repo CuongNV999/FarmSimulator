@@ -268,7 +268,7 @@ public class AdminView extends VBox {
                 ItemType.CROISSANT, ItemType.PRETZEL, ItemType.DONUT, ItemType.PANCAKE,
                 ItemType.COOKED_DRUMSTICK, ItemType.COOKED_CHICKEN,
                 ItemType.COOKED_MEAT, ItemType.SAUSAGE,
-                ItemType.CHICK, ItemType.CALF, ItemType.LAMB, ItemType.PIGLET, ItemType.TURKEY,
+                ItemType.CHICK, ItemType.CALF, ItemType.LAMB, ItemType.PIGLET, ItemType.TURKEY_CHICK, ItemType.TURKEY,
                 ItemType.ROOSTER, ItemType.BULL, ItemType.SHEEP, ItemType.PIG
         );
 
